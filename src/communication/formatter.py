@@ -169,7 +169,7 @@ class InsightFormatter:
             for i, pattern in enumerate(significant_patterns, 1):
                 lines.append(f"{i}. **{pattern['description']}**")
                 lines.append(f"   - Observerat {pattern['sample_size']} gånger")
-                lines.append(f"   - Konfidensgrad: {pattern['confidence']*100:.0f}%")
+                lines.append(f"   - Historisk styrka: {pattern['statistical_strength']*100:.0f}%")
                 lines.append("")
         
         return "\n".join(lines)
@@ -248,7 +248,7 @@ class InsightFormatter:
     def _format_stability(self, pattern_eval: PatternEvaluation) -> str:
         """Formaterar stabilitetsinformation."""
         stability_pct = pattern_eval.stability_score * 100
-        confidence_pct = pattern_eval.confidence_level * 100
+        strength_pct = pattern_eval.statistical_strength * 100
         
         if stability_pct > 80:
             stability_desc = "mycket konsekvent"
@@ -259,7 +259,7 @@ class InsightFormatter:
         
         lines = []
         lines.append(f"Mönstret har varit {stability_desc} över olika tidsperioder ")
-        lines.append(f"(stabilitet: {stability_pct:.0f}%, konfidensgrad: {confidence_pct:.0f}%).")
+        lines.append(f"(stabilitet: {stability_pct:.0f}%, historisk styrka: {strength_pct:.0f}%).")
         
         return " ".join(lines)
     

@@ -20,8 +20,9 @@ class PatternEvaluation:
     win_rate: float
     max_drawdown: float
     is_significant: bool
-    stability_score: float
-    confidence_level: float
+    stability_score: float  # Hur stabilt mönstret är över tid (0-1)
+    statistical_strength: float  # Statistisk styrka baserat på sample size och konsistens (0-1)
+    # OBS: Dessa är HISTORISKA mått, inte framtidsprediktioner!
     
     
 class PatternEvaluator:
@@ -74,14 +75,14 @@ class PatternEvaluator:
         # Utvärdera stabilitet över tid
         stability_score = self._evaluate_stability(historical_returns, timestamps)
         
-        # Beräkna konfidensgrad
-        confidence_level = self._calculate_confidence(historical_returns)
+        # Beräkna statistisk styrka
+        statistical_strength = self._calculate_statistical_strength(historical_returns)
         
         # Avgör om mönstret är signifikant
         is_significant = (
             len(historical_returns) >= self.min_occurrences and
             stability_score >= self.min_confidence and
-            confidence_level >= self.min_confidence
+            statistical_strength >= self.min_confidence
         )
         
         return PatternEvaluation(
@@ -93,7 +94,7 @@ class PatternEvaluator:
             max_drawdown=max_drawdown,
             is_significant=is_significant,
             stability_score=stability_score,
-            confidence_level=confidence_level
+            statistical_strength=statistical_strength
         )
     
     def _calculate_max_drawdown(self, returns: np.ndarray) -> float:
@@ -138,11 +139,12 @@ class PatternEvaluator:
             
         return stability
     
-    def _calculate_confidence(self, returns: np.ndarray) -> float:
+    def _calculate_statistical_strength(self, returns: np.ndarray) -> float:
         """
-        Beräknar konfidensgrad baserat på antal observationer och variation.
+        Beräknar statistisk styrka baserat på antal observationer och variation.
         
-        Fler observationer och lägre variation ger högre konfidensgrad.
+        Fler observationer och lägre variation ger högre statistisk styrka.
+        OBS: Detta är INTE sannolikheten att mönstret fungerar i framtiden!
         """
         n = len(returns)
         
@@ -183,5 +185,5 @@ class PatternEvaluator:
             max_drawdown=0.0,
             is_significant=False,
             stability_score=0.0,
-            confidence_level=0.0
+            statistical_strength=0.0
         )

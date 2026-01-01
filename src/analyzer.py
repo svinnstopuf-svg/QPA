@@ -133,9 +133,11 @@ class QuantPatternAnalyzer:
                 significant_patterns.append({
                     'description': situation.description,
                     'sample_size': outcome_stats.sample_size,
-                    'confidence': pattern_eval.confidence_level,
+                    'statistical_strength': pattern_eval.statistical_strength,
+                    'stability_score': pattern_eval.stability_score,
                     'mean_return': outcome_stats.mean_return,
-                    'win_rate': outcome_stats.win_rate
+                    'win_rate': outcome_stats.win_rate,
+                    'metadata': situation.metadata  # Include for warning checks
                 })
         
         print(f"Hittade {len(significant_patterns)} signifikanta mönster")
@@ -322,13 +324,27 @@ class QuantPatternAnalyzer:
         
         table_data = []
         for pattern in analysis_results['significant_patterns']:
+            # Check for data sufficiency warning
+            warning = ""
+            if 'metadata' in pattern and pattern['metadata'].get('is_seasonal'):
+                if not pattern['metadata'].get('data_sufficient', True):
+                    warning = " [!]"
+            
             table_data.append({
-                'Mönster': pattern['description'][:40] + '...' if len(pattern['description']) > 40 else pattern['description'],
+                'Mönster': (pattern['description'][:37] + '...' if len(pattern['description']) > 37 else pattern['description']) + warning,
                 'Antal': str(pattern['sample_size']),
                 'Genomsnitt': self.console_formatter.format_percentage(pattern['mean_return']),
                 'Vinstfrekvens': self.console_formatter.format_percentage(pattern['win_rate']),
-                'Konfidensgrad': self.console_formatter.format_percentage(pattern['confidence'])
+                'Hist. Styrka': self.console_formatter.format_percentage(pattern['statistical_strength'])
             })
         
-        headers = ['Mönster', 'Antal', 'Genomsnitt', 'Vinstfrekvens', 'Konfidensgrad']
-        return self.console_formatter.format_table(table_data, headers)
+        headers = ['Mönster', 'Antal', 'Genomsnitt', 'Vinstfrekvens', 'Hist. Styrka']
+        table = self.console_formatter.format_table(table_data, headers)
+        
+        # Add warning legend if needed
+        has_warnings = any('metadata' in p and p['metadata'].get('is_seasonal') and not p['metadata'].get('data_sufficient', True) 
+                          for p in analysis_results['significant_patterns'])
+        if has_warnings:
+            table += "\n\n[!] = VARNING: Säsongsmönster med <10 års data - resultat är preliminära!"
+        
+        return table
