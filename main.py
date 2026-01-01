@@ -112,9 +112,10 @@ def main():
     
     # Initiera analysverktyget med känsligare parametrar för djupanalys
     # Renessaince-approach: Hitta 10-20 svaga mönster att kombinera
+    # Technical patterns behöver lägre trösklar (6-279 observations)
     analyzer = QuantPatternAnalyzer(
-        min_occurrences=15,  # Sänkt till 15 för att hitta fler kandidater
-        min_confidence=0.55,  # Sänkt till 0.55 för bredare täckning
+        min_occurrences=5,  # Sänkt till 5 för tekniska patterns (golden_cross=7, extended_selloff=6)
+        min_confidence=0.40,  # Sänkt till 0.40 för att inkludera tekniska patterns
         forward_periods=1
     )
     

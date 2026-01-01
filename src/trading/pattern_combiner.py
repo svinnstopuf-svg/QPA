@@ -119,11 +119,21 @@ class PatternCombiner:
             
             # Add if edge is meaningful (>0.01%)
             if best_edge > 0.01:
+                # Weight by Bayesian confidence if available
+                bayesian_weight = 1.0
+                if 'bayesian_confidence' in pattern:
+                    # Higher confidence = higher weight
+                    bayesian_weight = pattern['bayesian_confidence']
+                
+                # Combined weight: observations × Bayesian confidence
+                combined_weight = max(1.0, best_obs / 100) * bayesian_weight
+                
                 active_patterns.append({
                     'pattern': pattern,
                     'edge': best_edge,
                     'regime': best_regime,
-                    'weight': max(1.0, best_obs / 100)  # Weight by data, min 1.0
+                    'weight': combined_weight,
+                    'bayesian_confidence': bayesian_weight
                 })
         
         if not active_patterns:

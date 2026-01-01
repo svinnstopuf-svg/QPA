@@ -40,7 +40,8 @@ class BayesianEdgeEstimator:
         self,
         prior_mean: float = 0.0,  # Assume no edge a priori
         prior_std: float = 0.01,  # 1% daily volatility
-        min_threshold: float = 0.001  # 0.1% edge threshold
+        min_threshold: float = 0.001,  # 0.1% edge threshold
+        adaptive_threshold: bool = True  # Adjust threshold by volatility
     ):
         """
         Initialize Bayesian estimator.
@@ -53,6 +54,7 @@ class BayesianEdgeEstimator:
         self.prior_mean = prior_mean
         self.prior_std = prior_std
         self.min_threshold = min_threshold
+        self.adaptive_threshold = adaptive_threshold
     
     def estimate_edge(
         self,
@@ -109,8 +111,17 @@ class BayesianEdgeEstimator:
         # Probability edge is positive
         prob_positive = 1 - stats.norm.cdf(0, loc=posterior_mean, scale=posterior_std)
         
+        # Adaptive threshold based on volatility
+        if self.adaptive_threshold:
+            # High vol = lower threshold, Low vol = higher threshold
+            vol_adjustment = sample_std / 0.01  # Normalize to 1% daily vol
+            adaptive_min_threshold = self.min_threshold / vol_adjustment
+            adaptive_min_threshold = max(0.0005, min(0.002, adaptive_min_threshold))  # 0.05%-0.2% range
+        else:
+            adaptive_min_threshold = self.min_threshold
+        
         # Probability edge exceeds threshold (after costs)
-        effective_threshold = self.min_threshold + transaction_cost
+        effective_threshold = adaptive_min_threshold + transaction_cost
         prob_above_threshold = 1 - stats.norm.cdf(
             effective_threshold,
             loc=posterior_mean,

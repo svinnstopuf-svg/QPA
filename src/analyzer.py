@@ -11,6 +11,7 @@ from datetime import datetime
 
 from .utils.market_data import MarketData, MarketDataProcessor
 from .patterns.detector import PatternDetector, MarketSituation
+from .patterns.technical_patterns import TechnicalPatternDetector
 from .core.pattern_evaluator import PatternEvaluator, PatternEvaluation
 from .core.pattern_monitor import PatternMonitor, PatternStatus
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
@@ -51,6 +52,7 @@ class QuantPatternAnalyzer:
             forward_periods: Antal perioder framåt att mäta utfall över
         """
         self.pattern_detector = PatternDetector()
+        self.technical_detector = TechnicalPatternDetector()
         self.pattern_evaluator = PatternEvaluator(
             min_occurrences=min_occurrences,
             min_confidence=min_confidence
@@ -112,6 +114,10 @@ class QuantPatternAnalyzer:
         
         # Steg 1: Identifiera alla marknadssituationer
         all_situations = self.pattern_detector.detect_all_patterns(market_data)
+        
+        # Add technical patterns
+        technical_patterns = self.technical_detector.detect_all_technical_patterns(market_data)
+        all_situations.update(technical_patterns)
         
         # Filtrera om specifika mönster önskas
         if patterns_to_analyze:
