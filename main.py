@@ -153,6 +153,11 @@ def main():
         print("\n")
         combined_strategy = analyzer.generate_combined_strategy(analysis_results, market_data)
         print(combined_strategy)
+        
+        # NYTT: Backtesting med walk-forward validation
+        print("\n")
+        backtest_report = analyzer.backtest_patterns(analysis_results, walk_forward=True)
+        print(backtest_report)
     
     # Analysera nuvarande marknadssituation
     print("\n" + "=" * 80)

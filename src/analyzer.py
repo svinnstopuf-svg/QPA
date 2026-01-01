@@ -19,6 +19,7 @@ from .analysis.permutation_tester import PermutationTester
 from .analysis.regime_analyzer import RegimeAnalyzer
 from .trading.strategy_generator import TradingStrategyGenerator
 from .trading.pattern_combiner import PatternCombiner
+from .trading.backtester import Backtester
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
 
@@ -69,6 +70,11 @@ class QuantPatternAnalyzer:
             correlation_penalty=0.5,  # 50% penalty for correlation
             min_patterns=1,  # Allow single pattern (changed from 2)
             max_patterns=10
+        )
+        self.backtester = Backtester(
+            initial_capital=100000,
+            transaction_cost=0.0002,  # 0.02%
+            slippage=0.0001  # 0.01%
         )
         self.formatter = InsightFormatter()
         self.console_formatter = ConsoleFormatter()
@@ -478,3 +484,82 @@ class QuantPatternAnalyzer:
             table += "\n\n[!] = VARNING: Veckodagsmönster med <8 års data - hög risk för regimberoende (lokal stabilitet)!"
         
         return table
+    
+    def backtest_patterns(self, analysis_results: Dict, walk_forward: bool = True) -> str:
+        """
+        Backtestar signifikanta mönster med walk-forward analysis.
+        
+        Args:
+            analysis_results: Resultat från analyze_market_data
+            walk_forward: Om True, använd walk-forward validation
+            
+        Returns:
+            Rapport över backtest-resultat
+        """
+        lines = []
+        lines.append("\n" + "="*80)
+        lines.append("BACKTEST RESULTAT (Walk-Forward Validation)")
+        lines.append("="*80)
+        
+        for result in analysis_results['results']:
+            if result['pattern_eval'].is_significant:
+                description = result['situation'].description
+                forward_returns = result['forward_returns']
+                timestamps = analysis_results['market_data'].timestamps[
+                    result['situation'].timestamp_indices
+                ]
+                
+                if walk_forward:
+                    # Split data 70/30 in-sample/out-of-sample
+                    split_idx = int(len(forward_returns) * 0.7)
+                    pattern_indices = result['situation'].timestamp_indices
+                    
+                    # In-sample backtest
+                    in_sample_result = self.backtester.backtest_pattern(
+                        pattern_indices[:split_idx],
+                        forward_returns[:split_idx],
+                        timestamps[:split_idx]
+                    )
+                    
+                    # Out-of-sample backtest
+                    out_sample_result = self.backtester.backtest_pattern(
+                        pattern_indices[split_idx:],
+                        forward_returns[split_idx:],
+                        timestamps[split_idx:]
+                    )
+                    
+                    lines.append(f"\n{description}")
+                    lines.append("-" * 80)
+                    lines.append("📊 IN-SAMPLE (70% av data - träning)")
+                    lines.append(self._format_backtest_result(in_sample_result))
+                    lines.append("\n📊 OUT-OF-SAMPLE (30% av data - validering)")
+                    lines.append(self._format_backtest_result(out_sample_result))
+                    
+                    # Warn if out-of-sample is significantly worse
+                    if out_sample_result.sharpe_ratio < in_sample_result.sharpe_ratio * 0.5:
+                        lines.append("\n⚠️ VARNING: Out-of-sample är mycket sämre än in-sample - risk för överanpassning!")
+                else:
+                    # Full period backtest
+                    pattern_indices = result['situation'].timestamp_indices
+                    bt_result = self.backtester.backtest_pattern(
+                        pattern_indices,
+                        forward_returns,
+                        timestamps
+                    )
+                    lines.append(f"\n{description}")
+                    lines.append("-" * 80)
+                    lines.append(self._format_backtest_result(bt_result))
+        
+        return "\n".join(lines)
+    
+    def _format_backtest_result(self, result) -> str:
+        """Formaterar backtest-resultat."""
+        lines = []
+        lines.append(f"  Total avkastning: {result.total_return:+.2%}")
+        lines.append(f"  Årlig avkastning: {result.annual_return:+.2%}")
+        lines.append(f"  Sharpe ratio: {result.sharpe_ratio:.2f} ({result.rating})")
+        lines.append(f"  Max drawdown: {result.max_drawdown:.2%}")
+        lines.append(f"  Vinstfrekvens: {result.win_rate:.1%}")
+        lines.append(f"  Profit factor: {result.profit_factor:.2f}")
+        lines.append(f"  Antal trades: {result.num_trades}")
+        return "\n".join(lines)
