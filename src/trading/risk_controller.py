@@ -19,6 +19,8 @@ class RiskLimits:
     max_position_size: float  # Max position size (fraction)
     min_sharpe: float  # Min required Sharpe ratio
     lookback_window: int  # Days to evaluate performance
+    stop_loss_pct: float = 0.02  # 2% stop loss per trade
+    trailing_stop_pct: float = 0.015  # 1.5% trailing stop
 
 
 @dataclass
@@ -316,3 +318,45 @@ class DynamicRiskController:
         lines.append("⚠️ Patterns are automatically disabled when they stop working.")
         
         return "\n".join(lines)
+    
+    def calculate_dynamic_stops(
+        self,
+        pattern_returns: np.ndarray,
+        current_position_size: float
+    ) -> Dict[str, float]:
+        """
+        Calculate dynamic stop-loss and take-profit levels.
+        
+        Args:
+            pattern_returns: Historical returns for pattern
+            current_position_size: Current position size (fraction)
+            
+        Returns:
+            Dictionary with stop/target levels
+        """
+        if len(pattern_returns) == 0:
+            return {'stop_loss': 0.02, 'trailing_stop': 0.015, 'take_profit': 0.04}
+        
+        # Calculate volatility-adjusted stops
+        volatility = np.std(pattern_returns)
+        
+        # Stop loss: 2x volatility or 2%, whichever is larger
+        stop_loss = max(0.02, 2 * volatility)
+        
+        # Trailing stop: 1.5x volatility
+        trailing_stop = max(0.015, 1.5 * volatility)
+        
+        # Take profit: 3x volatility (reward/risk = 1.5)
+        take_profit = max(0.04, 3 * volatility)
+        
+        # Adjust for position size (larger positions = tighter stops)
+        if current_position_size > 0.15:  # >15% position
+            stop_loss *= 0.8  # Tighter stops
+            trailing_stop *= 0.8
+        
+        return {
+            'stop_loss': stop_loss,
+            'trailing_stop': trailing_stop,
+            'take_profit': take_profit,
+            'volatility': volatility
+        }
