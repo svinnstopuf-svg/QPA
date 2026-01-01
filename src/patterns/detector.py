@@ -268,6 +268,9 @@ class PatternDetector:
         """
         Identifierar kalenderrelaterade mönster.
         
+        VARNING: Veckodagseffekter kräver 8-10 års data för tillförlitlighet.
+        Kortare perioder riskerar "lokal stabilitet" (regimberoende).
+        
         Args:
             market_data: Marknadsdata att analysera
             
@@ -277,6 +280,14 @@ class PatternDetector:
         calendar_features = self.processor.get_calendar_features(market_data.timestamps)
         
         situations = {}
+        
+        # Beräkna antal år med data
+        if len(market_data.timestamps) > 0:
+            first_date = market_data.timestamps[0]
+            last_date = market_data.timestamps[-1]
+            years_of_data = (last_date - first_date).days / 365.25
+        else:
+            years_of_data = 0
         
         # Månadsskifte
         month_end_indices = np.where(calendar_features['is_month_end'])[0]
@@ -308,7 +319,7 @@ class PatternDetector:
             metadata={'count': len(quarter_end_indices)}
         )
         
-        # Veckodagar
+        # Veckodagar - KRÄVER 8-10 års data för regimoberoende analys
         for day in range(5):  # 0 = måndag, 4 = fredag
             day_name = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][day]
             day_indices = np.where(calendar_features['day_of_week'] == day)[0]
@@ -317,7 +328,15 @@ class PatternDetector:
                 description=f"{day_name}",
                 timestamp_indices=day_indices,
                 confidence=len(day_indices) / len(market_data),
-                metadata={'day_name': day_name, 'count': len(day_indices)}
+                metadata={
+                    'day_name': day_name,
+                    'count': len(day_indices),
+                    'years_of_data': years_of_data,
+                    'is_seasonal': True,
+                    'min_years_required': 8,
+                    'data_sufficient': years_of_data >= 8,
+                    'regime_risk': years_of_data < 8  # Flag för regimberoende
+                }
             )
         
         return situations
@@ -328,7 +347,10 @@ class PatternDetector:
         n_consecutive: int = 3
     ) -> Tuple[MarketSituation, MarketSituation]:
         """
-        Identifierar konsekutiva upp- eller nedgångar (mean reversion signal).
+        Identifierar konsekutiva upp- eller nedgångar.
+        
+        Historiskt har fortsättningen varit mindre sannolik efter långa sträckor.
+        INTE en prediktion - endast historisk observation.
         
         Args:
             market_data: Marknadsdata att analysera
@@ -354,9 +376,10 @@ class PatternDetector:
         up_indices = np.array(up_indices) + 1  # +1 för att matcha market_data längd
         down_indices = np.array(down_indices) + 1
         
+        # Använd neutral, icke-prediktiv språk
         consecutive_up = MarketSituation(
             situation_id=f"consecutive_up_{n_consecutive}",
-            description=f"{n_consecutive} konsekutiva uppgångar",
+            description=f"{n_consecutive} konsekutiva uppgångar (historiskt lägre sannolikhet för fortsatt uppgång)",
             timestamp_indices=up_indices,
             confidence=len(up_indices) / len(market_data) if len(market_data) > 0 else 0.0,
             metadata={'n_consecutive': n_consecutive, 'count': len(up_indices)}
@@ -364,7 +387,7 @@ class PatternDetector:
         
         consecutive_down = MarketSituation(
             situation_id=f"consecutive_down_{n_consecutive}",
-            description=f"{n_consecutive} konsekutiva nedgångar",
+            description=f"{n_consecutive} konsekutiva nedgångar (historiskt lägre sannolikhet för fortsatt nedgång)",
             timestamp_indices=down_indices,
             confidence=len(down_indices) / len(market_data) if len(market_data) > 0 else 0.0,
             metadata={'n_consecutive': n_consecutive, 'count': len(down_indices)}

@@ -30,7 +30,9 @@ class InsightFormatter:
         self,
         situation: MarketSituation,
         outcome_stats: OutcomeStatistics,
-        pattern_eval: PatternEvaluation
+        pattern_eval: PatternEvaluation,
+        baseline_comparison: Optional[Dict] = None,
+        permutation_result: Optional[object] = None
     ) -> str:
         """
         Skapar en användarvänlig beskrivning av ett mönster och dess utfall.
@@ -39,6 +41,8 @@ class InsightFormatter:
             situation: Den identifierade marknadssituationen
             outcome_stats: Statistik över historiska utfall
             pattern_eval: Utvärdering av mönstrets robusthet
+            baseline_comparison: Optionell jämförelse mot baseline (marknadens genomsnitt)
+            permutation_result: Optionell permutation test result (shuffle test)
             
         Returns:
             Formaterad sträng med insikt
@@ -55,6 +59,17 @@ class InsightFormatter:
         # Hur ofta mönstret förekommit
         lines.append(self._format_frequency(outcome_stats.sample_size))
         lines.append("")
+        
+        # BASELINE JÄMFÖRELSE - Visa edge relativt genomsnittet
+        if baseline_comparison:
+            lines.append("### Edge relativt marknadens genomsnitt")
+            lines.append(self._format_baseline_edge(outcome_stats, baseline_comparison))
+            lines.append("")
+        
+        # PERMUTATION TEST - Validering mot slump
+        if permutation_result:
+            lines.append(self._format_permutation_test(permutation_result))
+            lines.append("")
         
         # Historiskt beteende
         lines.append("### Historiskt beteende")
@@ -178,6 +193,49 @@ class InsightFormatter:
                 lines.append("")
         
         return "\n".join(lines)
+    
+    def _format_baseline_edge(self, stats: OutcomeStatistics, baseline_comparison: Dict) -> str:
+        """Formaterar edge relativt baseline - KRITISKT för att förstå värde."""
+        pattern_mean = stats.mean_return * 100
+        baseline_mean = baseline_comparison.get('baseline_mean', 0.0) * 100
+        edge = pattern_mean - baseline_mean
+        
+        lines = []
+        lines.append(f"Mönstrets genomsnitt: **{pattern_mean:+.2f}%** per dag")
+        lines.append(f"Marknadens genomsnitt: **{baseline_mean:+.2f}%** per dag")
+        lines.append(f"**Edge (skillnad): {edge:+.2f}%**")
+        
+        # Interpret edge
+        if abs(edge) < 0.05:
+            interpretation = "⚠️ Edge är MYCKET liten - mönstret är knappt bättre än genomsnittet"
+        elif abs(edge) < 0.10:
+            interpretation = "⚠️ Edge är liten - endast marginal fördel mot genomsnittet"
+        elif abs(edge) < 0.20:
+            interpretation = "✅ Edge är måttlig - tydlig skillnad mot genomsnittet"
+        else:
+            interpretation = "✅ Edge är betydande - stor skillnad mot genomsnittet"
+        
+        lines.append(interpretation)
+        
+        return " ".join(lines)
+    
+    def _format_permutation_test(self, permutation_result) -> str:
+        """Formaterar permutation test - Jim Simons validering mot slump."""
+        lines = []
+        lines.append("### Shuffle Test (Validering mot slumpen)")
+        lines.append(f"Mönstrets avkastning: {permutation_result.real_mean_return*100:.2f}%")
+        lines.append(f"Jämfört med {permutation_result.n_permutations} slumpmässiga dagindelningar:")
+        lines.append(f"**Bättre än {permutation_result.percentile_rank:.1f}% av slumpmässiga mönster**")
+        
+        if permutation_result.is_better_than_random:
+            lines.append("✅ Detta mönster är statistiskt bättre än slump")
+        else:
+            lines.append("❌ Detta mönster är INTE tydligt bättre än slump")
+            lines.append("⚠️ Kan vara överanpassning eller brus")
+        
+        lines.append(f"P-värde: {permutation_result.p_value:.3f}")
+        
+        return " ".join(lines)
     
     def _format_frequency(self, sample_size: int) -> str:
         """Formaterar hur ofta något inträffat."""

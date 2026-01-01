@@ -15,6 +15,7 @@ from .core.pattern_evaluator import PatternEvaluator, PatternEvaluation
 from .core.pattern_monitor import PatternMonitor, PatternStatus
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
 from .analysis.baseline_comparator import BaselineComparator, BaselineComparison
+from .analysis.permutation_tester import PermutationTester
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
 
@@ -55,6 +56,7 @@ class QuantPatternAnalyzer:
         )
         self.outcome_analyzer = OutcomeAnalyzer()
         self.baseline_comparator = BaselineComparator()
+        self.permutation_tester = PermutationTester(n_permutations=1000)
         self.formatter = InsightFormatter()
         self.console_formatter = ConsoleFormatter()
         
@@ -120,13 +122,31 @@ class QuantPatternAnalyzer:
                 timestamps=situation_timestamps
             )
             
+            # Jämför mot baseline (hela marknadens genomsnitt)
+            baseline_returns = market_data.returns[:-self.forward_periods] if self.forward_periods > 0 else market_data.returns
+            baseline_comparison = self.outcome_analyzer.compare_to_baseline(
+                pattern_returns=forward_returns,
+                baseline_returns=baseline_returns
+            )
+            
+            # Permutation test - validerar mot slump (endast för signifikanta mönster)
+            permutation_result = None
+            if pattern_eval.is_significant:
+                permutation_result = self.permutation_tester.test_pattern(
+                    pattern_returns=forward_returns,
+                    all_market_returns=baseline_returns,
+                    pattern_size=len(forward_returns)
+                )
+            
             # Lagra resultat
             result = {
                 'situation_id': situation_id,
                 'situation': situation,
                 'outcome_stats': outcome_stats,
                 'pattern_eval': pattern_eval,
-                'forward_returns': forward_returns
+                'forward_returns': forward_returns,
+                'baseline_comparison': baseline_comparison,
+                'permutation_result': permutation_result
             }
             results.append(result)
             
@@ -177,7 +197,9 @@ class QuantPatternAnalyzer:
                 insight = self.formatter.format_pattern_insight(
                     situation=result['situation'],
                     outcome_stats=result['outcome_stats'],
-                    pattern_eval=result['pattern_eval']
+                    pattern_eval=result['pattern_eval'],
+                    baseline_comparison=result.get('baseline_comparison'),
+                    permutation_result=result.get('permutation_result')
                 )
                 lines.append(insight)
                 lines.append("\n" + "-"*80 + "\n")
@@ -326,10 +348,12 @@ class QuantPatternAnalyzer:
         
         table_data = []
         for pattern in analysis_results['significant_patterns']:
-            # Check for data sufficiency warning
+            # Check for data sufficiency and regime risk warnings
             warning = ""
             if 'metadata' in pattern and pattern['metadata'].get('is_seasonal'):
                 if not pattern['metadata'].get('data_sufficient', True):
+                    warning = " [!]"
+                elif pattern['metadata'].get('regime_risk', False):
                     warning = " [!]"
             
             table_data.append({
@@ -344,9 +368,19 @@ class QuantPatternAnalyzer:
         table = self.console_formatter.format_table(table_data, headers)
         
         # Add warning legend if needed
-        has_warnings = any('metadata' in p and p['metadata'].get('is_seasonal') and not p['metadata'].get('data_sufficient', True) 
-                          for p in analysis_results['significant_patterns'])
-        if has_warnings:
+        has_seasonal_warnings = any(
+            'metadata' in p and p['metadata'].get('is_seasonal') and 
+            not p['metadata'].get('data_sufficient', True)
+            for p in analysis_results['significant_patterns']
+        )
+        has_regime_warnings = any(
+            'metadata' in p and p['metadata'].get('regime_risk', False)
+            for p in analysis_results['significant_patterns']
+        )
+        
+        if has_seasonal_warnings:
             table += "\n\n[!] = VARNING: Säsongsmönster med <10 års data - resultat är preliminära!"
+        elif has_regime_warnings:
+            table += "\n\n[!] = VARNING: Veckodagsmönster med <8 års data - hög risk för regimberoende (lokal stabilitet)!"
         
         return table

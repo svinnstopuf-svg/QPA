@@ -18,6 +18,7 @@ class PatternStatus:
     pattern_id: str
     is_active: bool
     weight: float  # 0.0 - 1.0
+    status_label: str  # "Friskt", "Försvagande", "Instabilt", "Inaktivt"
     degradation_reason: Optional[str]
     recent_performance: float
     historical_performance: float
@@ -96,30 +97,42 @@ class PatternMonitor:
         else:
             degradation = 0.0
         
-        # Bestäm om mönstret är aktivt och beräkna vikt
+        # Bestäm degradationsstatus baserat på kontinuerlig skala
+        # Simons-princip: Kontinuerlig degradering, inte binära flaggor
         is_active = True
         weight = 1.0
         degradation_reason = None
+        status_label = "Friskt"  # Kontinuerlig skala: Friskt -> Försvagande -> Instabilt -> Inaktivt
         
         # Kontrollera olika kriterier för nedgradering
-        if degradation > self.degradation_threshold:
+        if degradation > 0.30:  # >30%: Inaktivt
             is_active = False
+            status_label = "Inaktivt"
             degradation_reason = f"Prestanda försämrad med {degradation*100:.1f}%"
             weight = 0.0
-        elif sharpe < self.min_sharpe_ratio:
+        elif degradation > 0.20:  # 20-30%: Instabilt
+            status_label = "Instabilt"
             weight = 0.5
+            degradation_reason = f"Signifikant försämring: {degradation*100:.1f}%"
+        elif degradation > 0.10:  # 10-20%: Försvagande
+            status_label = "Försvagande"
+            weight = 0.7
+            degradation_reason = f"Måttlig försämring: {degradation*100:.1f}%"
+        elif sharpe < self.min_sharpe_ratio:
+            weight = 0.8
             degradation_reason = f"Låg riskjusterad avkastning (Sharpe: {sharpe:.2f})"
         elif stability_trend == "degrading":
-            weight = 0.7
+            weight = 0.85
             degradation_reason = "Stabilitet försämras över tid"
         elif len(recent_returns) < 10:
-            weight = 0.8
+            weight = 0.9
             degradation_reason = "För få senaste observationer"
         
         return PatternStatus(
             pattern_id=pattern_id,
             is_active=is_active,
             weight=weight,
+            status_label=status_label,
             degradation_reason=degradation_reason,
             recent_performance=recent_perf,
             historical_performance=historical_perf,
@@ -265,52 +278,61 @@ class PatternMonitor:
         lines.append("=" * 80)
         lines.append("")
         
-        # Dela upp i aktiva och inaktiva
-        active_patterns = {k: v for k, v in pattern_statuses.items() if v.is_active}
-        inactive_patterns = {k: v for k, v in pattern_statuses.items() if not v.is_active}
-        degraded_patterns = {k: v for k, v in active_patterns.items() if v.weight < 1.0}
+        # Dela upp enligt kontinuerlig degraderingsskala
+        friska = {k: v for k, v in pattern_statuses.items() if v.status_label == "Friskt"}
+        forsvagande = {k: v for k, v in pattern_statuses.items() if v.status_label == "Försvagande"}
+        instabila = {k: v for k, v in pattern_statuses.items() if v.status_label == "Instabilt"}
+        inaktiva = {k: v for k, v in pattern_statuses.items() if v.status_label == "Inaktivt"}
         
         lines.append(f"Totalt antal mönster: {len(pattern_statuses)}")
-        lines.append(f"  Aktiva: {len(active_patterns)}")
-        lines.append(f"  Degraderade (aktiva men reducerad vikt): {len(degraded_patterns)}")
-        lines.append(f"  Inaktiva: {len(inactive_patterns)}")
+        lines.append(f"  ✅ Friska: {len(friska)} (full vikt, 0-10% degradering)")
+        lines.append(f"  ⚠️ Försvagande: {len(forsvagande)} (70% vikt, 10-20% degradering)")
+        lines.append(f"  ❌ Instabila: {len(instabila)} (50% vikt, 20-30% degradering)")
+        lines.append(f"  🛑 Inaktiva: {len(inaktiva)} (0% vikt, >30% degradering)")
         lines.append("")
         
-        # Degraderade mönster
-        if degraded_patterns:
+        # Försvagande mönster
+        if forsvagande:
             lines.append("-" * 80)
-            lines.append("DEGRADERADE MÖNSTER (Reducerad vikt)")
+            lines.append("⚠️ FÖRSVAGANDE MÖNSTER (10-20% degradering)")
             lines.append("-" * 80)
-            for pattern_id, status in degraded_patterns.items():
+            for pattern_id, status in forsvagande.items():
                 lines.append(f"\n{pattern_id}:")
-                lines.append(f"  Vikt: {status.weight*100:.0f}%")
+                lines.append(f"  Status: {status.status_label} (vikt: {status.weight*100:.0f}%)")
                 lines.append(f"  Orsak: {status.degradation_reason}")
-                lines.append(f"  Recent prestanda: {status.recent_performance*100:.2f}%")
-                lines.append(f"  Historisk prestanda: {status.historical_performance*100:.2f}%")
-                lines.append(f"  Sharpe ratio: {status.sharpe_ratio:.2f}")
-                lines.append(f"  Stabilitetstrend: {status.stability_trend}")
+                lines.append(f"  Recent: {status.recent_performance*100:.2f}% | Historisk: {status.historical_performance*100:.2f}%")
+        
+        # Instabila mönster
+        if instabila:
+            lines.append("")
+            lines.append("-" * 80)
+            lines.append("❌ INSTABILA MÖNSTER (20-30% degradering)")
+            lines.append("-" * 80)
+            for pattern_id, status in instabila.items():
+                lines.append(f"\n{pattern_id}:")
+                lines.append(f"  Status: {status.status_label} (vikt: {status.weight*100:.0f}%)")
+                lines.append(f"  Orsak: {status.degradation_reason}")
+                lines.append(f"  Recent: {status.recent_performance*100:.2f}% | Historisk: {status.historical_performance*100:.2f}%")
         
         # Inaktiva mönster
-        if inactive_patterns:
+        if inaktiva:
             lines.append("")
             lines.append("-" * 80)
-            lines.append("INAKTIVA MÖNSTER (Markerade som inaktiva)")
+            lines.append("🛑 INAKTIVA MÖNSTER (>30% degradering)")
             lines.append("-" * 80)
-            for pattern_id, status in inactive_patterns.items():
+            for pattern_id, status in inaktiva.items():
                 lines.append(f"\n{pattern_id}:")
                 lines.append(f"  Orsak: {status.degradation_reason}")
-                lines.append(f"  Recent prestanda: {status.recent_performance*100:.2f}%")
-                lines.append(f"  Historisk prestanda: {status.historical_performance*100:.2f}%")
-                lines.append(f"  Sharpe ratio: {status.sharpe_ratio:.2f}")
+                lines.append(f"  Recent: {status.recent_performance*100:.2f}% | Historisk: {status.historical_performance*100:.2f}%")
         
         # Friska mönster
-        healthy_patterns = {k: v for k, v in active_patterns.items() if v.weight == 1.0}
-        if healthy_patterns:
+        if friska:
             lines.append("")
             lines.append("-" * 80)
-            lines.append(f"FRISKA MÖNSTER ({len(healthy_patterns)} mönster)")
+            lines.append(f"✅ FRISKA MÖNSTER ({len(friska)} mönster med full vikt)")
             lines.append("-" * 80)
-            lines.append("Dessa mönster har full vikt och god prestanda.")
+            for pattern_id, status in friska.items():
+                lines.append(f"  • {pattern_id}: {status.recent_performance*100:.2f}% recent | Stabilitet: {status.stability_trend}")
         
         lines.append("")
         lines.append("=" * 80)
