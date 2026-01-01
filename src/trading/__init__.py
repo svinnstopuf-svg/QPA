@@ -3,6 +3,7 @@
 from .strategy_generator import TradingStrategyGenerator, TradingSignal
 from .pattern_combiner import PatternCombiner, CombinedSignal
 from .backtester import Backtester, BacktestResult
+from .portfolio_optimizer import PortfolioOptimizer, PositionSize
 
 __all__ = [
     'TradingStrategyGenerator',
@@ -10,5 +11,7 @@ __all__ = [
     'PatternCombiner',
     'CombinedSignal',
     'Backtester',
-    'BacktestResult'
+    'BacktestResult',
+    'PortfolioOptimizer',
+    'PositionSize'
 ]

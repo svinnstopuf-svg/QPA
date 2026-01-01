@@ -158,6 +158,10 @@ def main():
         print("\n")
         backtest_report = analyzer.backtest_patterns(analysis_results, walk_forward=True)
         print(backtest_report)
+        
+        # NYTT: Portfolio optimization med Kelly Criterion
+        portfolio_report = analyzer.optimize_portfolio(analysis_results, total_capital=100000)
+        print(portfolio_report)
     
     # Analysera nuvarande marknadssituation
     print("\n" + "=" * 80)

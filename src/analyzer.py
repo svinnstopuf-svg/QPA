@@ -20,6 +20,7 @@ from .analysis.regime_analyzer import RegimeAnalyzer
 from .trading.strategy_generator import TradingStrategyGenerator
 from .trading.pattern_combiner import PatternCombiner
 from .trading.backtester import Backtester
+from .trading.portfolio_optimizer import PortfolioOptimizer
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
 
@@ -75,6 +76,11 @@ class QuantPatternAnalyzer:
             initial_capital=100000,
             transaction_cost=0.0002,  # 0.02%
             slippage=0.0001  # 0.01%
+        )
+        self.portfolio_optimizer = PortfolioOptimizer(
+            max_position_size=0.25,  # Max 25% per pattern
+            kelly_fraction=0.5,  # Half-Kelly for safety
+            min_edge=0.001  # 0.1% min edge
         )
         self.formatter = InsightFormatter()
         self.console_formatter = ConsoleFormatter()
@@ -563,3 +569,38 @@ class QuantPatternAnalyzer:
         lines.append(f"  Profit factor: {result.profit_factor:.2f}")
         lines.append(f"  Antal trades: {result.num_trades}")
         return "\n".join(lines)
+    
+    def optimize_portfolio(self, analysis_results: Dict, total_capital: float = 100000) -> str:
+        """
+        Skapa Kelly Criterion-baserad portfolio-allokering.
+        
+        Args:
+            analysis_results: Resultat från analyze_market_data
+            total_capital: Totalt kapital att allokera
+            
+        Returns:
+            Rapport över portfolio-allokering
+        """
+        # Samla tradeable patterns
+        patterns_for_optimization = []
+        
+        for result in analysis_results['results']:
+            if result['pattern_eval'].is_significant:
+                # Extrahera statistik
+                pattern_dict = {
+                    'pattern_id': result['situation_id'],
+                    'description': result['situation'].description,
+                    'win_rate': result['outcome_stats'].win_rate,
+                    'overall_edge': result['outcome_stats'].mean_return,
+                    'volatility': result['outcome_stats'].std_return
+                }
+                patterns_for_optimization.append(pattern_dict)
+        
+        if not patterns_for_optimization:
+            return "\n\n" + "="*80 + "\nPORTFOLIO OPTIMIZATION\n" + "="*80 + "\n\n❌ Inga mönster att optimera."
+        
+        # Beräkna position sizes
+        position_sizes = self.portfolio_optimizer.calculate_position_sizes(patterns_for_optimization)
+        
+        # Skapa rapport
+        return "\n\n" + self.portfolio_optimizer.create_portfolio_allocation(position_sizes, total_capital)
