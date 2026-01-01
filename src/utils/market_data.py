@@ -135,10 +135,6 @@ class MarketDataProcessor:
         volatility = pd.Series(returns).rolling(window=window).std().values
         mean_return = pd.Series(returns).rolling(window=window).mean().values
         
-        # Flytta fram ett index för att matcha returns-längden
-        volatility = volatility[1:]
-        mean_return = mean_return[1:]
-        
         # Z-score för varje avkastning
         z_scores = np.zeros(len(returns))
         valid_idx = ~np.isnan(volatility) & (volatility > 0)
@@ -258,11 +254,11 @@ class MarketDataProcessor:
             timestamps = pd.to_datetime(timestamps)
         
         return {
-            'day_of_week': timestamps.dayofweek.values,
-            'day_of_month': timestamps.day.values,
-            'month': timestamps.month.values,
-            'quarter': timestamps.quarter.values,
-            'is_month_end': timestamps.is_month_end.values,
-            'is_month_start': timestamps.is_month_start.values,
-            'is_quarter_end': timestamps.is_quarter_end.values
+            'day_of_week': timestamps.dayofweek if hasattr(timestamps, 'dayofweek') else np.array([t.dayofweek for t in timestamps]),
+            'day_of_month': timestamps.day if hasattr(timestamps, 'day') else np.array([t.day for t in timestamps]),
+            'month': timestamps.month if hasattr(timestamps, 'month') else np.array([t.month for t in timestamps]),
+            'quarter': timestamps.quarter if hasattr(timestamps, 'quarter') else np.array([t.quarter for t in timestamps]),
+            'is_month_end': timestamps.is_month_end if hasattr(timestamps, 'is_month_end') else np.array([t.is_month_end for t in timestamps]),
+            'is_month_start': timestamps.is_month_start if hasattr(timestamps, 'is_month_start') else np.array([t.is_month_start for t in timestamps]),
+            'is_quarter_end': timestamps.is_quarter_end if hasattr(timestamps, 'is_quarter_end') else np.array([t.is_quarter_end for t in timestamps])
         }
