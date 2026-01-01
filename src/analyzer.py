@@ -17,6 +17,7 @@ from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
 from .analysis.baseline_comparator import BaselineComparator, BaselineComparison
 from .analysis.permutation_tester import PermutationTester
 from .analysis.regime_analyzer import RegimeAnalyzer
+from .trading.strategy_generator import TradingStrategyGenerator
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
 
@@ -59,6 +60,10 @@ class QuantPatternAnalyzer:
         self.baseline_comparator = BaselineComparator()
         self.permutation_tester = PermutationTester(n_permutations=1000)
         self.regime_analyzer = RegimeAnalyzer(trend_window=50, vol_window=20)
+        self.strategy_generator = TradingStrategyGenerator(
+            min_edge_threshold=0.10,  # Need 0.10% edge after costs
+            transaction_cost=0.02  # 0.02% realistic trading cost
+        )
         self.formatter = InsightFormatter()
         self.console_formatter = ConsoleFormatter()
         
@@ -345,6 +350,33 @@ class QuantPatternAnalyzer:
             Formaterad rapport som sträng
         """
         return self.pattern_monitor.generate_monitoring_report(pattern_statuses)
+    
+    def find_tradeable_strategies(self, analysis_results: Dict) -> str:
+        """
+        Hitta handelbara strategier baserat på regimfiltrering.
+        
+        Args:
+            analysis_results: Resultat från analyze_market_data
+            
+        Returns:
+            Rapport över handelbara strategier
+        """
+        patterns_with_regimes = []
+        
+        for result in analysis_results['results']:
+            if result['pattern_eval'].is_significant and result.get('regime_stats'):
+                patterns_with_regimes.append({
+                    'description': result['situation'].description,
+                    'regime_stats': result['regime_stats'],
+                    'pattern_id': result['situation_id'],
+                    'overall_edge': result['outcome_stats'].mean_return
+                })
+        
+        # Filtrera till endast handelbara
+        tradeable = self.strategy_generator.filter_tradeable_patterns(patterns_with_regimes)
+        
+        # Skapa rapport
+        return self.strategy_generator.create_strategy_report(tradeable)
     
     def create_summary_table(self, analysis_results: Dict) -> str:
         """

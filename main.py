@@ -92,7 +92,7 @@ def main():
         print(f"Ogiltigt val '{choice}'. Använder S&P 500 som standard.\n")
         ticker, market_name = markets["1"]
     
-    period = "2y"  # 2 års historik
+    period = "15y"  # 15 års historik för tillförlitliga säsongsmönster
     
     print()
     print(f"Hämtar marknadsdata för {market_name} ({ticker}) - {period} historik...")
@@ -110,10 +110,11 @@ def main():
     
     print()
     
-    # Initiera analysverktyget
+    # Initiera analysverktyget med känsligare parametrar för djupanalys
+    # Renessaince-approach: Hitta 10-20 svaga mönster att kombinera
     analyzer = QuantPatternAnalyzer(
-        min_occurrences=30,
-        min_confidence=0.70,
+        min_occurrences=15,  # Sänkt till 15 för att hitta fler kandidater
+        min_confidence=0.55,  # Sänkt till 0.55 för bredare täckning
         forward_periods=1
     )
     
@@ -142,6 +143,11 @@ def main():
         pattern_statuses = analyzer.monitor_patterns(analysis_results)
         monitoring_report = analyzer.generate_monitoring_report(pattern_statuses)
         print(monitoring_report)
+        
+        # NYTT: Visa handelbara strategier (Renaissance-filtrerade)
+        print("\n")
+        tradeable_strategies = analyzer.find_tradeable_strategies(analysis_results)
+        print(tradeable_strategies)
     
     # Analysera nuvarande marknadssituation
     print("\n" + "=" * 80)
