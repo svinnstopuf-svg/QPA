@@ -523,6 +523,8 @@ class PatternDetector:
         """
         Identifierar månadsvisa mönster (Januari-effekt, Sälj i Maj, etc).
         
+        VARNING: Säsongsmönster kräver 10+ års data för tillförlitlighet.
+        
         Args:
             market_data: Marknadsdata att analysera
             
@@ -532,6 +534,14 @@ class PatternDetector:
         calendar_features = self.processor.get_calendar_features(market_data.timestamps)
         situations = {}
         
+        # Beräkna antal år med data
+        if len(market_data.timestamps) > 0:
+            first_date = market_data.timestamps[0]
+            last_date = market_data.timestamps[-1]
+            years_of_data = (last_date - first_date).days / 365.25
+        else:
+            years_of_data = 0
+        
         # Januari-effekt
         january_indices = np.where(calendar_features['month'] == 1)[0]
         situations['january_effect'] = MarketSituation(
@@ -539,7 +549,13 @@ class PatternDetector:
             description="Januari (Januari-effekt)",
             timestamp_indices=january_indices,
             confidence=len(january_indices) / len(market_data),
-            metadata={'count': len(january_indices)}
+            metadata={
+                'count': len(january_indices),
+                'years_of_data': years_of_data,
+                'is_seasonal': True,
+                'min_years_required': 10,
+                'data_sufficient': years_of_data >= 10
+            }
         )
         
         # Sell in May (Maj-Oktober svag period)
@@ -549,7 +565,13 @@ class PatternDetector:
             description="Maj-Oktober (Sell in May period)",
             timestamp_indices=may_oct_indices,
             confidence=len(may_oct_indices) / len(market_data),
-            metadata={'count': len(may_oct_indices)}
+            metadata={
+                'count': len(may_oct_indices),
+                'years_of_data': years_of_data,
+                'is_seasonal': True,
+                'min_years_required': 10,
+                'data_sufficient': years_of_data >= 10
+            }
         )
         
         # November-April (Stark period)
@@ -559,7 +581,13 @@ class PatternDetector:
             description="November-April (Stark säsong)",
             timestamp_indices=nov_apr_indices,
             confidence=len(nov_apr_indices) / len(market_data),
-            metadata={'count': len(nov_apr_indices)}
+            metadata={
+                'count': len(nov_apr_indices),
+                'years_of_data': years_of_data,
+                'is_seasonal': True,
+                'min_years_required': 10,
+                'data_sufficient': years_of_data >= 10
+            }
         )
         
         return situations
