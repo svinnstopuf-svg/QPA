@@ -1,0 +1,41 @@
+# Konfiguration för Quant Pattern Analyzer
+
+# Mönsterutvärdering
+pattern_evaluation:
+  min_occurrences: 30          # Minsta antal observationer för att mönster ska vara giltigt
+  min_confidence: 0.70          # Minsta konfidensgrad (0-1)
+  stability_window: 252         # Fönster för stabilitetsanalys (handelsdagar)
+
+# Analys
+analysis:
+  forward_periods: 1            # Antal perioder framåt att mäta utfall över
+  lookback_window: 50           # Antal perioder att analysera bakåt för nuvarande situation
+  risk_free_rate: 0.0           # Riskfri ränta (annualiserad) för Sharpe-beräkningar
+
+# Mönsterigenkänning - parametrar för detektorer
+pattern_detection:
+  volatility:
+    threshold_percentile: 75    # Percentil för att klassas som 'hög' volatilitet
+    window: 20                  # Fönster för volatilitetsberäkning
+  
+  momentum:
+    lookback: 20                # Antal perioder för momentumberäkning
+    threshold: 0.05             # Minimum momentum för att klassas som tydligt momentum
+  
+  volume:
+    threshold_multiplier: 2.0   # Hur många gånger genomsnittet för att räknas som spike
+    window: 20                  # Fönster för genomsnittsberäkning
+  
+  extreme_moves:
+    threshold_std: 2.5          # Antal standardavvikelser för att räknas som extrem
+    window: 20                  # Fönster för att beräkna 'normal' volatilitet
+  
+  range_bound:
+    window: 50                  # Fönster för att mäta prisrange
+    max_range: 0.10             # Maximal rörelse (procent) för att räknas som sidledes
+
+# Output-formattering
+output:
+  console_width: 80             # Bredd på konsolutput
+  decimal_places: 2             # Antal decimaler i output
+  table_format: "simple"        # Format för tabeller
