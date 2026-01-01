@@ -51,23 +51,23 @@ Verktyget utför följande steg:
 pip install -r requirements.txt
 ```
 
+**OBS:** Appen hämtar automatiskt riktig marknadsdata från Yahoo Finance. Ingen API-nyckel krävs.
+
 ## Användning
 
 ### Grundläggande exempel
 
 ```python
-from src import QuantPatternAnalyzer, MarketData
+from src import QuantPatternAnalyzer, DataFetcher
 import numpy as np
 
-# Skapa eller ladda marknadsdata
-market_data = MarketData(
-    timestamps=your_timestamps,
-    open_prices=your_open_prices,
-    high_prices=your_high_prices,
-    low_prices=your_low_prices,
-    close_prices=your_close_prices,
-    volume=your_volume
-)
+# Hämta riktig marknadsdata
+fetcher = DataFetcher()
+market_data = fetcher.fetch_stock_data("^GSPC", period="2y")  # S&P 500, 2 år
+
+# Andra exempel:
+# market_data = fetcher.fetch_stock_data("AAPL", period="5y")  # Apple, 5 år
+# market_data = fetcher.fetch_stock_data("^OMXS30", period="1y")  # OMX Stockholm 30
 
 # Initiera analysverktyget
 analyzer = QuantPatternAnalyzer(
@@ -90,7 +90,13 @@ print(report)
 python main.py
 ```
 
-Detta kör en demonstration med simulerad data och visar hur verktyget fungerar.
+Detta hämtar riktig marknadsdata för S&P 500 från Yahoo Finance och kör en fullständig analys. 
+
+**Anpassa ticker:** Redigera `main.py` och ändra `ticker` variabeln för att analysera andra aktier eller index:
+- `"AAPL"` - Apple
+- `"MSFT"` - Microsoft  
+- `"^OMXS30"` - OMX Stockholm 30
+- `"^DJI"` - Dow Jones
 
 ## Projektstruktur
 
@@ -154,6 +160,7 @@ Det är INTE lämpligt för:
 - **NumPy**: Numeriska beräkningar och array-hantering
 - **Pandas**: Tidsserieanalys och rullande beräkningar
 - **SciPy**: Statistiska funktioner och hypotestestning
+- **yfinance**: Hämtar riktig marknadsdata från Yahoo Finance
 
 ### Python-version
 

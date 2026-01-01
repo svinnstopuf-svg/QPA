@@ -7,14 +7,14 @@ Detta visar hur man använder analysverktyget.
 import numpy as np
 from datetime import datetime, timedelta
 from src import QuantPatternAnalyzer, MarketData
+from src.utils.data_fetcher import DataFetcher
 
 
 def create_sample_data(n_days: int = 500) -> MarketData:
     """
     Skapar simulerad marknadsdata för demonstration.
     
-    I en verklig applikation skulle detta läsas från en datakälla
-    som CSV, databas, eller API.
+    Denna funktion är kvar för testing, men main() använder nu riktig data.
     """
     np.random.seed(42)
     
@@ -54,11 +54,59 @@ def main():
     print("=" * 80)
     print()
     
-    # Skapa eller ladda marknadsdata
-    print("Laddar marknadsdata...")
-    market_data = create_sample_data(n_days=500)
-    print(f"Laddat {len(market_data)} dagars data")
-    print(f"Period: {market_data.timestamps[0].date()} till {market_data.timestamps[-1].date()}")
+    # Marknadsmeny
+    print("Välj marknad att analysera:")
+    print("1. S&P 500 (USA)")
+    print("2. OMX Stockholm 30 (Sverige)")
+    print("3. OMX Helsinki 25 (Finland)")
+    print("4. OMX Copenhagen 25 (Danmark)")
+    print("5. OBX (Norge)")
+    print("6. Dow Jones Industrial Average (USA)")
+    print("7. NASDAQ Composite (USA)")
+    print("8. FTSE 100 (Storbritannien)")
+    print("9. Anpassat ticker")
+    print()
+    
+    # Marknadsdefinitioner
+    markets = {
+        "1": ("^GSPC", "S&P 500"),
+        "2": ("^OMX", "OMX Stockholm 30"),
+        "3": ("^OMXH25", "OMX Helsinki 25"),
+        "4": ("^OMXC25", "OMX Copenhagen 25"),
+        "5": ("^OSEAX", "OBX Oslo"),
+        "6": ("^DJI", "Dow Jones Industrial Average"),
+        "7": ("^IXIC", "NASDAQ Composite"),
+        "8": ("^FTSE", "FTSE 100")
+    }
+    
+    # Låt användaren välja
+    choice = input("Ditt val (1-9): ").strip()
+    
+    if choice == "9":
+        ticker = input("Ange ticker-symbol (t.ex. AAPL, MSFT): ").strip()
+        market_name = ticker
+    elif choice in markets:
+        ticker, market_name = markets[choice]
+    else:
+        print(f"Ogiltigt val '{choice}'. Använder S&P 500 som standard.\n")
+        ticker, market_name = markets["1"]
+    
+    period = "2y"  # 2 års historik
+    
+    print()
+    print(f"Hämtar marknadsdata för {market_name} ({ticker}) - {period} historik...")
+    
+    # Hämta riktig marknadsdata
+    data_fetcher = DataFetcher()
+    market_data = data_fetcher.fetch_stock_data(ticker, period=period)
+    
+    if market_data is None:
+        print("\nKunde inte hämta marknadsdata. Kontrollera din internetanslutning.")
+        print("Kör med simulerad data istället...\n")
+        market_data = create_sample_data(n_days=500)
+        print(f"Laddat {len(market_data)} dagars simulerad data")
+        print(f"Period: {market_data.timestamps[0].date()} till {market_data.timestamps[-1].date()}")
+    
     print()
     
     # Initiera analysverktyget

@@ -12,6 +12,7 @@ __version__ = "0.1.0"
 
 from .analyzer import QuantPatternAnalyzer
 from .utils.market_data import MarketData, MarketDataProcessor
+from .utils.data_fetcher import DataFetcher
 from .patterns.detector import PatternDetector, MarketSituation
 from .core.pattern_evaluator import PatternEvaluator, PatternEvaluation
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
@@ -21,6 +22,7 @@ __all__ = [
     'QuantPatternAnalyzer',
     'MarketData',
     'MarketDataProcessor',
+    'DataFetcher',
     'PatternDetector',
     'MarketSituation',
     'PatternEvaluator',
