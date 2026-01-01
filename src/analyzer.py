@@ -14,6 +14,7 @@ from .patterns.detector import PatternDetector, MarketSituation
 from .core.pattern_evaluator import PatternEvaluator, PatternEvaluation
 from .core.pattern_monitor import PatternMonitor, PatternStatus
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
+from .analysis.baseline_comparator import BaselineComparator, BaselineComparison
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
 
@@ -53,6 +54,7 @@ class QuantPatternAnalyzer:
             stability_threshold=0.60
         )
         self.outcome_analyzer = OutcomeAnalyzer()
+        self.baseline_comparator = BaselineComparator()
         self.formatter = InsightFormatter()
         self.console_formatter = ConsoleFormatter()
         

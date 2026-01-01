@@ -152,6 +152,12 @@ def main():
         print(f"\nAktiva situationer (baserat på senaste {current_situation['lookback_window']} perioderna):")
         for situation in current_situation['active_situations']:
             print(f"  - {situation['description']}")
+        
+        # Korrelationsvarning
+        if len(current_situation['active_situations']) > 2:
+            print("\n[VIKTIGT] Flera signaler aktiva samtidigt:")
+            print("Dessa kan vara korrelerade (ej oberoende).")
+            print("Kombinera inte deras 'styrka' - risken är double-counting.")
     else:
         print("\nInga speciella situationer identifierade för närvarande.")
     

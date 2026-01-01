@@ -68,6 +68,11 @@ class InsightFormatter:
         lines.append(self._format_stability(pattern_eval))
         lines.append("")
         
+        # Negativ information - när mönstret INTE fungerar
+        lines.append("### När mönstret varit mindre tillförlitligt")
+        lines.append(self._format_negative_information(outcome_stats, pattern_eval))
+        lines.append("")
+        
         # Begränsningar
         lines.append("### Viktigt att komma ihåg")
         lines.append(self._format_limitations(outcome_stats))
@@ -260,6 +265,28 @@ class InsightFormatter:
         lines = []
         lines.append(f"Mönstret har varit {stability_desc} över olika tidsperioder ")
         lines.append(f"(stabilitet: {stability_pct:.0f}%, historisk styrka: {strength_pct:.0f}%).")
+        
+        return " ".join(lines)
+    
+    def _format_negative_information(self, stats: OutcomeStatistics, pattern_eval: PatternEvaluation) -> str:
+        """
+        Formaterar NEGATIV information - när mönstret INTE fungerar.
+        Detta bygger förtroende genom ärlighet.
+        """
+        lines = []
+        
+        # Worst case scenario
+        worst_pct = abs(stats.percentile_5 * 100)
+        lines.append(f"I de sämsta 5% av fallen (ungefär 1 gång av 20) har mönstret")
+        lines.append(f"resulterat i förluster på upp till {worst_pct:.2f}%.")
+        
+        # Win rate transparency
+        loss_rate = (1 - stats.win_rate) * 100
+        lines.append(f"Mönstret har varit negativt i {loss_rate:.0f}% av observationerna.")
+        
+        # Temporal concern
+        if pattern_eval.stability_score < 0.7:
+            lines.append("Mönstrets prestanda har varierat över tid - det är inte konsekvent.")
         
         return " ".join(lines)
     
