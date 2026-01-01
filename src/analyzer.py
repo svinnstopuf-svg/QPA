@@ -18,6 +18,7 @@ from .analysis.baseline_comparator import BaselineComparator, BaselineComparison
 from .analysis.permutation_tester import PermutationTester
 from .analysis.regime_analyzer import RegimeAnalyzer
 from .trading.strategy_generator import TradingStrategyGenerator
+from .trading.pattern_combiner import PatternCombiner
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
 
@@ -63,6 +64,11 @@ class QuantPatternAnalyzer:
         self.strategy_generator = TradingStrategyGenerator(
             min_edge_threshold=0.10,  # Need 0.10% edge after costs
             transaction_cost=0.02  # 0.02% realistic trading cost
+        )
+        self.pattern_combiner = PatternCombiner(
+            correlation_penalty=0.5,  # 50% penalty for correlation
+            min_patterns=1,  # Allow single pattern (changed from 2)
+            max_patterns=10
         )
         self.formatter = InsightFormatter()
         self.console_formatter = ConsoleFormatter()
@@ -377,6 +383,49 @@ class QuantPatternAnalyzer:
         
         # Skapa rapport
         return self.strategy_generator.create_strategy_report(tradeable)
+    
+    def generate_combined_strategy(
+        self,
+        analysis_results: Dict,
+        market_data: MarketData
+    ) -> str:
+        """
+        Genererar kombinerad strategi från flera mönster.
+        
+        Args:
+            analysis_results: Resultat från analyze_market_data
+            market_data: MarketData för regimklassificering
+            
+        Returns:
+            Rapport över kombinerad strategi
+        """
+        # Hitta handelbara mönster
+        patterns_with_regimes = []
+        for result in analysis_results['results']:
+            if result['pattern_eval'].is_significant and result.get('regime_stats'):
+                patterns_with_regimes.append({
+                    'description': result['situation'].description,
+                    'regime_stats': result['regime_stats'],
+                    'pattern_id': result['situation_id'],
+                    'overall_edge': result['outcome_stats'].mean_return
+                })
+        
+        tradeable = self.strategy_generator.filter_tradeable_patterns(patterns_with_regimes)
+        
+        if not tradeable:
+            return "❌ Inga mönster att kombinera."
+        
+        # Klassificera nuvarande regim
+        last_idx = len(market_data) - 1
+        current_regime = self.regime_analyzer.classify_regime(market_data, last_idx)
+        
+        # Kombinera mönster
+        combined = self.pattern_combiner.combine_patterns(
+            tradeable,
+            current_regime
+        )
+        
+        return self.pattern_combiner.create_combination_report(combined)
     
     def create_summary_table(self, analysis_results: Dict) -> str:
         """

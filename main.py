@@ -148,6 +148,11 @@ def main():
         print("\n")
         tradeable_strategies = analyzer.find_tradeable_strategies(analysis_results)
         print(tradeable_strategies)
+        
+        # NYTT: Visa kombinerad strategi (Multi-pattern aggregation)
+        print("\n")
+        combined_strategy = analyzer.generate_combined_strategy(analysis_results, market_data)
+        print(combined_strategy)
     
     # Analysera nuvarande marknadssituation
     print("\n" + "=" * 80)
