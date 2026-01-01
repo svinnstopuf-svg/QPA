@@ -12,6 +12,7 @@ from datetime import datetime
 from .utils.market_data import MarketData, MarketDataProcessor
 from .patterns.detector import PatternDetector, MarketSituation
 from .core.pattern_evaluator import PatternEvaluator, PatternEvaluation
+from .core.pattern_monitor import PatternMonitor, PatternStatus
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
@@ -45,6 +46,11 @@ class QuantPatternAnalyzer:
         self.pattern_evaluator = PatternEvaluator(
             min_occurrences=min_occurrences,
             min_confidence=min_confidence
+        )
+        self.pattern_monitor = PatternMonitor(
+            degradation_threshold=0.15,
+            min_sharpe_ratio=0.0,
+            stability_threshold=0.60
         )
         self.outcome_analyzer = OutcomeAnalyzer()
         self.formatter = InsightFormatter()
@@ -252,6 +258,54 @@ class QuantPatternAnalyzer:
             'recent_data': recent_data,
             'lookback_window': lookback_window
         }
+    
+    def monitor_patterns(self, analysis_results: Dict) -> Dict[str, PatternStatus]:
+        """
+        Övervakar alla signifikanta mönster för att identifiera försämring.
+        
+        Args:
+            analysis_results: Resultat från analyze_market_data
+            
+        Returns:
+            Dictionary med PatternStatus för varje mönster
+        """
+        # Förbered data för övervakning
+        patterns_data = {}
+        
+        for result in analysis_results['results']:
+            if result['pattern_eval'].is_significant:
+                situation_id = result['situation_id']
+                forward_returns = result['forward_returns']
+                situation = result['situation']
+                market_data = analysis_results['market_data']
+                
+                # Hämta timestamps för observationerna
+                timestamps = market_data.timestamps[situation.timestamp_indices]
+                
+                patterns_data[situation_id] = {
+                    'returns': forward_returns,
+                    'timestamps': timestamps
+                }
+        
+        # Övervaka alla mönster
+        pattern_statuses = self.pattern_monitor.monitor_all_patterns(
+            patterns_data,
+            lookback_recent=50
+        )
+        
+        return pattern_statuses
+    
+    def generate_monitoring_report(self, pattern_statuses: Dict[str, PatternStatus]) -> str:
+        """
+        Genererar en rapport över mönsterövervakning.
+        
+        Args:
+            pattern_statuses: Dictionary med PatternStatus
+            
+        Returns:
+            Formaterad rapport som sträng
+        """
+        return self.pattern_monitor.generate_monitoring_report(pattern_statuses)
     
     def create_summary_table(self, analysis_results: Dict) -> str:
         """

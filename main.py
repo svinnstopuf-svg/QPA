@@ -135,6 +135,13 @@ def main():
     report = analyzer.generate_report(analysis_results)
     print(report)
     
+    # Övervaka mönsters hälsa
+    if analysis_results['significant_patterns']:
+        print("\n")
+        pattern_statuses = analyzer.monitor_patterns(analysis_results)
+        monitoring_report = analyzer.generate_monitoring_report(pattern_statuses)
+        print(monitoring_report)
+    
     # Analysera nuvarande marknadssituation
     print("\n" + "=" * 80)
     print("NUVARANDE MARKNADSSITUATION")

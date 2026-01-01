@@ -15,6 +15,7 @@ from .utils.market_data import MarketData, MarketDataProcessor
 from .utils.data_fetcher import DataFetcher
 from .patterns.detector import PatternDetector, MarketSituation
 from .core.pattern_evaluator import PatternEvaluator, PatternEvaluation
+from .core.pattern_monitor import PatternMonitor, PatternStatus
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
@@ -27,6 +28,8 @@ __all__ = [
     'MarketSituation',
     'PatternEvaluator',
     'PatternEvaluation',
+    'PatternMonitor',
+    'PatternStatus',
     'OutcomeAnalyzer',
     'OutcomeStatistics',
     'InsightFormatter',
