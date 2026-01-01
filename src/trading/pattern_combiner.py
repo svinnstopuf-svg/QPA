@@ -67,14 +67,14 @@ class PatternCombiner:
         Returns:
             CombinedSignal with aggregate edge
         """
-        if len(tradeable_patterns) < self.min_patterns:
+        if len(tradeable_patterns) == 0:
             return CombinedSignal(
                 combined_edge=0.0,
                 confidence=0.0,
                 contributing_patterns=[],
                 regime_adjusted=False,
                 correlation_penalty=0.0,
-                recommendation="Not enough patterns to combine"
+                recommendation="No tradeable patterns available"
             )
         
         # Select patterns active in current regime
@@ -86,18 +86,45 @@ class PatternCombiner:
             trend = current_regime.get('trend', 'unknown')
             vol = current_regime.get('volatility', 'unknown')
             
-            trend_stat = regime_stats.get(trend)
-            vol_stat = regime_stats.get(vol)
+            # Try to find best regime match (trend first, then vol, then overall)
+            best_edge = 0.0
+            best_regime = None
+            best_obs = 0
             
-            if trend_stat and trend_stat.is_sufficient_data:
+            # Check trend regime
+            trend_stat = regime_stats.get(trend)
+            if trend_stat and hasattr(trend_stat, 'mean_return'):
                 edge = trend_stat.mean_return * 100
-                if edge > 0.05:  # At least 0.05% edge
-                    active_patterns.append({
-                        'pattern': pattern,
-                        'edge': edge,
-                        'regime': trend,
-                        'weight': trend_stat.n_observations / 100  # Weight by data
-                    })
+                if edge > best_edge:
+                    best_edge = edge
+                    best_regime = trend
+                    best_obs = trend_stat.n_observations
+            
+            # Check vol regime
+            vol_stat = regime_stats.get(vol)
+            if vol_stat and hasattr(vol_stat, 'mean_return'):
+                edge = vol_stat.mean_return * 100
+                if edge > best_edge:
+                    best_edge = edge
+                    best_regime = vol
+                    best_obs = vol_stat.n_observations
+            
+            # If no regime match, use overall edge
+            if best_edge == 0.0:
+                overall_edge = pattern.get('overall_edge', 0.0)
+                if isinstance(overall_edge, float):
+                    best_edge = overall_edge * 100
+                    best_regime = 'overall'
+                    best_obs = pattern.get('observations', 0)
+            
+            # Add if edge is meaningful (>0.01%)
+            if best_edge > 0.01:
+                active_patterns.append({
+                    'pattern': pattern,
+                    'edge': best_edge,
+                    'regime': best_regime,
+                    'weight': max(1.0, best_obs / 100)  # Weight by data, min 1.0
+                })
         
         if not active_patterns:
             return CombinedSignal(
