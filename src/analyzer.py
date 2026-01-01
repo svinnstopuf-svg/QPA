@@ -17,6 +17,7 @@ from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
 from .analysis.baseline_comparator import BaselineComparator, BaselineComparison
 from .analysis.permutation_tester import PermutationTester
 from .analysis.regime_analyzer import RegimeAnalyzer
+from .analysis.bayesian_estimator import BayesianEdgeEstimator
 from .trading.strategy_generator import TradingStrategyGenerator
 from .trading.pattern_combiner import PatternCombiner
 from .trading.backtester import Backtester
@@ -63,6 +64,11 @@ class QuantPatternAnalyzer:
         self.baseline_comparator = BaselineComparator()
         self.permutation_tester = PermutationTester(n_permutations=1000)
         self.regime_analyzer = RegimeAnalyzer(trend_window=50, vol_window=20)
+        self.bayesian_estimator = BayesianEdgeEstimator(
+            prior_mean=0.0,  # No edge a priori
+            prior_std=0.01,  # 1% daily vol
+            min_threshold=0.001  # 0.1% edge threshold
+        )
         self.strategy_generator = TradingStrategyGenerator(
             min_edge_threshold=0.10,  # Need 0.10% edge after costs
             transaction_cost=0.02  # 0.02% realistic trading cost
@@ -172,6 +178,12 @@ class QuantPatternAnalyzer:
                     forward_returns=forward_returns
                 )
             
+            # Bayesian uncertainty estimation (alltid, speciellt för små samples)
+            bayesian_estimate = self.bayesian_estimator.estimate_edge(
+                returns=forward_returns,
+                transaction_cost=0.0002  # 0.02%
+            )
+            
             # Lagra resultat
             result = {
                 'situation_id': situation_id,
@@ -181,7 +193,8 @@ class QuantPatternAnalyzer:
                 'forward_returns': forward_returns,
                 'baseline_comparison': baseline_comparison,
                 'permutation_result': permutation_result,
-                'regime_stats': regime_stats
+                'regime_stats': regime_stats,
+                'bayesian_estimate': bayesian_estimate
             }
             results.append(result)
             
@@ -569,6 +582,30 @@ class QuantPatternAnalyzer:
         lines.append(f"  Profit factor: {result.profit_factor:.2f}")
         lines.append(f"  Antal trades: {result.num_trades}")
         return "\n".join(lines)
+    
+    def show_bayesian_uncertainty(self, analysis_results: Dict) -> str:
+        """
+        Visa Bayesian uncertainty för alla signifikanta mönster.
+        
+        Args:
+            analysis_results: Resultat från analyze_market_data
+            
+        Returns:
+            Rapport över uncertainty
+        """
+        reports = []
+        
+        for result in analysis_results['results']:
+            if result['pattern_eval'].is_significant:
+                bayesian_est = result.get('bayesian_estimate')
+                if bayesian_est:
+                    report = self.bayesian_estimator.create_uncertainty_report(
+                        bayesian_est,
+                        result['situation'].description
+                    )
+                    reports.append(report)
+        
+        return "\n".join(reports) if reports else "\nInga signifikanta mönster att analysera."
     
     def optimize_portfolio(self, analysis_results: Dict, total_capital: float = 100000) -> str:
         """

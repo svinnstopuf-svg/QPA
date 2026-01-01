@@ -162,6 +162,10 @@ def main():
         # NYTT: Portfolio optimization med Kelly Criterion
         portfolio_report = analyzer.optimize_portfolio(analysis_results, total_capital=100000)
         print(portfolio_report)
+        
+        # NYTT: Bayesian uncertainty quantification
+        bayesian_report = analyzer.show_bayesian_uncertainty(analysis_results)
+        print(bayesian_report)
     
     # Analysera nuvarande marknadssituation
     print("\n" + "=" * 80)
