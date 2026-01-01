@@ -32,7 +32,8 @@ class InsightFormatter:
         outcome_stats: OutcomeStatistics,
         pattern_eval: PatternEvaluation,
         baseline_comparison: Optional[Dict] = None,
-        permutation_result: Optional[object] = None
+        permutation_result: Optional[object] = None,
+        regime_stats: Optional[Dict] = None
     ) -> str:
         """
         Skapar en användarvänlig beskrivning av ett mönster och dess utfall.
@@ -69,6 +70,11 @@ class InsightFormatter:
         # PERMUTATION TEST - Validering mot slump
         if permutation_result:
             lines.append(self._format_permutation_test(permutation_result))
+            lines.append("")
+        
+        # REGIME ANALYSIS - Beteende per marknadsregim
+        if regime_stats:
+            lines.append(self._format_regime_analysis(regime_stats, situation.description))
             lines.append("")
         
         # Historiskt beteende
@@ -234,6 +240,45 @@ class InsightFormatter:
             lines.append("⚠️ Kan vara överanpassning eller brus")
         
         lines.append(f"P-värde: {permutation_result.p_value:.3f}")
+        
+        return " ".join(lines)
+    
+    def _format_regime_analysis(self, regime_stats: Dict, pattern_name: str) -> str:
+        """Formaterar regimanalys - Simons insikt om regimberoende."""
+        lines = []
+        lines.append(f"### Regimberoende analys")
+        lines.append("**VIKTIGT**: Mönstrets beteende varierar beroende på marknadsregim.")
+        
+        # Trend regimes
+        trend_regimes = ['uptrend', 'downtrend', 'neutral']
+        trend_data = {k: v for k, v in regime_stats.items() if k in trend_regimes}
+        
+        if trend_data:
+            lines.append("")
+            lines.append("**Trendberoende:**")
+            for regime_name, stats in sorted(trend_data.items(), key=lambda x: x[1].mean_return, reverse=True):
+                suffix = "" if stats.is_sufficient_data else " ⚠️ FÅ OBS"
+                lines.append(f"  • {regime_name.upper()}: {stats.mean_return*100:+.2f}% "
+                           f"({stats.n_observations} obs, {stats.win_rate*100:.0f}% vinstfrekvens){suffix}")
+        
+        # Volatility regimes
+        vol_regimes = ['high_vol', 'low_vol', 'normal_vol']
+        vol_data = {k: v for k, v in regime_stats.items() if k in vol_regimes}
+        
+        if vol_data:
+            lines.append("")
+            lines.append("**Volatilitetsberoende:**")
+            for regime_name, stats in sorted(vol_data.items(), key=lambda x: x[1].mean_return, reverse=True):
+                suffix = "" if stats.is_sufficient_data else " ⚠️ FÅ OBS"
+                lines.append(f"  • {regime_name.replace('_', ' ').upper()}: {stats.mean_return*100:+.2f}% "
+                           f"({stats.n_observations} obs, {stats.win_rate*100:.0f}% vinstfrekvens){suffix}")
+        
+        # Warning if large discrepancy
+        if trend_data:
+            returns = [s.mean_return for s in trend_data.values()]
+            if max(returns) - min(returns) > 0.003:  # 0.3% difference
+                lines.append("")
+                lines.append("⚠️ **STOR SKILLNAD mellan regimer - mönstret är STARKT regimberoende!**")
         
         return " ".join(lines)
     

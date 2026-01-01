@@ -16,6 +16,7 @@ from .core.pattern_monitor import PatternMonitor, PatternStatus
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
 from .analysis.baseline_comparator import BaselineComparator, BaselineComparison
 from .analysis.permutation_tester import PermutationTester
+from .analysis.regime_analyzer import RegimeAnalyzer
 from .communication.formatter import InsightFormatter, ConsoleFormatter
 
 
@@ -57,6 +58,7 @@ class QuantPatternAnalyzer:
         self.outcome_analyzer = OutcomeAnalyzer()
         self.baseline_comparator = BaselineComparator()
         self.permutation_tester = PermutationTester(n_permutations=1000)
+        self.regime_analyzer = RegimeAnalyzer(trend_window=50, vol_window=20)
         self.formatter = InsightFormatter()
         self.console_formatter = ConsoleFormatter()
         
@@ -138,6 +140,15 @@ class QuantPatternAnalyzer:
                     pattern_size=len(forward_returns)
                 )
             
+            # Regime analysis - split prestanda per marknadsregim (endast för signifikanta mönster)
+            regime_stats = None
+            if pattern_eval.is_significant:
+                regime_stats = self.regime_analyzer.analyze_pattern_by_regime(
+                    market_data=market_data,
+                    pattern_indices=situation.timestamp_indices,
+                    forward_returns=forward_returns
+                )
+            
             # Lagra resultat
             result = {
                 'situation_id': situation_id,
@@ -146,7 +157,8 @@ class QuantPatternAnalyzer:
                 'pattern_eval': pattern_eval,
                 'forward_returns': forward_returns,
                 'baseline_comparison': baseline_comparison,
-                'permutation_result': permutation_result
+                'permutation_result': permutation_result,
+                'regime_stats': regime_stats
             }
             results.append(result)
             
@@ -199,7 +211,8 @@ class QuantPatternAnalyzer:
                     outcome_stats=result['outcome_stats'],
                     pattern_eval=result['pattern_eval'],
                     baseline_comparison=result.get('baseline_comparison'),
-                    permutation_result=result.get('permutation_result')
+                    permutation_result=result.get('permutation_result'),
+                    regime_stats=result.get('regime_stats')
                 )
                 lines.append(insight)
                 lines.append("\n" + "-"*80 + "\n")

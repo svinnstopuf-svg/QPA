@@ -8,6 +8,7 @@ import numpy as np
 from datetime import datetime, timedelta
 from src import QuantPatternAnalyzer, MarketData
 from src.utils.data_fetcher import DataFetcher
+from src.analysis.signal_aggregator import SignalAggregator
 
 
 def create_sample_data(n_days: int = 500) -> MarketData:
@@ -149,15 +150,22 @@ def main():
     current_situation = analyzer.get_current_market_situation(market_data, lookback_window=50)
     
     if current_situation['active_situations']:
-        print(f"\nAktiva situationer (baserat på senaste {current_situation['lookback_window']} perioderna):")
+        # Aggregera signaler med korrelationsmedvetenhet
+        aggregator = SignalAggregator()
+        aggregated = aggregator.aggregate_signals(current_situation['active_situations'])
+        
+        print("\n" + aggregated.description)
+        print(f"\nKonfidensgrad: {aggregated.confidence.upper()}")
+        
+        # Visa individuella signaler
+        print(f"\n\nAktiva situationer (baserat på senaste {current_situation['lookback_window']} perioderna):")
         for situation in current_situation['active_situations']:
             print(f"  - {situation['description']}")
         
-        # Korrelationsvarning
-        if len(current_situation['active_situations']) > 2:
-            print("\n[VIKTIGT] Flera signaler aktiva samtidigt:")
-            print("Dessa kan vara korrelerade (ej oberoende).")
-            print("Kombinera inte deras 'styrka' - risken är double-counting.")
+        if aggregated.correlation_warning:
+            print("\n⚠️ [VIKTIGT] Signalkorrelation detekterad:")
+            print("Dessa signaler är troligen inte oberoende.")
+            print("Undvik att summera deras styrka - risken är dubbel-counting.")
     else:
         print("\nInga speciella situationer identifierade för närvarande.")
     
