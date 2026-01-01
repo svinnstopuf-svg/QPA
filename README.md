@@ -1,6 +1,36 @@
 # Quant Pattern Analyzer
 
-Ett statistiskt observationsinstrument för finansiella marknader, inspirerat av Jim Simons och Renaissance Technologies tillvägagångssätt.
+Ett **Renaissance-level** statistiskt observationsinstrument för finansiella marknader, inspirerat av Jim Simons och Renaissance Technologies tillvägagångssätt.
+
+## 🏆 Renaissance-Level Features
+
+Detta verktyg implementerar 14 avancerade funktioner inspirerade av Renaissance Technologies:
+
+### 7 Grundläggande Statistiska Rigor-Features:
+1. ✅ **Lång historik (15 år)** - Undviker regimberoende
+2. ✅ **Baseline-jämförelse** - Pattern edge vs marknad
+3. ✅ **Kontinuerlig degraderingsskala** - Friskt/Försvagande/Instabilt/Inaktivt
+4. ✅ **Mjukt prediktivt språk** - "Historiskt har..." istället för "kommer att..."
+5. ✅ **Permutation testing** - Shuffle test mot slump (p-värde)
+6. ✅ **Regimberoende analys** - Splittrar per trend/volatilitet
+7. ✅ **Signal-aggregering** - Korrelationsmedveten kombination
+
+### 7 Värde-Extraktions-Features:
+1. ✅ **Sänkta trösklar** - Hittar fler svaga kandidater (15 obs, 0.55 conf)
+2. ✅ **Regimfiltrerade strategier** - Tradar bara i optimala regimer
+3. ✅ **Multi-pattern kombination** - Aggregerar flera mönster med korrelationsstraff
+4. ✅ **Walk-forward backtesting** - 70/30 split, realistiska kostnader
+5. ⏭️ **Intraday-stöd** - Krävs betald data-API (IEX Cloud, Polygon.io)
+6. ✅ **Makrodata-integration** - VIX, räntor, sektorrotation
+7. ✅ **Kelly Criterion position sizing** - Optimal allokering (0.25-0.5x Kelly)
+
+### 🆕 NYTT: 4 Advanced Renaissance-Features:
+1. ✅ **Enhanced Signal Detection** - Volatility bursts, momentum flips, volume spikes
+2. ✅ **Dynamic Risk Controls** - Adaptiv Kelly, auto-disable vid Sharpe < 0.5
+3. ✅ **Multi-Ticker Analysis** - Korrelationsmatris, diversifiering
+4. ✅ **Cross-Market Signals** - Lead-lag detection (S&P leder OMX?)
+
+📖 Se [FEATURES.md](FEATURES.md) för fullständig dokumentation.
 
 ## Filosofi
 
@@ -103,23 +133,39 @@ Detta hämtar riktig marknadsdata för S&P 500 från Yahoo Finance och kör en f
 ```
 quant-pattern-analyzer/
 ├── src/
-│   ├── core/                 # Kärnlogik för mönsterutvärdering
-│   │   └── pattern_evaluator.py
-│   ├── patterns/             # Mönsterigenkänning (X-variabler)
-│   │   └── detector.py
-│   ├── analysis/             # Utfallsanalys (Y-variabler)
-│   │   └── outcome_analyzer.py
-│   ├── utils/                # Databehandling och verktyg
+│   ├── core/                      # Kärnlogik för mönsterutvärdering
+│   │   ├── pattern_evaluator.py
+│   │   └── pattern_monitor.py     # Degraderingsövervakning
+│   ├── patterns/                  # Mönsterigenkänning
+│   │   ├── detector.py            # Grundläggande mönster
+│   │   └── enhanced_signals.py    # 🆕 Vol bursts, momentum flips
+│   ├── analysis/                  # Statistisk analys
+│   │   ├── outcome_analyzer.py
+│   │   ├── baseline_comparator.py
+│   │   ├── permutation_tester.py  # Shuffle test
+│   │   ├── regime_analyzer.py     # Trend/vol regimer
+│   │   ├── signal_aggregator.py   # Multi-signal kombination
+│   │   └── multi_ticker.py        # 🆕 Cross-market analysis
+│   ├── trading/                   # Trading-logik
+│   │   ├── strategy_generator.py  # Regimfiltrerade strategier
+│   │   ├── pattern_combiner.py    # Multi-pattern aggregation
+│   │   ├── backtester.py          # Walk-forward backtest
+│   │   ├── portfolio_optimizer.py # Kelly Criterion
+│   │   └── risk_controller.py     # 🆕 Adaptiv risk control
+│   ├── data/                      # Data-integration
+│   │   └── macro_data.py          # VIX, räntor, sektorer
+│   ├── utils/                     # Verktyg
 │   │   └── market_data.py
-│   ├── communication/        # Användarvänlig formattering
+│   ├── communication/             # Formattering
 │   │   └── formatter.py
-│   └── analyzer.py           # Huvudapplikation
-├── tests/                    # Enhetstester
-├── config/                   # Konfigurationsfiler
-├── data/                     # Datalagringsplats
-├── main.py                   # Exempelskript
-├── requirements.txt          # Python-beroenden
-└── README.md                 # Denna fil
+│   └── analyzer.py                # Huvudapplikation
+├── tests/                         # Enhetstester
+├── config/                        # Konfiguration
+├── data/                          # Datalagringsplats
+├── main.py                        # Huvudskript
+├── FEATURES.md                    # 🆕 Fullständig feature-dokumentation
+├── requirements.txt               # Python-beroenden
+└── README.md                      # Denna fil
 ```
 
 ## Konfiguration
