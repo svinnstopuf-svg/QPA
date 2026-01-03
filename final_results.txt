@@ -1,0 +1,256 @@
+﻿================================================================================
+INSTRUMENT SCREENER
+================================================================================
+
+Analyserar 17 instrument...
+
+[1/17] Analyserar OMX Stockholm 30 (^OMX)...
+Hõmtar data f÷r ^OMX...
+Hõmtade 3762 datapunkter f÷r ^OMX
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 6 signifikanta m÷nster
+  OK: Score 26.3/100, Signal RED
+
+[2/17] Analyserar S&P 500 (^GSPC)...
+Hõmtar data f÷r ^GSPC...
+Hõmtade 3773 datapunkter f÷r ^GSPC
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 8 signifikanta m÷nster
+  OK: Score 14.7/100, Signal RED
+
+[3/17] Analyserar NASDAQ Composite (^IXIC)...
+Hõmtar data f÷r ^IXIC...
+Hõmtade 3773 datapunkter f÷r ^IXIC
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 7 signifikanta m÷nster
+  OK: Score 17.1/100, Signal RED
+
+[4/17] Analyserar Dow Jones Industrial (^DJI)...
+Hõmtar data f÷r ^DJI...
+Hõmtade 3773 datapunkter f÷r ^DJI
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 8 signifikanta m÷nster
+  OK: Score 19.6/100, Signal RED
+
+[5/17] Analyserar FTSE 100 (^FTSE)...
+Hõmtar data f÷r ^FTSE...
+Hõmtade 3787 datapunkter f÷r ^FTSE
+Period: 2011-01-04 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 5 signifikanta m÷nster
+  OK: Score 26.2/100, Signal RED
+
+[6/17] Analyserar OMX Helsinki 25 (^OMXH25)...
+Hõmtar data f÷r ^OMXH25...
+Hõmtade 3207 datapunkter f÷r ^OMXH25
+Period: 2013-03-05 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 4 signifikanta m÷nster
+  OK: Score 17.8/100, Signal RED
+
+[7/17] Analyserar OMX Copenhagen 25 (^OMXC25)...
+Hõmtar data f÷r ^OMXC25...
+Hõmtade 2230 datapunkter f÷r ^OMXC25
+Period: 2016-12-19 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 8 signifikanta m÷nster
+  OK: Score 25.6/100, Signal RED
+
+[8/17] Analyserar OBX Oslo (^OSEAX)...
+Hõmtar data f÷r ^OSEAX...
+Hõmtade 3204 datapunkter f÷r ^OSEAX
+Period: 2013-03-05 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 6 signifikanta m÷nster
+  OK: Score 18.5/100, Signal RED
+
+[9/17] Analyserar Volvo B (VOLV-B.ST)...
+Hõmtar data f÷r VOLV-B.ST...
+Hõmtade 3768 datapunkter f÷r VOLV-B.ST
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 6 signifikanta m÷nster
+  OK: Score 29.8/100, Signal RED
+
+[10/17] Analyserar Investor B (INVE-B.ST)...
+Hõmtar data f÷r INVE-B.ST...
+Hõmtade 3768 datapunkter f÷r INVE-B.ST
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 9 signifikanta m÷nster
+  OK: Score 25.0/100, Signal RED
+
+[11/17] Analyserar H&M B (HM-B.ST)...
+Hõmtar data f÷r HM-B.ST...
+Hõmtade 3768 datapunkter f÷r HM-B.ST
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 2 signifikanta m÷nster
+  OK: Score 21.7/100, Signal RED
+
+[12/17] Analyserar SEB A (SEB-A.ST)...
+Hõmtar data f÷r SEB-A.ST...
+Hõmtade 3768 datapunkter f÷r SEB-A.ST
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 5 signifikanta m÷nster
+  OK: Score 18.8/100, Signal RED
+
+[13/17] Analyserar Essity B (ESSITY-B.ST)...
+Hõmtar data f÷r ESSITY-B.ST...
+Hõmtade 2149 datapunkter f÷r ESSITY-B.ST
+Period: 2017-06-15 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 5 signifikanta m÷nster
+  OK: Score 24.7/100, Signal RED
+
+[14/17] Analyserar Apple (AAPL)...
+Hõmtar data f÷r AAPL...
+Hõmtade 3773 datapunkter f÷r AAPL
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 9 signifikanta m÷nster
+  OK: Score 58.2/100, Signal RED
+
+[15/17] Analyserar Microsoft (MSFT)...
+Hõmtar data f÷r MSFT...
+Hõmtade 3773 datapunkter f÷r MSFT
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 9 signifikanta m÷nster
+  OK: Score 51.5/100, Signal RED
+
+[16/17] Analyserar Alphabet (GOOGL)...
+Hõmtar data f÷r GOOGL...
+Hõmtade 3773 datapunkter f÷r GOOGL
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 9 signifikanta m÷nster
+  OK: Score 51.9/100, Signal RED
+
+[17/17] Analyserar Johnson & Johnson (JNJ)...
+Hõmtar data f÷r JNJ...
+Hõmtade 3773 datapunkter f÷r JNJ
+Period: 2011-01-03 till 2026-01-02
+Analyserar marknadsdata...
+Identifierade 32 marknadssituationer
+Hittade 6 signifikanta m÷nster
+  OK: Score 50.3/100, Signal RED
+
+
+
+
+================================================================================
+INSTRUMENT SCREENER RESULTAT
+================================================================================
+
+Analyserade instrument: 17
+
+--------------------------------------------------------------------------------
+TOPP RANKADE INSTRUMENT
+--------------------------------------------------------------------------------
+
+Rank  Instrument                     Signal     Edge     Score  Kelly% 
+--------------------------------------------------------------------------------
+1     Apple                          RED        +0.96%   58.2     0.2%
+2     Alphabet                       RED        +0.91%   51.9     0.2%
+3     Microsoft                      RED        +0.89%   51.5     0.1%
+4     Johnson & Johnson              RED        +0.64%   50.3     0.2%
+5     Volvo B                        RED        -3.32%   29.8     0.0%
+6     OMX Stockholm 30               RED        -1.67%   26.3     0.0%
+7     FTSE 100                       RED        -1.57%   26.2     0.0%
+8     OMX Copenhagen 25              RED        -1.24%   25.6     0.0%
+9     Investor B                     RED        -1.59%   25.0     0.0%
+10    Essity B                       RED        -1.69%   24.7     0.0%
+
+--------------------------------------------------------------------------------
+DETALJERAD INFO (TOPP 3)
+--------------------------------------------------------------------------------
+
+1. Apple (AAPL)
+   Kategori: STOCK
+   Signal: RED (Konfidens: M┼TTLIG)
+   Bõsta edge: +0.96% (Extended Rally (7+ up days) - Exhaustion Risk)
+   Genomsnittlig edge: +0.15%
+   Stabilitet: 63.2%
+   Handelsbara m÷nster: 7/9
+   Kelly-allokering: 0.2% av portf÷lj
+   Data: 15.0 Õr, 3773 dagar
+   Overall Score: 58.2/100
+
+2. Alphabet (GOOGL)
+   Kategori: STOCK
+   Signal: RED (Konfidens: M┼TTLIG)
+   Bõsta edge: +0.91% (Extended Rally (7+ up days) - Exhaustion Risk)
+   Genomsnittlig edge: +0.15%
+   Stabilitet: 54.0%
+   Handelsbara m÷nster: 5/9
+   Kelly-allokering: 0.2% av portf÷lj
+   Data: 15.0 Õr, 3773 dagar
+   Overall Score: 51.9/100
+
+3. Microsoft (MSFT)
+   Kategori: STOCK
+   Signal: RED (Konfidens: M┼TTLIG)
+   Bõsta edge: +0.89% (Nya lõgsta nivÕer (252 perioder))
+   Genomsnittlig edge: +0.18%
+   Stabilitet: 63.2%
+   Handelsbara m÷nster: 4/9
+   Kelly-allokering: 0.1% av portf÷lj
+   Data: 15.0 Õr, 3773 dagar
+   Overall Score: 51.5/100
+
+--------------------------------------------------------------------------------
+N─RA EDGE-KATEGORIER (Informativt - ej handelsrekommendation)
+--------------------------------------------------------------------------------
+
+STRONG EDGE (>=0.50%): 4 instrument
+  Apple                            +0.96% (Extended Rally (7+ up days) - )
+  Alphabet                         +0.91% (Extended Rally (7+ up days) - )
+  Microsoft                        +0.89% (Nya lõgsta nivÕer (252 periode)
+  Johnson & Johnson                +0.64% (Extended Rally (7+ up days) - )
+
+[!] OBS: Edge ensam rõcker inte - Traffic Light mÕste ocksÕ vara gr÷n/gul.
+
+--------------------------------------------------------------------------------
+PORTFÍLJREKOMMENDATION
+--------------------------------------------------------------------------------
+
+[X] Inga instrument rekommenderas f÷r investering just nu.
+[!] Võntelõge - behÕll h÷g cash reserve
+
+--------------------------------------------------------------------------------
+SIGNAL-FÍRDELNING
+--------------------------------------------------------------------------------
+  GREEN: 0 instrument (0%)
+  YELLOW: 0 instrument (0%)
+  RED: 17 instrument (100%)
+
+================================================================================
+[!] VIKTIGT
+================================================================================
+  ò Detta õr ett statistiskt filter-verktyg, inte investeringsrÕdgivning
+  ò Kombinera alltid med egen due diligence
+  ò Kelly-allokeringar õr konservativa (25% av full Kelly)
+  ò Íverstig aldrig din risktolerans
+

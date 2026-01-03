@@ -110,7 +110,10 @@ class MarketDataProcessor:
             Tuple av (genomsnittlig volym, relativ volym)
         """
         avg_volume = pd.Series(volume).rolling(window=window).mean().values
-        relative_volume = volume / avg_volume
+        # Fix divide-by-zero: replace NaN and inf med 1.0 (neutral)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            relative_volume = volume / avg_volume
+        relative_volume = np.nan_to_num(relative_volume, nan=1.0, posinf=1.0, neginf=1.0)
         
         return avg_volume, relative_volume
     

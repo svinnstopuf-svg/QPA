@@ -79,10 +79,15 @@ class TrafficLightEvaluator:
         )
         
         # Bestäm färg baserat på poäng
+        # VIKTIGT: För GRÖN krävs minst 1 handelsbart mönster (edge >= 0.10%)
+        has_tradeable = any(
+            self._get_pattern_edge(p) >= 0.10 for p in significant_patterns
+        )
+        
         if red_score >= 2:
             signal = Signal.RED
             reasoning = red_reasons
-        elif green_score >= 3:
+        elif green_score >= 3 and has_tradeable:
             signal = Signal.GREEN
             reasoning = green_reasons
         else:
@@ -90,6 +95,9 @@ class TrafficLightEvaluator:
             reasoning = self._get_yellow_reasoning(
                 significant_patterns, aggregated_signal
             )
+            # Om nära grön men saknar tradeable, förklara varför
+            if green_score >= 3 and not has_tradeable:
+                reasoning.insert(0, "⚠️ Tekniskt positiv miljö MEN inga handelsbara mönster (edge < 0.10%)")
         
         # Bygg komplett resultat
         result = self._build_result(
@@ -454,28 +462,28 @@ Mentalt tillstånd:
     def _get_pattern_edge(self, pattern) -> float:
         """Extrahera edge från pattern."""
         if isinstance(pattern, dict):
-            eval_data = pattern.get('pattern_eval', {})
-            if hasattr(eval_data, 'outcome_stats'):
-                return eval_data.outcome_stats.mean_return * 100  # Convert to %
+            # Fix: mean_return finns direkt i pattern dict
+            if 'mean_return' in pattern:
+                return pattern['mean_return'] * 100  # Convert to %
             return 0.0
         return 0.0
     
     def _get_pattern_stability(self, pattern) -> float:
         """Extrahera stabilitet från pattern."""
         if isinstance(pattern, dict):
-            eval_data = pattern.get('pattern_eval', {})
-            if hasattr(eval_data, 'stability_score'):
-                return eval_data.stability_score
+            # Fix: stability_score finns direkt i pattern dict
+            if 'stability_score' in pattern:
+                return pattern['stability_score']
             return 0.5
         return 0.5
     
     def _get_pattern_name(self, pattern) -> str:
         """Extrahera mönsternamn."""
         if isinstance(pattern, dict):
-            situation = pattern.get('situation', {})
-            if hasattr(situation, 'description'):
-                return situation.description
-            return str(situation)
+            # Fix: description finns direkt i pattern dict
+            if 'description' in pattern:
+                return pattern['description']
+            return str(pattern)
         return str(pattern)
     
     def _is_pattern_degraded(self, pattern) -> bool:

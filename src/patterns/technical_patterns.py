@@ -49,7 +49,10 @@ class TechnicalPatternDetector:
                 avg_gains[i] = (avg_gains[i-1] * (period - 1) + gains[i-1]) / period
                 avg_losses[i] = (avg_losses[i-1] * (period - 1) + losses[i-1]) / period
         
-        rs = np.where(avg_losses > 0, avg_gains / avg_losses, 0)
+        # Fix divide-by-zero: hantera när avg_losses är 0
+        with np.errstate(divide='ignore', invalid='ignore'):
+            rs = np.where(avg_losses > 0, avg_gains / avg_losses, 0)
+        rs = np.nan_to_num(rs, nan=0.0, posinf=100.0)
         rsi = 100 - (100 / (1 + rs))
         
         return rsi
