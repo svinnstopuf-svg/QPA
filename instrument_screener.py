@@ -60,6 +60,9 @@ class InstrumentScore:
     
     # Overall score (0-100)
     overall_score: float
+    
+    # Contributing factors (for debugging)
+    contributing_factors: dict = None
 
 
 class InstrumentScreener:
@@ -275,7 +278,11 @@ class InstrumentScreener:
             data_points=data_points,
             period_years=period_years,
             avg_volume=avg_volume,
-            overall_score=overall_score
+            overall_score=overall_score,
+            contributing_factors={
+                'green_score': traffic_result.contributing_factors.get('green_score', 0),
+                'red_score': traffic_result.contributing_factors.get('red_score', 0)
+            }
         )
     
     def _calculate_overall_score(
@@ -342,12 +349,15 @@ class InstrumentScreener:
 def format_screener_report(results: List[InstrumentScore]) -> str:
     """Formatera screener-resultat för display."""
     lines = []
-    
     lines.append("=" * 80)
     lines.append("INSTRUMENT SCREENER RESULTAT")
     lines.append("=" * 80)
     lines.append("")
     lines.append(f"Analyserade instrument: {len(results)}")
+    lines.append("")
+    lines.append("[!] GUIDE: Score indikerar mönstersignaler, men Traffic Light kombinerar")
+    lines.append("    Score med risk/regim för slutgiltig signal. Kelly% baseras på edge * win_rate.")
+    lines.append("")
     lines.append("")
     
     # Topp 10 rankning
@@ -417,24 +427,57 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
     if strong_edge:
         lines.append(f"STRONG EDGE (>=0.50%): {len(strong_edge)} instrument")
         for r in strong_edge[:5]:
-            lines.append(f"  {r.name[:30]:<32} {r.best_edge:+.2f}% ({r.best_pattern_name[:30]})")
+            # Fix texttrunkering - använd full pattern name
+            lines.append(f"  {r.name[:30]:<32} {r.best_edge:+.2f}% ({r.best_pattern_name})")
     
     # Moderate edge (0.20-0.49%)
     moderate_edge = [r for r in results if 0.20 <= r.best_edge < 0.50]
     if moderate_edge:
         lines.append(f"\nMODERATE EDGE (0.20-0.49%): {len(moderate_edge)} instrument")
         for r in moderate_edge[:5]:
-            lines.append(f"  {r.name[:30]:<32} {r.best_edge:+.2f}% ({r.best_pattern_name[:30]})")
+            lines.append(f"  {r.name[:30]:<32} {r.best_edge:+.2f}% ({r.best_pattern_name})")
     
     # Small edge (0.10-0.19%)
     small_edge = [r for r in results if 0.10 <= r.best_edge < 0.20]
     if small_edge:
         lines.append(f"\nSMALL EDGE (0.10-0.19%): {len(small_edge)} instrument")
         for r in small_edge[:5]:
-            lines.append(f"  {r.name[:30]:<32} {r.best_edge:+.2f}% ({r.best_pattern_name[:30]})")
+            lines.append(f"  {r.name[:30]:<32} {r.best_edge:+.2f}% ({r.best_pattern_name})")
     
     lines.append("")
     lines.append("[!] OBS: Edge ensam räcker inte - Traffic Light måste också vara grön/gul.")
+    lines.append("")
+    
+    # Övervakningskategori - Strong edge men RED signal
+    lines.append("-" * 80)
+    lines.append("ÖVERVAKNING (Strong edge men RED signal - bevakas utan att investera)")
+    lines.append("-" * 80)
+    lines.append("")
+    
+    watch_list = [r for r in results if r.best_edge >= 0.50 and r.signal == Signal.RED]
+    if watch_list:
+        lines.append(f"{len(watch_list)} instrument att bevaka:")
+        for r in watch_list[:10]:
+            # Förklara varför RED
+            red_reasons = []
+            if r.contributing_factors.get('red_score', 0) >= 2:
+                red_reasons.append("Hög risk")
+            if r.contributing_factors.get('green_score', 0) < 3:
+                red_reasons.append("För få gröna villkor")
+            if r.tradeable_patterns == 0:
+                red_reasons.append("Inga handelsbara mönster")
+            
+            reason_text = ", ".join(red_reasons) if red_reasons else "Regim/risk-faktorer"
+            
+            lines.append(
+                f"  {r.name[:30]:<32} Edge: {r.best_edge:+.2f}%, "
+                f"Score: {r.overall_score:>5.1f} - RED p.g.a: {reason_text}"
+            )
+    else:
+        lines.append("Inga instrument med strong edge och RED signal.")
+    
+    lines.append("")
+    lines.append("[i] Bevaka dessa för framtida investeringsmöjligheter när signal blir grön/gul.")
     lines.append("")
     
     # Portföljrekommendation
