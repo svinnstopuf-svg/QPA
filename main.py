@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from src import QuantPatternAnalyzer, MarketData
 from src.utils.data_fetcher import DataFetcher
 from src.analysis.signal_aggregator import SignalAggregator
+from src.decision import TrafficLightEvaluator, format_traffic_light_report
 
 
 def create_sample_data(n_days: int = 500) -> MarketData:
@@ -174,6 +175,8 @@ def main():
     print("=" * 80)
     current_situation = analyzer.get_current_market_situation(market_data, lookback_window=50)
     
+    # Aggregera signaler för Traffic Light-utvärdering
+    aggregated = None
     if current_situation['active_situations']:
         # Aggregera signaler med korrelationsmedvetenhet
         aggregator = SignalAggregator()
@@ -193,6 +196,45 @@ def main():
             print("Undvik att summera deras styrka - risken är dubbel-counting.")
     else:
         print("\nInga speciella situationer identifierade för närvarande.")
+    
+    # ==========================================================================
+    # TRAFFIC LIGHT DECISION MODEL
+    # ==========================================================================
+    # Översättningslager: Kvantanalys → Beslutstöd
+    # Svarar på EN fråga: "Hur aggressiv bör jag vara just nu?"
+    
+    print("\n\n")
+    
+    # Förbered data för Traffic Light-utvärdering
+    aggregated_signal_data = None
+    if aggregated:
+        aggregated_signal_data = {
+            'bias': aggregated.direction if hasattr(aggregated, 'direction') else 'NEUTRAL',
+            'confidence': aggregated.confidence,
+            'correlation_warning': aggregated.correlation_warning
+        }
+    else:
+        aggregated_signal_data = {
+            'bias': 'NEUTRAL',
+            'confidence': 'LÅG',
+            'correlation_warning': False
+        }
+    
+    traffic_light_situation = {
+        'aggregated_signal': aggregated_signal_data,
+        'active_situations': current_situation.get('active_situations', [])
+    }
+    
+    # Kör Traffic Light-utvärdering
+    traffic_light = TrafficLightEvaluator()
+    traffic_result = traffic_light.evaluate(
+        analysis_results=analysis_results,
+        current_situation=traffic_light_situation
+    )
+    
+    # Visa Traffic Light-rapport (HUVUDBUDSKAP)
+    traffic_report = format_traffic_light_report(traffic_result)
+    print(traffic_report)
     
     print("\n" + "=" * 80)
     print("ANALYS SLUTFÖRD")
