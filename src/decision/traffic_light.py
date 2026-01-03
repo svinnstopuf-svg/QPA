@@ -14,10 +14,11 @@ from typing import List, Dict, Tuple
 
 
 class Signal(Enum):
-    """Traffic light signals."""
-    GREEN = "🟢 GRÖN"
-    YELLOW = "🟡 GUL" 
-    RED = "🔴 RÖD"
+    """Traffic light signals - 4-tier system."""
+    GREEN = "🟢 GRÖN"      # Stark positiv - 3-5% allokering per instrument
+    YELLOW = "🟡 GUL"      # Måttlig positiv - 1-3% allokering per instrument
+    ORANGE = "🟠 ORANGE"   # Neutral/observant - 0-1% allokering per instrument
+    RED = "🔴 RÖD"         # Stark negativ - 0% allokering
 
 
 @dataclass
@@ -35,12 +36,13 @@ class TrafficLightResult:
 
 class TrafficLightEvaluator:
     """
-    Utvärderar marknadsläge och ger beslutstöd genom traffic-light-modell.
+    Utvärderar marknadsläge och ger beslutstöd genom 4-nivå traffic-light-modell.
     
     Regler:
-    - 🟢 GRÖN: Statistiskt gynnsam miljö → Risk på
-    - 🟡 GUL: Osäker miljö → Vänta / Skala ner
-    - 🔴 RÖD: Statistiskt ogynnsam miljö → Risk av
+    - 🟢 GRÖN: Stark positiv miljö → 3-5% allokering per instrument
+    - 🟡 GUL: Måttlig positiv miljö → 1-3% allokering per instrument
+    - 🟠 ORANGE: Neutral/observant → 0-1% allokering per instrument
+    - 🔴 RÖD: Stark negativ miljö → 0% allokering
     
     Viktigt:
     - Färg ändras sällan (ingen snabba flippar)
@@ -78,26 +80,37 @@ class TrafficLightEvaluator:
             significant_patterns, aggregated_signal
         )
         
-        # Bestäm färg baserat på poäng
+        # Bestäm färg baserat på poäng (4-nivå system)
         # VIKTIGT: För GRÖN krävs minst 1 handelsbart mönster (edge >= 0.10%)
         has_tradeable = any(
             self._get_pattern_edge(p) >= 0.10 for p in significant_patterns
         )
         
+        # Beräkna Bayesian edge sannolikhet och osäkerhet
+        edge_quality = self._evaluate_edge_quality(significant_patterns)
+        
         if red_score >= 2:
             signal = Signal.RED
             reasoning = red_reasons
-        elif green_score >= 3 and has_tradeable:
+        elif green_score >= 4 and has_tradeable and edge_quality['high_certainty']:
+            # Stark positiv: Hög score + tradeable + låg osäkerhet
             signal = Signal.GREEN
             reasoning = green_reasons
-        else:
+        elif green_score >= 3 and has_tradeable:
+            # Måttlig positiv: Bra score + tradeable men viss osäkerhet
             signal = Signal.YELLOW
-            reasoning = self._get_yellow_reasoning(
+            reasoning = green_reasons
+            reasoning.insert(0, "⚠️ Måttlig positiv miljö - hantera med försiktighet")
+        elif green_score >= 2 or (red_score == 1 and green_score >= 1):
+            # Neutral/observant: Blandade signaler
+            signal = Signal.ORANGE
+            reasoning = self._get_orange_reasoning(
                 significant_patterns, aggregated_signal
             )
-            # Om nära grön men saknar tradeable, förklara varför
-            if green_score >= 3 and not has_tradeable:
-                reasoning.insert(0, "⚠️ Tekniskt positiv miljö MEN inga handelsbara mönster (edge < 0.10%)")
+        else:
+            # Fallback till RED om inget annat passar
+            signal = Signal.RED
+            reasoning = red_reasons if red_reasons else ["Otillräckliga positiva signaler"]
         
         # Bygg komplett resultat
         result = self._build_result(
@@ -300,6 +313,101 @@ class TrafficLightEvaluator:
         
         return reasons
     
+    def _get_orange_reasoning(
+        self, 
+        patterns: List,
+        aggregated_signal
+    ) -> List[str]:
+        """
+        Skapa resonemang för ORANGE signal (neutral/observant).
+        
+        Args:
+            patterns: Lista av signifikanta mönster
+            aggregated_signal: Aggregerad signaldata
+            
+        Returns:
+            Lista med förklaringar
+        """
+        reasons = []
+        reasons.append("🟠 NEUTRAL/OBSERVANT - Blandade signaler")
+        
+        # Marknadsanalys
+        if aggregated_signal:
+            bias = aggregated_signal.get('bias', 'NEUTRAL')
+            confidence = aggregated_signal.get('confidence', 'LÅG')
+            correlation = aggregated_signal.get('correlation_warning', False)
+            
+            reasons.append(f"📈 Marknadsbias: {bias}")
+            reasons.append(f"📊 Konfidens: {confidence}")
+            
+            if correlation:
+                reasons.append("⚠️ Hög korrelation mellan signaler")
+        
+        # Edge-analys
+        edges = [self._get_pattern_edge(p) for p in patterns]
+        avg_edge = sum(edges) / len(edges) if edges else 0
+        
+        if abs(avg_edge) < 0.10:
+            reasons.append(f"⚠️ Genomsnittlig edge är låg: {avg_edge:.2%}")
+        else:
+            reasons.append(f"👀 Måttlig edge: {avg_edge:.2%} - bevaka läget")
+        
+        reasons.append("💡 Vänteläge eller mycket små positioner - bevaka utveckling")
+        
+        return reasons
+    
+    def _evaluate_edge_quality(self, patterns: List) -> Dict[str, any]:
+        """
+        Utvärdera kvaliteten på edge baserat på Bayesian osäkerhet.
+        
+        Args:
+            patterns: Lista av signifikanta mönster
+            
+        Returns:
+            Dict med edge kvalitetsmått:
+            - high_certainty: True om edges har låg osäkerhet
+            - avg_edge: Genomsnittlig edge
+            - certainty_score: Score för säkerhet (0-1)
+        """
+        if not patterns:
+            return {
+                'high_certainty': False,
+                'avg_edge': 0.0,
+                'certainty_score': 0.0
+            }
+        
+        edges = []
+        stabilities = []
+        
+        for p in patterns:
+            edge = self._get_pattern_edge(p)
+            stability = self._get_pattern_stability(p)
+            
+            if edge >= 0.10:  # Endast handelsbara mönster
+                edges.append(edge)
+                stabilities.append(stability)
+        
+        if not edges:
+            return {
+                'high_certainty': False,
+                'avg_edge': 0.0,
+                'certainty_score': 0.0
+            }
+        
+        avg_edge = sum(edges) / len(edges)
+        avg_stability = sum(stabilities) / len(stabilities)
+        
+        # Hög säkerhet kräver:
+        # - Genomsnittlig stabilitet > 70%
+        # - Minst 2 handelsbara mönster
+        high_certainty = avg_stability > 0.70 and len(edges) >= 2
+        
+        return {
+            'high_certainty': high_certainty,
+            'avg_edge': avg_edge,
+            'certainty_score': avg_stability
+        }
+    
     def _build_result(
         self,
         signal: Signal,
@@ -325,9 +433,13 @@ class TrafficLightEvaluator:
             risk_level = "NORMAL → LÅG"
             risk_change = "↓ REDUCERA"
             action = self._get_yellow_action()
-        else:  # RED
+        elif signal == Signal.ORANGE:
             risk_level = "LÅG"
-            risk_change = "↓↓ MINIMAL"
+            risk_change = "→ MINIMAL"
+            action = self._get_orange_action()
+        else:  # RED
+            risk_level = "MYCKET LÅG"
+            risk_change = "↓↓ INGEN"
             action = self._get_red_action()
         
         # Requirements for change
@@ -373,18 +485,35 @@ Mentalt tillstånd:
     def _get_yellow_action(self) -> str:
         """Handlingsrekommendation för GUL signal."""
         return """
-🟡 VÄNTA / SKALA NER - Ingen tydlig edge
+🟡 MÅTTLIG POSITIV - Försiktig exponering
 
 Hur du agerar:
-  • Vänta med nya större beslut
-  • Skala ner tempo, inte panik
-  • Endast små justeringar
-  • Låt tid göra jobbet
+  • Investera med försiktighet: 1-3% per instrument
+  • Diversifiera över flera tillgångar
+  • Behåll hög cash reserve (70-90%)
+  • Övervaka läget noggrant
 
-📌 Detta är det vanligaste läget (och det är bra)
+📌 Statistisk fördel finns men viss osäkerhet kvarstår
 
 Mentalt tillstånd:
-  "Jag gör inget dumt – och det är ett aktivt val."
+  "Jag tar små risker med potential – men håller igen."
+"""
+    
+    def _get_orange_action(self) -> str:
+        """Handlingsrekommendation för ORANGE signal."""
+        return """
+🟠 NEUTRAL/OBSERVANT - Bevaka eller mikro-positioner
+
+Hur du agerar:
+  • Mycket små positioner (0-1% per instrument) ENDAST om du måste
+  • Huvudsakligen vänteläge
+  • Bevaka marknaden för förbättring
+  • Ingen FOMO - disciplin viktigare än action
+
+📌 Blandade signaler - ingen tydlig riktning
+
+Mentalt tillstånd:
+  "Jag väntar på bättre läge – det är smart, inte fegt."
 """
     
     def _get_red_action(self) -> str:
@@ -416,9 +545,14 @@ Mentalt tillstånd:
         
         if current_signal == Signal.GREEN:
             requirements['Till GUL'] = [
-                "Marknadsbias blir NEUTRAL",
-                "Edge minskar under 0.10%",
-                "Konfidens sjunker till LÅG"
+                "Edge-kvalitet sjunker (osäkerhet ökar)",
+                "Green score minskar till 3",
+                "Konfidens sjunker"
+            ]
+            requirements['Till ORANGE'] = [
+                "Green score minskar till 2",
+                "Endast blandade signaler",
+                "Edge < 0.10% på flest mönster"
             ]
             requirements['Till RÖD'] = [
                 "Minst 2 negativa villkor aktiveras",
@@ -428,9 +562,14 @@ Mentalt tillstånd:
         
         elif current_signal == Signal.YELLOW:
             requirements['Till GRÖN'] = [
-                f"Uppnå minst 3/5 gröna villkor (nu: {green_score}/5)",
-                "Bias blir BULLISH eller NEUTRAL med edge",
-                "Konfidens ökar till MÅTTLIG eller HÖG"
+                f"Uppnå green_score ≥ 4 (nu: {green_score}/5)",
+                "Hög edge-kvalitet (låg osäkerhet)",
+                "Stabila handelsbara mönster"
+            ]
+            requirements['Till ORANGE'] = [
+                "Green score minskar till 2",
+                "Edge-kvalitet försämras",
+                "Osäkerheten ökar"
             ]
             requirements['Till RÖD'] = [
                 f"Minst 2 röda villkor aktiveras (nu: {red_score})",
@@ -438,15 +577,37 @@ Mentalt tillstånd:
                 "Bearish regim + hög volatilitet"
             ]
         
-        else:  # RED
+        elif current_signal == Signal.ORANGE:
             requirements['Till GUL'] = [
+                f"Green score ökar till 3 (nu: {green_score}/5)",
+                "Minst 1 handelsbart mönster",
+                "Bias förbättras"
+            ]
+            requirements['Till GRÖN'] = [
+                f"Green score ≥ 4 (nu: {green_score}/5)",
+                "Hög edge-kvalitet",
+                "Röda villkor < 2"
+            ]
+            requirements['Till RÖD'] = [
+                f"Minst 2 röda villkor aktiveras (nu: {red_score})",
+                "Negativa mönster dominerar",
+                "Bearish regim"
+            ]
+        
+        else:  # RED
+            requirements['Till ORANGE'] = [
                 f"Färre än 2 röda villkor (nu: {red_score})",
                 "Negativa mönster inaktiveras",
                 "Volatilitet normaliseras"
             ]
+            requirements['Till GUL'] = [
+                "Röda villkor < 2 OCH green score ≥ 3",
+                "Minst 1 handelsbart mönster",
+                "Bias förbättras"
+            ]
             requirements['Till GRÖN'] = [
-                "Röda villkor < 2 OCH gröna villkor ≥ 3",
-                "Bullish eller neutral bias",
+                "Röda villkor < 2 OCH green score ≥ 4",
+                "Hög edge-kvalitet",
                 "Stabila mönster med positiv edge"
             ]
         

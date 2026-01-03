@@ -49,9 +49,8 @@ class InstrumentScore:
     stability_score: float
     tradeable_patterns: int
     
-    # Kelly recommendation
-    kelly_allocation: float
-    position_size_pct: float
+    # Practical allocation (Traffic Light based)
+    recommended_allocation: str  # "5-10%", "2-5%", "0%"
     
     # Data quality
     data_points: int
@@ -231,24 +230,16 @@ class InstrumentScreener:
             if 'mean_return' in p and p['mean_return'] * 100 >= 0.10
         )
         
-        # 8. Kelly allocation (mer korrekt)
-        kelly_allocation = 0.0
-        if best_edge > 0.10:
-            # Hitta win_rate för bästa mönstret
-            win_rate = 0.5  # Default
-            for p in significant_patterns:
-                if 'mean_return' in p and 'win_rate' in p:
-                    if p['mean_return'] * 100 == best_edge:
-                        win_rate = p['win_rate']
-                        break
-            
-            # Kelly formula: f = (bp - q) / b
-            # där b = odds (simplified: 1), p = win prob, q = loss prob
-            # Konservativ approximation: f = edge * win_rate
-            full_kelly = (best_edge / 100) * win_rate
-            
-            # Använd 25% av full Kelly (Renaissance-princip)
-            kelly_allocation = min(0.25 * full_kelly, 0.25)
+        # 8. Practical allocation based on 4-tier Traffic Light
+        # GREEN = 3-5%, YELLOW = 1-3%, ORANGE = 0-1%, RED = 0%
+        if traffic_result.signal == Signal.GREEN:
+            recommended_allocation = "3-5%"
+        elif traffic_result.signal == Signal.YELLOW:
+            recommended_allocation = "1-3%"
+        elif traffic_result.signal == Signal.ORANGE:
+            recommended_allocation = "0-1%"
+        else:  # RED
+            recommended_allocation = "0%"
         
         # 9. Beräkna overall score (0-100)
         overall_score = self._calculate_overall_score(
@@ -273,8 +264,7 @@ class InstrumentScreener:
             avg_edge=avg_edge,
             stability_score=avg_stability,
             tradeable_patterns=tradeable_count,
-            kelly_allocation=kelly_allocation,
-            position_size_pct=kelly_allocation * 100,
+            recommended_allocation=recommended_allocation,
             data_points=data_points,
             period_years=period_years,
             avg_volume=avg_volume,
@@ -309,7 +299,9 @@ class InstrumentScreener:
         if traffic_result.signal == Signal.GREEN:
             score += 30
         elif traffic_result.signal == Signal.YELLOW:
-            score += 15
+            score += 20
+        elif traffic_result.signal == Signal.ORANGE:
+            score += 10
         else:  # RED
             score += 0
         
@@ -342,40 +334,60 @@ class InstrumentScreener:
             return "GREEN"
         elif signal == Signal.YELLOW:
             return "YELLOW"
+        elif signal == Signal.ORANGE:
+            return "ORANGE"
         else:
             return "RED"
 
 
 def format_screener_report(results: List[InstrumentScore]) -> str:
-    """Formatera screener-resultat för display."""
+    """Formatera screener-resultat för display (Dashboard-stil)."""
     lines = []
     lines.append("=" * 80)
-    lines.append("INSTRUMENT SCREENER RESULTAT")
+    lines.append("📊 INSTRUMENT SCREENER - VERSION 2.0 (4-NIVÅ SYSTEM)")
     lines.append("=" * 80)
     lines.append("")
-    lines.append(f"Analyserade instrument: {len(results)}")
+    
+    # Signalöversikt
+    green_count = sum(1 for r in results if r.signal == Signal.GREEN)
+    yellow_count = sum(1 for r in results if r.signal == Signal.YELLOW)
+    orange_count = sum(1 for r in results if r.signal == Signal.ORANGE)
+    red_count = sum(1 for r in results if r.signal == Signal.RED)
+    
+    lines.append("🚦 SIGNALÖVERSIKT:")
+    lines.append(f"  🟢 GREEN  (Stark positiv):     {green_count} instrument")
+    lines.append(f"  🟡 YELLOW (Måttlig positiv):   {yellow_count} instrument")
+    lines.append(f"  🟠 ORANGE (Neutral/bevaka):   {orange_count} instrument")
+    lines.append(f"  🔴 RED    (Stark negativ):     {red_count} instrument")
     lines.append("")
-    lines.append("[!] GUIDE: Score indikerar mönstersignaler, men Traffic Light kombinerar")
-    lines.append("    Score med risk/regim för slutgiltig signal. Kelly% baseras på edge * win_rate.")
-    lines.append("")
+    lines.append(f"Analyserade: {len(results)} instrument")
     lines.append("")
     
-    # Topp 10 rankning
+    # Dashboard: Visa GREEN först
     lines.append("-" * 80)
-    lines.append("TOPP RANKADE INSTRUMENT")
+    lines.append("👉 INVESTERINGSMÖJLIGHETER (GREEN/YELLOW/ORANGE FÖRST)")
     lines.append("-" * 80)
     lines.append("")
+    
+    # Sortera efter signal (GREEN > YELLOW > ORANGE > RED), sedan efter score
+    signal_priority = {Signal.GREEN: 0, Signal.YELLOW: 1, Signal.ORANGE: 2, Signal.RED: 3}
+    sorted_results = sorted(
+        results, 
+        key=lambda x: (signal_priority.get(x.signal, 4), -x.overall_score)
+    )
     
     # Header
-    lines.append(f"{'Rank':<5} {'Instrument':<30} {'Signal':<10} {'Edge':<8} {'Score':<6} {'Kelly%':<7}")
+    lines.append(f"{'Rank':<5} {'Instrument':<30} {'Signal':<10} {'Edge':<8} {'Score':<6} {'Allokering':<12}")
     lines.append("-" * 80)
     
-    for i, result in enumerate(results[:10], 1):
+    for i, result in enumerate(sorted_results[:15], 1):
         # Konvertera till text istället för emoji
         if result.signal == Signal.GREEN:
             signal_text = "GREEN"
         elif result.signal == Signal.YELLOW:
             signal_text = "YELLOW"
+        elif result.signal == Signal.ORANGE:
+            signal_text = "ORANGE"
         else:
             signal_text = "RED"
         
@@ -384,7 +396,7 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
             f"{signal_text:<10} "
             f"{result.best_edge:+.2f}%  "
             f"{result.overall_score:>5.1f}  "
-            f"{result.position_size_pct:>6.1f}%"
+            f"{result.recommended_allocation:>10}"
         )
     
     lines.append("")
@@ -400,6 +412,8 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
             signal_text = "GREEN"
         elif result.signal == Signal.YELLOW:
             signal_text = "YELLOW"
+        elif result.signal == Signal.ORANGE:
+            signal_text = "ORANGE"
         else:
             signal_text = "RED"
         
@@ -410,7 +424,7 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
         lines.append(f"   Genomsnittlig edge: {result.avg_edge:+.2f}%")
         lines.append(f"   Stabilitet: {result.stability_score:.1%}")
         lines.append(f"   Handelsbara mönster: {result.tradeable_patterns}/{result.significant_patterns}")
-        lines.append(f"   Kelly-allokering: {result.position_size_pct:.1f}% av portfölj")
+        lines.append(f"   Rekommenderad allokering: {result.recommended_allocation} av portfölj")
         lines.append(f"   Data: {result.period_years:.1f} år, {result.data_points} dagar")
         lines.append(f"   Overall Score: {result.overall_score:.1f}/100")
     
@@ -446,6 +460,49 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
     
     lines.append("")
     lines.append("[!] OBS: Edge ensam räcker inte - Traffic Light måste också vara grön/gul.")
+    lines.append("")
+    
+    # Sektor/kategori-analys
+    lines.append("-" * 80)
+    lines.append("SEKTOR/KATEGORI-ANALYS (Multi-regim)")
+    lines.append("-" * 80)
+    lines.append("")
+    
+    # Gruppera efter kategori
+    by_category = {}
+    for r in results:
+        if r.category not in by_category:
+            by_category[r.category] = []
+        by_category[r.category].append(r)
+    
+    for category, instruments in by_category.items():
+        category_name = category.upper().replace('_', ' ')
+        
+        # Räkna signaler i kategorin
+        cat_green = sum(1 for i in instruments if i.signal == Signal.GREEN)
+        cat_yellow = sum(1 for i in instruments if i.signal == Signal.YELLOW)
+        cat_orange = sum(1 for i in instruments if i.signal == Signal.ORANGE)
+        cat_red = sum(1 for i in instruments if i.signal == Signal.RED)
+        
+        # Genomsnittlig edge i kategorin
+        avg_cat_edge = sum(i.best_edge for i in instruments) / len(instruments)
+        
+        lines.append(f"{category_name}: {len(instruments)} instrument")
+        lines.append(f"  Signaler: 🟢{cat_green} 🟡{cat_yellow} 🟠{cat_orange} 🔴{cat_red}")
+        lines.append(f"  Genomsnittlig edge: {avg_cat_edge:+.2f}%")
+        
+        # Hitta outliers: positiva signaler när kategorin är mestadels RED
+        if cat_red >= len(instruments) * 0.7:  # 70%+ RED
+            outliers = [i for i in instruments if i.signal in [Signal.GREEN, Signal.YELLOW, Signal.ORANGE]]
+            if outliers:
+                lines.append(f"  👀 OUTLIERS (potentiell okorrelerad möjlighet):")
+                for o in outliers:
+                    signal_emoji = "🟢" if o.signal == Signal.GREEN else "🟡" if o.signal == Signal.YELLOW else "🟠"
+                    lines.append(f"      {signal_emoji} {o.name[:25]:<27} Edge: {o.best_edge:+.2f}%")
+        
+        lines.append("")
+    
+    lines.append("[i] Outliers kan vara intressanta om de har låg korrelation med resten av sektorn.")
     lines.append("")
     
     # Övervakningskategori - Strong edge men RED signal
@@ -486,34 +543,56 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
     lines.append("-" * 80)
     lines.append("")
     
-    # Endast gröna och gula signaler
-    investable = [r for r in results if r.signal in [Signal.GREEN, Signal.YELLOW]]
-    total_kelly = sum(r.kelly_allocation for r in investable)
+    # Alla signalnivåer
+    green_instruments = [r for r in results if r.signal == Signal.GREEN]
+    yellow_instruments = [r for r in results if r.signal == Signal.YELLOW]
+    orange_instruments = [r for r in results if r.signal == Signal.ORANGE]
     
-    if total_kelly > 0:
-        lines.append("Rekommenderad fördelning (baserat på Kelly Criterion):")
+    if green_instruments or yellow_instruments or orange_instruments:
+        lines.append("Traffic Light + Practical Allocation Rules (4-nivå):")
         lines.append("")
         
-        for result in investable[:5]:
-            if result.kelly_allocation > 0:
-                normalized_pct = (result.kelly_allocation / total_kelly) * 100
-                # Konvertera signal till text
-                if result.signal == Signal.GREEN:
-                    signal_text = "GREEN"
-                else:
-                    signal_text = "YELLOW"
-                
-                lines.append(
-                    f"  {result.name[:30]:<32} {normalized_pct:>5.1f}%  "
-                    f"({signal_text})"
-                )
+        if green_instruments:
+            lines.append("🟢 GREEN (STARK POSITIV - 3-5%):")
+            for result in green_instruments:
+                lines.append(f"  {result.name[:30]:<32} {result.recommended_allocation:>8} av portfölj")
+            lines.append("")
         
-        lines.append("")
-        lines.append(f"Total rekommenderad exponering: {min(100, total_kelly * 100):.1f}%")
-        lines.append(f"Rekommenderad cash reserve: {max(0, 100 - total_kelly * 100):.1f}%")
+        if yellow_instruments:
+            lines.append("🟡 YELLOW (MÅTTLIG POSITIV - 1-3%):")
+            for result in yellow_instruments:
+                lines.append(f"  {result.name[:30]:<32} {result.recommended_allocation:>8} av portfölj")
+            lines.append("")
+        
+        if orange_instruments:
+            lines.append("🟠 ORANGE (NEUTRAL/OBSERVANT - 0-1%):")
+            for result in orange_instruments:
+                lines.append(f"  {result.name[:30]:<32} {result.recommended_allocation:>8} av portfölj")
+            lines.append("")
+        
+        # Beräkna total exponering
+        total_green = len(green_instruments)
+        total_yellow = len(yellow_instruments)
+        total_orange = len(orange_instruments)
+        
+        # Estimerad exponering: GREEN=4%, YELLOW=2%, ORANGE=0.5%
+        est_green_exposure = total_green * 4.0
+        est_yellow_exposure = total_yellow * 2.0
+        est_orange_exposure = total_orange * 0.5
+        total_exposure = est_green_exposure + est_yellow_exposure + est_orange_exposure
+        
+        lines.append(f"Estimerad total exponering:")
+        if total_green > 0:
+            lines.append(f"  GREEN: ~{est_green_exposure:.0f}%")
+        if total_yellow > 0:
+            lines.append(f"  YELLOW: ~{est_yellow_exposure:.0f}%")
+        if total_orange > 0:
+            lines.append(f"  ORANGE: ~{est_orange_exposure:.0f}%")
+        lines.append(f"  TOTAL: ~{total_exposure:.0f}%")
+        lines.append(f"Rekommenderad cash reserve: ~{max(0, 100 - total_exposure):.0f}%")
     else:
-        lines.append("[X] Inga instrument rekommenderas för investering just nu.")
-        lines.append("[!] Vänteläge - behåll hög cash reserve")
+        lines.append("[❌] Inga instrument rekommenderas för investering just nu.")
+        lines.append("[!] Vänteläge - behåll hög cash reserve (100%)")
     
     lines.append("")
     
@@ -524,19 +603,49 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
     
     green = sum(1 for r in results if r.signal == Signal.GREEN)
     yellow = sum(1 for r in results if r.signal == Signal.YELLOW)
+    orange = sum(1 for r in results if r.signal == Signal.ORANGE)
     red = sum(1 for r in results if r.signal == Signal.RED)
     
-    lines.append(f"  GREEN: {green} instrument ({green/len(results)*100:.0f}%)")
-    lines.append(f"  YELLOW: {yellow} instrument ({yellow/len(results)*100:.0f}%)")
-    lines.append(f"  RED: {red} instrument ({red/len(results)*100:.0f}%)")
+    lines.append(f"  🟢 GREEN: {green} instrument ({green/len(results)*100:.0f}%)")
+    lines.append(f"  🟡 YELLOW: {yellow} instrument ({yellow/len(results)*100:.0f}%)")
+    lines.append(f"  🟠 ORANGE: {orange} instrument ({orange/len(results)*100:.0f}%)")
+    lines.append(f"  🔴 RED: {red} instrument ({red/len(results)*100:.0f}%)")
     lines.append("")
     
+    # Guide section
+    lines.append("-" * 80)
+    lines.append("GUIDE: Hur man tolkar resultaten")
+    lines.append("-" * 80)
+    lines.append("")
+    lines.append("SIGNAL = Traffic Light 4-nivå system (färgen som styr din action):")
+    lines.append("  • 🟢 GREEN  → Stark positiv: 3-5% per instrument")
+    lines.append("  • 🟡 YELLOW → Måttlig positiv: 1-3% per instrument")
+    lines.append("  • 🟠 ORANGE → Neutral/observant: 0-1% per instrument (eller vänta)")
+    lines.append("  • 🔴 RED    → Stark negativ: 0%, stå utanför marknaden")
+    lines.append("")
+    lines.append("EDGE = Statistisk fördel i procent (informativt):")
+    lines.append("  • Visar genomsnittlig avkastning från tekniska mönster")
+    lines.append("  • Positiv edge betyder historisk fördel, men SIGNAL avgör om du agerar")
+    lines.append("")
+    lines.append("SCORE = Overall ranking (0-100):")
+    lines.append("  • Kombinerar Traffic Light (30%), Edge (30%), Stabilitet (20%), Patterns (20%)")
+    lines.append("  • Högre score = bättre kandidat när signal blir GREEN")
+    lines.append("")
+    lines.append("ALLOKERING = Praktisk positionsstorlek (graderad):")
+    lines.append("  • Baserad direkt på Traffic Light signal")
+    lines.append("  • Diversifiera: Sprid exponering över flera instrument")
+    lines.append("  • Exempel 100,000 SEK portfölj:")
+    lines.append("      - GREEN:  3,000-5,000 SEK per instrument")
+    lines.append("      - YELLOW: 1,000-3,000 SEK per instrument")
+    lines.append("      - ORANGE: 0-1,000 SEK per instrument (eller vänta)")
+    lines.append("  • Max total exponering: 30-50% i svaga marknader")
+    lines.append("")
     lines.append("=" * 80)
     lines.append("[!] VIKTIGT")
     lines.append("=" * 80)
     lines.append("  • Detta är ett statistiskt filter-verktyg, inte investeringsrådgivning")
     lines.append("  • Kombinera alltid med egen due diligence")
-    lines.append("  • Kelly-allokeringar är konservativa (25% av full Kelly)")
+    lines.append("  • Allokeringar baseras på Traffic Light, inte Kelly (Kelly var för konservativt)")
     lines.append("  • Överstig aldrig din risktolerans")
     lines.append("")
     
@@ -545,39 +654,22 @@ def format_screener_report(results: List[InstrumentScore]) -> str:
 
 def main():
     """Main entry point för instrument screener."""
+    import sys
     
-    # AVANZA-VÄNLIGA INSTRUMENT
-    # Fokus: Likviditet + stabilitet + långsiktighet
-    
-    instruments = [
-        # Index-ETF:er / fonder (BRED EXPONERING)
-        ("^OMX", "OMX Stockholm 30", "index_etf"),
-        ("^GSPC", "S&P 500", "index_etf"),
-        ("^IXIC", "NASDAQ Composite", "index_etf"),
-        ("^DJI", "Dow Jones Industrial", "index_etf"),
-        ("^FTSE", "FTSE 100", "index_etf"),
-        
-        # Nordiska index
-        ("^OMXH25", "OMX Helsinki 25", "index_etf"),
-        ("^OMXC25", "OMX Copenhagen 25", "index_etf"),
-        ("^OSEAX", "OBX Oslo", "index_etf"),
-        
-        # Svenska storbolag (STORA, STABILA)
-        ("VOLV-B.ST", "Volvo B", "stock"),
-        ("INVE-B.ST", "Investor B", "stock"),
-        ("HM-B.ST", "H&M B", "stock"),
-        ("SEB-A.ST", "SEB A", "stock"),
-        ("ESSITY-B.ST", "Essity B", "stock"),
-        
-        # Amerikanska storbolag
-        ("AAPL", "Apple", "stock"),
-        ("MSFT", "Microsoft", "stock"),
-        ("GOOGL", "Alphabet", "stock"),
-        ("JNJ", "Johnson & Johnson", "stock"),
-        
-        # Tematiska (ANVÄND FÖRSIKTIGT)
-        # ("QQQ", "NASDAQ-100 ETF", "thematic"),  # Om tillgänglig på Avanza
-    ]
+    # Importera det utvidgade instrumentuniversumet
+    try:
+        from instruments_universe import get_all_instruments, get_instrument_count
+        instruments = get_all_instruments()
+        print(f"\nℹ️ Laddar {get_instrument_count()} Avanza-kompatibla instrument...\n")
+    except ImportError:
+        print("⚠️ instruments_universe.py saknas, använder fallback-lista...\n")
+        # Fallback - minimal lista om filen inte finns
+        instruments = [
+            ("^OMX", "OMX Stockholm 30", "index_regional"),
+            ("^GSPC", "S&P 500", "index_global"),
+            ("AAPL", "Apple", "stock_us_tech"),
+            ("MSFT", "Microsoft", "stock_us_tech"),
+        ]
     
     # Initiera screener
     screener = InstrumentScreener(
