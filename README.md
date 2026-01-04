@@ -1,229 +1,376 @@
-# Quant Pattern Analyzer
+# 🎲 Quant Pattern Analyzer - Casino-Style Trading System
 
-Ett **Renaissance-level** statistiskt observationsinstrument för finansiella marknader, inspirerat av Jim Simons och Renaissance Technologies tillvägagångssätt.
+## What Does This App Do?
 
-## 🏆 Renaissance-Level Features
+This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, and only play when they have an edge. This system does the same for stock trading.
 
-Detta verktyg implementerar 14 avancerade funktioner inspirerade av Renaissance Technologies:
+---
 
-### 7 Grundläggande Statistiska Rigor-Features:
-1. ✅ **Lång historik (15 år)** - Undviker regimberoende
-2. ✅ **Baseline-jämförelse** - Pattern edge vs marknad
-3. ✅ **Kontinuerlig degraderingsskala** - Friskt/Försvagande/Instabilt/Inaktivt
-4. ✅ **Mjukt prediktivt språk** - "Historiskt har..." istället för "kommer att..."
-5. ✅ **Permutation testing** - Shuffle test mot slump (p-värde)
-6. ✅ **Regimberoende analys** - Splittrar per trend/volatilitet
-7. ✅ **Signal-aggregering** - Korrelationsmedveten kombination
+## The Problem It Solves
 
-### 7 Värde-Extraktions-Features:
-1. ✅ **Sänkta trösklar** - Hittar fler svaga kandidater (15 obs, 0.55 conf)
-2. ✅ **Regimfiltrerade strategier** - Tradar bara i optimala regimer
-3. ✅ **Multi-pattern kombination** - Aggregerar flera mönster med korrelationsstraff
-4. ✅ **Walk-forward backtesting** - 70/30 split, realistiska kostnader
-5. ⏭️ **Intraday-stöd** - Krävs betald data-API (IEX Cloud, Polygon.io)
-6. ✅ **Makrodata-integration** - VIX, räntor, sektorrotation
-7. ✅ **Kelly Criterion position sizing** - Optimal allokering (0.25-0.5x Kelly)
+**Traditional trading issues:**
+- "This stock looks good, should I buy?" (pure guessing)
+- "I'm up 10%, should I sell?" (emotional decisions)
+- "How much should I invest?" (random position sizing)
 
-### 🆕 NYTT: 4 Advanced Renaissance-Features:
-1. ✅ **Enhanced Signal Detection** - Volatility bursts, momentum flips, volume spikes
-2. ✅ **Dynamic Risk Controls** - Adaptiv Kelly, auto-disable vid Sharpe < 0.5
-3. ✅ **Multi-Ticker Analysis** - Korrelationsmatris, diversifiering
-4. ✅ **Cross-Market Signals** - Lead-lag detection (S&P leder OMX?)
+**This app answers:**
+1. **Should I buy?** (Only when math says odds are in your favor)
+2. **How much should I buy?** (Position size based on volatility and edge)
+3. **When should I sell?** (Statistical exits, not emotions)
 
-📖 Se [FEATURES.md](FEATURES.md) för fullständig dokumentation.
+---
 
-## Filosofi
+## How It Works (Simple Explanation)
 
-Detta verktyg är byggt kring följande grundprinciper:
+### 1. Pattern Detection (Finding Opportunities)
+The app scans 250 stocks/ETFs daily, looking for **chart patterns** that historically predict price moves:
+- Bullish flags (continuation patterns)
+- Head & shoulders (reversal patterns)
+- Triangles (breakout patterns)
+- Double bottoms (reversal patterns)
 
-- **Mätbara variabler**: Arbetar uteslutande med historisk data och kvantifierbara marknadsegenskaper
-- **Sannolikheter, inte förutsägelser**: Uttrycker resultat som historiska tendenser, aldrig som absoluta påståenden
-- **Ingen tolkning**: Ignorerar narrativ, bolagsnamn och subjektiva bedömningar
-- **Statistisk robusthet**: Kräver tillräcklig data och stabilitet över tid
+**Think of it as:** Reading the same "tells" in the market that casinos read in poker players.
 
-## Vad verktyget gör
+---
 
-Verktyget utför följande steg:
+### 2. Edge Calculation (Are The Odds Good?)
+For every pattern found, the app calculates:
+- **Win rate:** How often does this pattern win? (e.g., 55% of the time)
+- **Win/loss ratio:** When it wins, how much? When it loses, how much? (e.g., +2.5% vs -1.2%)
+- **Predicted edge:** Expected profit per trade after accounting for wins AND losses
 
-1. **Identifierar marknadssituationer (X)** baserat på:
-   - Prisrörelser
-   - Volatilitet
-   - Volym
-   - Tid och kalendereffekter
-   - Relationer mellan tillgångar
+**Example:**
+```
+Pattern: Bullish Flag on AAPL
+Win rate: 55%
+Avg win: +2.5%
+Avg loss: -1.2%
+Expected edge: +0.84% per trade
+```
 
-2. **Analyserar historiska utfall (Y)** för varje situation:
-   - Fördelning av framtida avkastning
-   - Statistiska mått (mean, median, standardavvikelse)
-   - Vinst/förlust-frekvens
-   - Maximal historisk drawdown
+**Casino analogy:** The house edge in blackjack is ~0.5%. This pattern has +0.84% edge—better than the casino!
 
-3. **Utvärderar mönstrens robusthet**:
-   - Tillräckligt antal observationer
-   - Stabilitet över olika tidsperioder
-   - Skydd mot överanpassning
+---
 
-4. **Kommunicerar insikter** på ett användarvänligt sätt:
-   - Enkelt, neutralt språk
-   - Historiska tendenser utan garantier
-   - Tydlig osäkerhetskommunikation
+### 3. Traffic Light System (Simple Buy/Sell Signals)
+
+Every stock gets a color based on its edge:
+
+🟢 **GREEN** - Strong positive edge → BUY
+🟡 **YELLOW** - Weak positive edge → MAYBE (watch closely)
+🟠 **ORANGE** - Weak negative edge → DON'T BUY
+🔴 **RED** - Strong negative edge → SELL (if you own it)
+
+**Think of it as:** A simple "go/no-go" decision system. If it's not GREEN in a healthy market, don't play.
+
+---
+
+### 4. Position Sizing (How Much To Bet)
+
+The app uses **V-Kelly formula** (volatility-adjusted Kelly Criterion) to calculate position size:
+- **Higher edge** = larger position
+- **Higher volatility** = smaller position (more risk)
+- **Lower confidence** = smaller position (less certain)
+
+**Example:**
+```
+AAPL: 
+- Edge: +0.84%
+- Volatility: 1.5% (calm)
+- Position size: 2.5% of portfolio
+
+NVDA:
+- Edge: +1.2%
+- Volatility: 3.0% (wild)
+- Position size: 1.8% of portfolio (lower due to volatility)
+```
+
+**Casino analogy:** Bet more when you have an edge AND the table is predictable. Bet less when the game is chaotic.
+
+---
+
+### 5. Risk Filters (Don't Play Rigged Games)
+
+Before buying, the app checks multiple filters:
+
+**A) Trend Filter**
+- Don't buy long if the trend is down (fighting the current)
+- Aligns trades with market momentum
+
+**B) Volatility Breakout Filter**
+- Detects if volatility is expanding (opportunity) or contracting (risk)
+- Adjusts position size based on 4 regimes: STABLE / EXPANDING / EXPLOSIVE / CONTRACTING
+
+**C) Cost-Aware Filter**
+- Calculates if your edge is STILL positive after spreads and fees
+- Example: +0.5% edge - 0.3% costs = +0.2% net edge (still profitable)
+
+**D) Market Regime Detection**
+- Is the overall market HEALTHY or in CRISIS?
+- In CRISIS: reduces all positions or exits entirely
+
+**Casino analogy:** Don't play when the dealer is cheating (costs too high) or when the casino is on fire (market crisis).
+
+---
+
+### 6. Profit-Targeting (When To Cash Out)
+
+Once you own a stock, the app monitors when to sell using **sigma levels**:
+
+- **+2σ (2 standard deviations):** Price is statistically high → Sell 50%
+- **+3σ (3 standard deviations):** Price is VERY statistically high → Sell 100%
+
+**Example:**
+```
+You bought AAPL at $150
+Mean price (20 days): $155
+Standard deviation: $5
+
++2σ level: $165 → If price hits this, sell 50%
++3σ level: $170 → If price hits this, sell remaining 50%
+
+Current price: $168 → You're at +2.6σ → SELL 50% NOW
+```
+
+**Casino analogy:** When you're up BIG at the poker table, the odds say "cash out before variance brings you back down."
+
+---
+
+### 7. Monte Carlo Simulation (System Validation)
+
+Quarterly, you run 10,000 simulated futures based on your actual trading stats:
+- What's the risk of a 20% drawdown?
+- What's the median expected return?
+- What's the worst-case scenario (5th percentile)?
+
+**Think of it as:** Stress-testing your entire system. Like a casino running simulations to ensure they won't go bankrupt even in bad scenarios.
+
+---
+
+## The Three Commands You Use
+
+### Daily (2 minutes)
+```bash
+python daglig_analys.py
+```
+**Shows:** Buy signals today, top opportunities, market regime
+**Action:** Buy if GREEN signals exist in HEALTHY market
+
+---
+
+### Weekly (15 minutes, every Sunday)
+```bash
+python veckovis_analys.py
+```
+**Shows:** 
+- What changed since last week (new GREEN, new RED)
+- Exit checks for your positions (profit-targeting)
+
+**Action:** 
+- Buy new GREEN signals
+- Sell RED signals
+- Take profits at +2σ / +3σ
+
+---
+
+### Quarterly (30 minutes, 4 times per year)
+```bash
+python kvartalsvis_analys.py
+```
+**Shows:**
+- Which patterns worked over 3 months
+- Which patterns stopped working
+- System risk validation (Monte Carlo)
+
+**Action:**
+- Adjust which patterns to trust
+- Adjust position sizing (Kelly fraction)
+
+---
+
+## Real-World Example
+
+**Monday morning:**
+```bash
+python daglig_analys.py
+```
+
+**Output:**
+```
+🟢 AAPL - Bullish Flag
+   Edge: +0.84%
+   V-Kelly Position: 2.5%
+   Signal: BUY
+
+🟢 MSFT - Ascending Triangle
+   Edge: +1.2%
+   V-Kelly Position: 3.0%
+   Signal: BUY
+
+MARKET REGIME: HEALTHY
+→ 2 buy signals today
+```
+
+**You do:** Buy AAPL (2.5% of portfolio) and MSFT (3.0% of portfolio)
+
+---
+
+**Sunday:**
+```bash
+python veckovis_analys.py
+```
+
+**Output:**
+```
+WEEKLY REPORT:
+- AAPL turned RED → SELL
+- NVDA new GREEN → BUY
+
+EXIT CHECKS:
+🟡 MSFT: $445 (+5.8%) → +2.1σ → SELL 50%
+🟢 GOOGL: $155 (+2.0%) → +0.7σ → HOLD
+```
+
+**You do:**
+- Sell AAPL (turned RED)
+- Sell 50% of MSFT (hit +2σ)
+- Buy NVDA (new GREEN)
+- Hold GOOGL
+
+---
+
+**March (quarterly):**
+```bash
+python kvartalsvis_analys.py
+```
+
+**Output:**
+```
+PATTERN PERFORMANCE (last 3 months):
+✅ Bullish Flags: 62% win rate
+✅ Triangles: 58% win rate
+❌ Head & Shoulders: 42% win rate (DEGRADED)
+
+RECOMMENDATION:
+- Continue trading Flags and Triangles
+- Stop trading Head & Shoulders
+- Run Monte Carlo to validate system risk
+```
+
+**You do:**
+- Adjust pattern selection
+- Run Monte Carlo
+- If risk is acceptable, continue trading
+
+---
+
+## What Makes This Different From Guessing?
+
+| **Guessing** | **This App** |
+|--------------|--------------|  
+| "This stock looks good" | "This pattern has 55% win rate, +0.84% edge" |
+| "I'll invest $1000" | "V-Kelly says 2.5% position based on volatility and edge" |
+| "I'm up 10%, should I sell?" | "+2σ hit, statistics say sell 50%" |
+| "I lost money, bad luck?" | "Monte Carlo shows this is within normal variance" |
+| Trading on emotions | Trading on mathematics |
+
+---
+
+## The Casino Philosophy
+
+**Casinos don't:**
+- Play games where they have no edge
+- Bet their entire bankroll on one game
+- Make emotional decisions
+- Ignore their own rules
+
+**This app doesn't either:**
+- Only trades when edge is positive (GREEN signals)
+- Sizes positions based on edge and volatility (V-Kelly)
+- Uses statistical exits (sigma levels)
+- Validates system quarterly (Monte Carlo)
+
+---
+
+## Technical Stack (For Developers)
+
+**Language:** Python  
+**Data Source:** Yahoo Finance (yfinance)  
+**Pattern Detection:** Custom algorithms for 15+ chart patterns  
+**Statistics:** Bayesian inference, Kelly Criterion, Monte Carlo simulation  
+**Position Sizing:** Volatility-adjusted Kelly (V-Kelly)  
+**Risk Management:** Multi-layer filters (trend, volatility, cost, regime)
+
+---
+
+## Files You Need To Know
+
+**Daily use:**
+- `daglig_analys.py` - Find buy signals
+- `my_positions.json` - Track what you own (manual entry)
+
+**Weekly use:**
+- `veckovis_analys.py` - Delta analysis + exit checks
+
+**Quarterly use:**
+- `kvartalsvis_analys.py` - System validation
+
+**Documentation:**
+- `ENKEL_GUIDE.md` - Quick start
+- `VERSION_2.2_FEATURES.md` - Technical details
+- `POSITION_TRACKING.md` - How to track positions
+
+---
 
 ## Installation
 
-### Krav
-
-- Python 3.8 eller senare
+### Requirements
+- Python 3.8 or later
 - pip
 
-### Installera beroenden
-
+### Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-**OBS:** Appen hämtar automatiskt riktig marknadsdata från Yahoo Finance. Ingen API-nyckel krävs.
+**Note:** The app automatically fetches real market data from Yahoo Finance. No API key required.
 
-## Användning
+---
 
-### Grundläggande exempel
+## Summary
 
-```python
-from src import QuantPatternAnalyzer, DataFetcher
-import numpy as np
+**What it does:** Finds profitable trades using math, not emotions  
+**How it works:** Detects patterns → Calculates edge → Filters risk → Sizes positions → Exits statistically  
+**Why it works:** Same philosophy casinos use (play with an edge, manage risk, ignore emotions)  
+**How you use it:** 3 simple commands (daily, weekly, quarterly)  
 
-# Hämta riktig marknadsdata
-fetcher = DataFetcher()
-market_data = fetcher.fetch_stock_data("^GSPC", period="2y")  # S&P 500, 2 år
+**The goal:** Trade like a casino, not like a gambler.
 
-# Andra exempel:
-# market_data = fetcher.fetch_stock_data("AAPL", period="5y")  # Apple, 5 år
-# market_data = fetcher.fetch_stock_data("^OMXS30", period="1y")  # OMX Stockholm 30
+---
 
-# Initiera analysverktyget
-analyzer = QuantPatternAnalyzer(
-    min_occurrences=30,
-    min_confidence=0.70,
-    forward_periods=1
-)
+## Important Disclaimers
 
-# Kör analys
-results = analyzer.analyze_market_data(market_data)
+- **This is NOT investment advice**: The tool provides statistical analysis, not recommendations
+- **Historical data guarantees nothing**: Patterns that worked historically can stop working at any time
+- **Trading involves risk**: You can lose money. Only trade with capital you can afford to lose
+- **Data quality is critical**: Incorrect or incomplete data produces misleading results
 
-# Generera rapport
-report = analyzer.generate_report(results)
-print(report)
-```
+---
 
-### Kör exempelskriptet
+## Use Cases
 
-```bash
-python main.py
-```
+**This tool is suitable for:**
+- Quantitative analysts seeking statistical patterns
+- Researchers studying market structure
+- Educational purposes to understand market behavior
+- Systematic traders who value mathematical edges
 
-Detta hämtar riktig marknadsdata för S&P 500 från Yahoo Finance och kör en fullständig analys. 
+**This tool is NOT suitable for:**
+- Direct investment decisions without deeper analysis
+- Real-time trading without extensive validation
+- Users without understanding of statistical analysis
+- Emotional or impulsive trading decisions
 
-**Anpassa ticker:** Redigera `main.py` och ändra `ticker` variabeln för att analysera andra aktier eller index:
-- `"AAPL"` - Apple
-- `"MSFT"` - Microsoft  
-- `"^OMXS30"` - OMX Stockholm 30
-- `"^DJI"` - Dow Jones
+---
 
-## Projektstruktur
-
-```
-quant-pattern-analyzer/
-├── src/
-│   ├── core/                      # Kärnlogik för mönsterutvärdering
-│   │   ├── pattern_evaluator.py
-│   │   └── pattern_monitor.py     # Degraderingsövervakning
-│   ├── patterns/                  # Mönsterigenkänning
-│   │   ├── detector.py            # Grundläggande mönster
-│   │   └── enhanced_signals.py    # 🆕 Vol bursts, momentum flips
-│   ├── analysis/                  # Statistisk analys
-│   │   ├── outcome_analyzer.py
-│   │   ├── baseline_comparator.py
-│   │   ├── permutation_tester.py  # Shuffle test
-│   │   ├── regime_analyzer.py     # Trend/vol regimer
-│   │   ├── signal_aggregator.py   # Multi-signal kombination
-│   │   └── multi_ticker.py        # 🆕 Cross-market analysis
-│   ├── trading/                   # Trading-logik
-│   │   ├── strategy_generator.py  # Regimfiltrerade strategier
-│   │   ├── pattern_combiner.py    # Multi-pattern aggregation
-│   │   ├── backtester.py          # Walk-forward backtest
-│   │   ├── portfolio_optimizer.py # Kelly Criterion
-│   │   └── risk_controller.py     # 🆕 Adaptiv risk control
-│   ├── data/                      # Data-integration
-│   │   └── macro_data.py          # VIX, räntor, sektorer
-│   ├── utils/                     # Verktyg
-│   │   └── market_data.py
-│   ├── communication/             # Formattering
-│   │   └── formatter.py
-│   └── analyzer.py                # Huvudapplikation
-├── tests/                         # Enhetstester
-├── config/                        # Konfiguration
-├── data/                          # Datalagringsplats
-├── main.py                        # Huvudskript
-├── FEATURES.md                    # 🆕 Fullständig feature-dokumentation
-├── requirements.txt               # Python-beroenden
-└── README.md                      # Denna fil
-```
-
-## Konfiguration
-
-Redigera `config/config.yaml` för att anpassa:
-
-- Minsta antal observationer för mönstervalidering
-- Konfidenströsklar
-- Parametrar för olika mönsterdetektorer
-- Output-formattering
-
-## Viktiga begränsningar
-
-- **Detta är INTE en investeringsrådgivare**: Verktyget ger inga köp- eller säljrekommendationer
-- **Historisk data garanterar inget**: Mönster som fungerat historiskt kan upphöra när som helst
-- **Svaga individuella mönster**: Varje mönster är svagt isolerat; värdet ligger i aggregation
-- **Datakvalitet är kritisk**: Felaktig eller bristfällig data ger missvisande resultat
-
-## Användningsfall
-
-Detta verktyg är lämpligt för:
-
-- Forskare som undersöker marknadsstruktur
-- Kvantitativa analytiker som söker statistiska mönster
-- Utbildningssyfte för att förstå marknadsbeteende
-- Backtesting av marknadsregimer
-
-Det är INTE lämpligt för:
-
-- Direkta investeringsbeslut utan djupare analys
-- Realtidshandel utan omfattande validering
-- Användning av personer utan förståelse för statistisk analys
-
-## Teknisk information
-
-### Beroenden
-
-- **NumPy**: Numeriska beräkningar och array-hantering
-- **Pandas**: Tidsserieanalys och rullande beräkningar
-- **SciPy**: Statistiska funktioner och hypotestestning
-- **yfinance**: Hämtar riktig marknadsdata från Yahoo Finance
-
-### Python-version
-
-Kräver Python 3.8 eller senare för dataclass och typing-stöd.
-
-## Licens
-
-Detta projekt är skapat för utbildnings- och forskningssyfte.
-
-## Bidrag
-
-Detta är ett utbildningsprojekt. För frågor eller diskussioner, vänligen kontakta projektägaren.
-
-## Ansvarsfriskrivning
-
-DETTA VERKTYG TILLHANDAHÅLLS "SOM DET ÄR" UTAN GARANTIER AV NÅGOT SLAG.
-
-Användning av detta verktyg för faktiska investeringsbeslut sker på egen risk. Utvecklaren tar inget ansvar för ekonomiska förluster som kan uppstå från användning av detta verktyg.
-
-Historisk avkastning är ingen garanti för framtida resultat.
+**Co-Authored-By: Warp <agent@warp.dev>**
