@@ -1,0 +1,23 @@
+{
+  "positions": [
+    {
+      "ticker": "AAPL",
+      "entry_price": 150.00,
+      "entry_date": "2026-01-01",
+      "shares": 10,
+      "notes": "Example position - remove this"
+    }
+  ],
+  "instructions": {
+    "how_to_add": "Add new positions to the 'positions' array above",
+    "example": {
+      "ticker": "MSFT",
+      "entry_price": 420.50,
+      "entry_date": "2026-01-15",
+      "shares": 5,
+      "notes": "Optional notes about why you bought"
+    },
+    "how_to_remove": "Delete the entire {...} block for closed positions",
+    "shares_optional": "Shares field is optional, only used for your own reference"
+  }
+}

@@ -6,7 +6,7 @@
 
 ---
 
-## ✅ Implementerade Funktioner (8/8)
+## ✅ Implementerade Funktioner (10/10)
 
 ### 1. ✅ 4-Nivå Traffic Light System
 **Fil**: `src/decision/traffic_light.py`
@@ -101,6 +101,42 @@ passes = fetcher.apply_fundamental_filters(
 - `SignalEntry` dataclass - Lagrar signal + outcome (1w, 1m, 3m returns)
 - `update_outcomes()` - Uppdaterar outcomes för gamla signals
 - `generate_performance_report()` - Validerar signal-accuracy över tid
+
+### 9. ✅ Veckorapport med Delta-Analys **[NY!]**
+**Fil**: `src/reporting/weekly_report.py`
+
+**Funktioner:**
+- Jämför marknadens temperatur vecka för vecka
+- Signal distribution changes (RED/YELLOW/GREEN shifts)
+- Confidence changes per instrument
+- Nya möjligheter (RED → YELLOW/GREEN transitions)
+- Market temperature trends (FROZEN/COLD/COOL/WARM/HOT)
+- Automatisk snapshot-lagring
+
+**Användning:**
+```python
+from src.reporting import generate_weekly_report
+report = generate_weekly_report(screening_results)
+print(report)
+```
+
+### 10. ✅ Kvartalsrevision (Pattern Audit) **[NY!]**
+**Fil**: `src/reporting/quarterly_audit.py`
+
+**Funktioner:**
+- Identifierar mest lönsamma mönster i realtid
+- Detekterar degradation och försämrade patterns
+- Validerar Bayesian predictions mot actual outcomes
+- Rekommenderar åtgärder: KEEP, ADJUST, MONITOR, REMOVE
+- Jämför predicted edge vs actual returns
+- Beräknar accuracy, win rate, Sharpe ratio per pattern
+
+**Användning:**
+```python
+from src.reporting import generate_quarterly_audit
+audit = generate_quarterly_audit()
+print(audit)
+```
 
 **Användning:**
 ```python
@@ -329,15 +365,17 @@ print(tracker.generate_performance_report())
 
 ## 📝 Version History
 
-### Version 2.0 (2026-01-03) - COMPLETE ✅
+### Version 2.0 (2026-01-04) - COMPLETE ✅
 - ✅ 4-nivå Traffic Light (GREEN/YELLOW/ORANGE/RED)
 - ✅ Bayesian edge-kvalitetsbedömning
 - ✅ Dynamisk proportionell allokering (3-5%, 1-3%, 0-1%, 0%)
 - ✅ Sektor/kategori-analys med outlier-detektion
-- ✅ Utökat till 111 Avanza-kompatibla instrument
+- ✅ Utökat till 250 Avanza-kompatibla instrument
 - ✅ Dashboard-stil visualisering
 - ✅ **Fundamentaldata integration** (P/E, P/B, quality score)
 - ✅ **Historisk signal tracking** (loggning + outcome validation)
+- ✅ **Veckorapport med delta-analys** (marknadens temperatur vecka-för-vecka)
+- ✅ **Kvartalsrevision** (pattern performance audit + degradation)
 
 ### Version 1.0 (2025-12-XX)
 - Traffic Light beslutsstöd (3-nivå)
@@ -380,9 +418,11 @@ För frågor eller förbättringsförslag, se GitHub repository.
 
 ---
 
-**🎉 GRATULERAR - Version 2.0 är komplett med alla 8 funktioner!**
+**🎉 GRATULERAR - Version 2.0 är komplett med alla 10 funktioner!**
 
-**Version**: 2.0 COMPLETE  
-**Datum**: 2026-01-03  
+**Version**: 2.0 COMPLETE + REPORTING  
+**Datum**: 2026-01-04  
 **Status**: Production Ready
-**Funktioner**: 8/8 ✅
+**Funktioner**: 10/10 ✅
+**Instrument**: 250  
+**Kategorier**: 13

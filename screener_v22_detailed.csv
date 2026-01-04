@@ -1,0 +1,246 @@
+Rank,Ticker,Name,Category,Signal,Best Edge %,Net Edge %,Cost Profitable,V-Kelly Position %,Trend Aligned,Regime Multiplier,Breakout Confidence,Volatility Regime,Final Allocation %,Entry Recommendation,Final Score
+1,SBB-B.ST,Samhällsbyggnadsbolaget B,stock_swedish_large,YELLOW,1.54,1.24,True,0.05,True,0.20,0.2,CONTRACTING,0.01,ENTER,77.0
+2,BND,Vanguard Total Bond Market,etf_broad,YELLOW,1.39,0.69,True,0.05,True,0.20,0.2,CONTRACTING,0.01,ENTER,77.0
+3,NVDA,Nvidia,stock_us_tech,RED,1.74,0.94,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,60.0
+4,DIA,SPDR Dow Jones Industrial,etf_broad,RED,1.79,1.09,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,60.0
+5,XLK,Technology Select Sector,etf_sector,RED,1.56,0.66,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,60.0
+6,XLU,Utilities Select Sector,etf_sector,RED,3.96,3.06,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,60.0
+7,VGT,Vanguard Information Technology,etf_sector,RED,2.42,1.52,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,60.0
+8,VHT,Vanguard Health Care,etf_sector,RED,1.45,0.55,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,60.0
+9,KRE,SPDR S&P Regional Banking,etf_sector,RED,1.57,0.67,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,60.0
+10,GDX,VanEck Gold Miners,etf_sector,RED,1.67,0.77,True,0.00,True,0.20,0.7,EXPANDING,0.00,BLOCK,60.0
+11,GDXJ,VanEck Junior Gold Miners,etf_sector,RED,1.97,1.07,True,0.00,True,0.20,0.7,EXPANDING,0.00,BLOCK,60.0
+12,LOW,Lowe's,stock_us_consumer,RED,2.97,0.47,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,58.1
+13,XLV,Health Care Select Sector,etf_sector,RED,1.26,0.36,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,51.6
+14,AVGO,Broadcom,stock_us_tech,RED,2.79,0.29,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,47.5
+15,XLC,Communication Services,etf_sector,YELLOW,-0.77,-0.77,True,0.05,True,0.20,0.30000000000000004,CONTRACTING,0.01,ENTER,47.0
+16,TLT,iShares 20+ Year Treasury,etf_broad,RED,0.97,0.27,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,46.3
+17,CDNS,Cadence Design Systems,stock_us_tech,RED,4.53,2.03,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,45.0
+18,USO,United States Oil Fund,etf_sector,RED,1.56,0.66,True,0.00,False,0.20,0.5,STABLE,0.00,BLOCK,45.0
+19,UNG,United States Natural Gas,etf_sector,RED,3.22,2.32,True,0.00,False,0.20,0.5,STABLE,0.00,BLOCK,45.0
+20,TXN,Texas Instruments,stock_us_tech,YELLOW,2.64,0.14,True,0.05,False,0.20,0.2,CONTRACTING,0.00,BLOCK - Below 200-day MA,40.7
+21,AAPL,Apple,stock_us_tech,RED,0.96,0.16,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,39.9
+22,GOOGL,Alphabet (Google),stock_us_tech,RED,0.91,0.11,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,36.7
+23,META,Meta (Facebook),stock_us_tech,YELLOW,0.87,0.07,True,0.05,False,0.20,0.2,CONTRACTING,0.00,BLOCK - Below 200-day MA,36.4
+24,ELUX-B.ST,Electrolux B,stock_swedish_mid,YELLOW,1.07,-0.93,False,0.05,True,0.20,0.2,CONTRACTING,0.00,BLOCK - Negative net edge after costs,32.0
+25,TGT,Target,stock_us_consumer,YELLOW,0.96,-1.54,False,0.05,True,0.20,0.7,EXPANDING,0.00,BLOCK - Negative net edge after costs,32.0
+26,VLO,Valero Energy,stock_us_energy,YELLOW,1.21,-1.29,False,0.05,True,0.20,0.2,CONTRACTING,0.00,BLOCK - Negative net edge after costs,32.0
+27,KMI,Kinder Morgan,stock_us_energy,YELLOW,0.80,-1.70,False,0.05,True,0.20,0.2,CONTRACTING,0.00,BLOCK - Negative net edge after costs,32.0
+28,GSK,GSK plc (ADR),stock_european,YELLOW,0.85,-1.65,False,0.05,True,0.20,0.2,CONTRACTING,0.00,BLOCK - Negative net edge after costs,32.0
+29,EFA,iShares MSCI EAFE,etf_broad,YELLOW,0.44,-0.26,False,0.05,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK - Negative net edge after costs,32.0
+30,VGK,Vanguard FTSE Europe,etf_broad,YELLOW,0.62,-0.08,False,0.05,True,0.20,0.6,STABLE,0.00,BLOCK - Negative net edge after costs,32.0
+31,AGG,iShares Core US Aggregate Bond,etf_broad,YELLOW,0.22,-0.48,False,0.05,True,0.20,0.2,CONTRACTING,0.00,BLOCK - Negative net edge after costs,32.0
+32,^GSPC,S&P 500,index_global,RED,-1.60,-1.60,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+33,^DJI,Dow Jones Industrial,index_global,RED,-0.70,-0.70,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+34,^IXIC,NASDAQ Composite,index_global,RED,-1.19,-1.19,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+35,^RUT,Russell 2000,index_global,RED,-2.03,-2.03,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+36,^FTSE,FTSE 100 (UK),index_regional,RED,-1.57,-1.57,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+37,^GDAXI,DAX (Tyskland),index_regional,RED,-2.40,-2.40,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+38,^FCHI,CAC 40 (Frankrike),index_regional,RED,-2.08,-2.08,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+39,^STOXX50E,EURO STOXX 50,index_regional,RED,-1.58,-1.58,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+40,^IBEX,IBEX 35 (Spanien),index_regional,RED,-1.10,-1.10,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+41,^OMX,OMX Stockholm 30,index_regional,RED,-1.67,-1.67,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+42,^OMXH25,OMX Helsinki 25,index_regional,RED,-1.10,-1.10,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+43,^OMXC25,OMX Copenhagen 25,index_regional,RED,-1.24,-1.24,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+44,^OSEAX,Oslo Børs (Norge),index_regional,RED,-0.72,-0.72,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+45,^N225,Nikkei 225 (Japan),index_regional,RED,-1.14,-1.14,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+46,^HSI,Hang Seng (Hong Kong),index_regional,RED,-1.13,-1.13,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+47,VOLV-B.ST,Volvo B,stock_swedish_large,RED,-3.32,-3.32,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+48,ATCO-A.ST,Atlas Copco A,stock_swedish_large,RED,-1.88,-1.88,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+49,SAND.ST,Sandvik,stock_swedish_large,RED,-2.51,-2.51,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+50,SKF-B.ST,SKF B,stock_swedish_large,RED,-2.05,-2.05,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+51,ABB.ST,ABB,stock_swedish_large,RED,-1.57,-1.57,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+52,ERIC-B.ST,Ericsson B,stock_swedish_large,RED,-1.31,-1.31,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+53,TELIA.ST,Telia Company,stock_swedish_large,RED,-0.91,-0.91,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+54,SEB-A.ST,SEB A,stock_swedish_large,RED,-1.22,-1.22,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+55,SHB-A.ST,Handelsbanken A,stock_swedish_large,RED,-1.47,-1.47,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+56,SWED-A.ST,Swedbank A,stock_swedish_large,RED,-1.71,-1.71,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+57,INVE-B.ST,Investor B,stock_swedish_large,RED,-1.59,-1.59,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+58,HM-B.ST,H&M B,stock_swedish_large,RED,-1.63,-1.63,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+59,AXFO.ST,Axfood,stock_swedish_large,RED,-1.20,-1.20,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+60,AZN.ST,AstraZeneca,stock_swedish_large,RED,-1.61,-1.61,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+61,GETI-B.ST,Getinge B,stock_swedish_large,RED,-1.41,-1.41,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+62,LUND-B.ST,Lundbergföretagen B,stock_swedish_mid,RED,-0.88,-0.88,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+63,ALFA.ST,Alfa Laval,stock_swedish_mid,RED,-2.63,-2.63,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+64,HEXA-B.ST,Hexagon B,stock_swedish_mid,RED,-2.43,-2.43,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+65,BOL.ST,Boliden,stock_swedish_mid,RED,-2.98,-2.98,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+66,SECU-B.ST,Securitas B,stock_swedish_mid,RED,-1.90,-1.90,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+67,NDA-SE.ST,Nordea Bank,stock_swedish_mid,RED,-2.96,-2.96,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+68,SINCH.ST,Sinch,stock_swedish_mid,RED,-2.43,-2.43,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+69,AMZN,Amazon,stock_us_tech,RED,-1.63,-1.63,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+70,TSLA,Tesla,stock_us_tech,RED,-4.38,-4.38,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+71,AMD,AMD,stock_us_tech,RED,-3.44,-3.44,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+72,CSCO,Cisco,stock_us_tech,RED,-1.90,-1.90,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+73,QCOM,Qualcomm,stock_us_tech,RED,-1.46,-1.46,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+74,PLTR,Palantir,stock_us_tech,RED,-2.76,-2.76,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+75,IBM,IBM,stock_us_tech,RED,-0.97,-0.97,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+76,PFE,Pfizer,stock_us_defensive,RED,-0.94,-0.94,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+77,LLY,Eli Lilly,stock_us_defensive,RED,-1.06,-1.06,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+78,MRK,Merck & Co,stock_us_defensive,RED,-1.47,-1.47,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+79,AMGN,Amgen,stock_us_defensive,RED,-1.34,-1.34,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+80,VRTX,Vertex Pharmaceuticals,stock_us_defensive,RED,-1.97,-1.97,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+81,CVS,CVS Health,stock_us_defensive,RED,-1.26,-1.26,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+82,HUM,Humana,stock_us_defensive,RED,-1.33,-1.33,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+83,KO,Coca-Cola,stock_us_defensive,RED,-0.81,-0.81,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+84,WMT,Walmart,stock_us_defensive,RED,-0.96,-0.96,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+85,K,Kellogg Company,stock_us_defensive,RED,-1.17,-1.17,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+86,NEE,NextEra Energy,stock_us_defensive,RED,-0.91,-0.91,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+87,AEP,American Electric Power,stock_us_defensive,RED,-1.19,-1.19,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+88,TJX,TJX Companies,stock_us_consumer,RED,-1.02,-1.02,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+89,ROST,Ross Stores,stock_us_consumer,RED,-1.58,-1.58,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+90,GM,General Motors,stock_us_consumer,RED,-1.41,-1.41,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+91,BKNG,Booking Holdings,stock_us_consumer,RED,-1.85,-1.85,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+92,MAR,Marriott,stock_us_consumer,RED,-1.67,-1.67,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+93,HLT,Hilton,stock_us_consumer,RED,-1.18,-1.18,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+94,CCL,Carnival,stock_us_consumer,RED,-1.75,-1.75,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+95,NCLH,Norwegian Cruise Line,stock_us_consumer,RED,-2.11,-2.11,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+96,JPM,JPMorgan Chase,stock_us_finance,RED,-1.17,-1.17,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+97,BAC,Bank of America,stock_us_finance,RED,-1.18,-1.18,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+98,C,Citigroup,stock_us_finance,RED,-1.74,-1.74,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+99,V,Visa,stock_us_finance,RED,-1.21,-1.21,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+100,MA,Mastercard,stock_us_finance,RED,-1.59,-1.59,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+101,AXP,American Express,stock_us_finance,RED,-1.93,-1.93,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+102,BLK,BlackRock,stock_us_finance,RED,-0.95,-0.95,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+103,BA,Boeing,stock_us_industrial,RED,-1.81,-1.81,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+104,GE,General Electric,stock_us_industrial,RED,-1.77,-1.77,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+105,MMM,3M,stock_us_industrial,RED,-0.87,-0.87,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+106,UPS,United Parcel Service,stock_us_industrial,RED,-1.14,-1.14,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+107,LMT,Lockheed Martin,stock_us_industrial,RED,-1.23,-1.23,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+108,NOC,Northrop Grumman,stock_us_industrial,RED,-2.26,-2.26,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+109,GD,General Dynamics,stock_us_industrial,RED,-1.00,-1.00,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+110,EMR,Emerson Electric,stock_us_industrial,RED,-0.95,-0.95,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+111,ITW,Illinois Tool Works,stock_us_industrial,RED,-1.36,-1.36,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+112,PH,Parker Hannifin,stock_us_industrial,RED,-1.45,-1.45,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+113,FDX,FedEx,stock_us_industrial,RED,-0.91,-0.91,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+114,NSC,Norfolk Southern,stock_us_industrial,RED,-1.13,-1.13,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+115,XOM,ExxonMobil,stock_us_energy,RED,-1.16,-1.16,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+116,CVX,Chevron,stock_us_energy,RED,-1.36,-1.36,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+117,COP,ConocoPhillips,stock_us_energy,RED,-2.68,-2.68,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+118,SLB,Schlumberger,stock_us_energy,RED,-1.84,-1.84,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+119,PSX,Phillips 66,stock_us_energy,RED,-1.51,-1.51,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+120,HAL,Halliburton,stock_us_energy,RED,-1.87,-1.87,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+121,BKR,Baker Hughes,stock_us_energy,RED,-3.53,-3.53,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+122,TTE,TotalEnergies,stock_european,RED,-1.53,-1.53,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+123,ASML,ASML Holding (ADR),stock_european,RED,-2.02,-2.02,True,0.00,True,0.20,0.7999999999999999,EXPANDING,0.00,BLOCK,30.0
+124,BP,BP plc (ADR),stock_european,RED,-1.75,-1.75,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+125,SAN,Banco Santander (ADR),stock_european,RED,-1.48,-1.48,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+126,SHEL,Shell plc (ADR),stock_european,RED,-1.42,-1.42,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+127,AZN,AstraZeneca (ADR),stock_european,RED,-1.13,-1.13,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+128,BHP,BHP Group (ADR),stock_european,RED,-2.69,-2.69,True,0.00,True,0.20,0.7,EXPANDING,0.00,BLOCK,30.0
+129,RIO,Rio Tinto (ADR),stock_european,RED,-1.47,-1.47,True,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,30.0
+130,BTI,British American Tobacco (ADR),stock_european,RED,-1.71,-1.71,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+131,BBVA,Banco Bilbao Vizcaya (ADR),stock_european,RED,-2.77,-2.77,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+132,NVS,Novartis (ADR),stock_european,RED,-0.73,-0.73,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+133,STM,STMicroelectronics (ADR),stock_european,RED,-3.00,-3.00,True,0.00,True,0.20,0.7999999999999999,EXPANDING,0.00,BLOCK,30.0
+134,SPY,SPDR S&P 500 ETF,etf_broad,RED,-1.57,-1.57,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+135,VOO,Vanguard S&P 500 ETF,etf_broad,RED,-1.63,-1.63,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+136,IVV,iShares Core S&P 500,etf_broad,RED,-1.19,-1.19,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+137,QQQ,Invesco QQQ (NASDAQ-100),etf_broad,RED,-1.08,-1.08,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+138,IWM,iShares Russell 2000,etf_broad,RED,-1.92,-1.92,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+139,VTI,Vanguard Total Stock Market,etf_broad,RED,-1.65,-1.65,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+140,VTV,Vanguard Value ETF,etf_broad,RED,-1.02,-1.02,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+141,VUG,Vanguard Growth ETF,etf_broad,RED,-1.24,-1.24,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+142,VEA,Vanguard FTSE Developed Markets,etf_broad,RED,-0.70,-0.70,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+143,VWO,Vanguard FTSE Emerging,etf_broad,RED,-1.14,-1.14,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+144,EEM,iShares MSCI Emerging Markets,etf_broad,RED,-1.40,-1.40,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+145,IEMG,iShares Core MSCI Emerging,etf_broad,RED,-1.25,-1.25,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+146,EWJ,iShares MSCI Japan,etf_broad,RED,-1.40,-1.40,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+147,FXI,iShares China Large-Cap,etf_broad,RED,-1.11,-1.11,True,0.00,True,0.20,0.7999999999999999,EXPANDING,0.00,BLOCK,30.0
+148,LQD,iShares iBoxx Investment Grade,etf_broad,RED,-0.38,-0.38,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+149,HYG,iShares iBoxx High Yield,etf_broad,RED,-0.58,-0.58,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+150,MUB,iShares National Muni Bond,etf_broad,RED,-0.19,-0.19,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+151,XLF,Financial Select Sector,etf_sector,RED,-0.98,-0.98,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+152,XLE,Energy Select Sector,etf_sector,RED,-2.14,-2.14,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+153,XLI,Industrial Select Sector,etf_sector,RED,-2.02,-2.02,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+154,XLY,Consumer Discretionary,etf_sector,RED,-1.09,-1.09,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+155,XLB,Materials Select Sector,etf_sector,RED,-1.23,-1.23,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+156,VFH,Vanguard Financials,etf_sector,RED,-0.86,-0.86,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+157,VDE,Vanguard Energy,etf_sector,RED,-2.86,-2.86,True,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,30.0
+158,VIS,Vanguard Industrials,etf_sector,RED,-1.33,-1.33,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+159,VCR,Vanguard Consumer Discretionary,etf_sector,RED,-1.48,-1.48,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+160,SOXX,iShares Semiconductor,etf_sector,RED,-1.21,-1.21,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+161,SMH,VanEck Semiconductor,etf_sector,RED,-1.44,-1.44,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+162,XBI,SPDR S&P Biotech,etf_sector,RED,-2.04,-2.04,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+163,IBB,iShares Biotechnology,etf_sector,RED,-2.36,-2.36,True,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,30.0
+164,IYR,iShares U.S. Real Estate,etf_sector,RED,-1.25,-1.25,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+165,VNQ,Vanguard Real Estate,etf_sector,RED,-1.26,-1.26,True,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,30.0
+166,ZS,Zscaler,stock_us_tech,GREEN,1.56,-0.94,False,0.05,False,0.20,0.2,CONTRACTING,0.00,BLOCK - Below 200-day MA,25.0
+167,MSFT,Microsoft,stock_us_tech,RED,0.89,0.09,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,20.6
+168,ESSITY-B.ST,Essity B,stock_swedish_large,RED,-1.69,-1.69,True,0.00,False,0.20,0.6,STABLE,0.00,BLOCK,15.0
+169,WALL-B.ST,Wallenstam B,stock_swedish_large,RED,-2.78,-2.78,True,0.00,False,0.20,0.5,STABLE,0.00,BLOCK,15.0
+170,KINV-B.ST,Kinnevik B,stock_swedish_mid,RED,-2.49,-2.49,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+171,NCAB.ST,NCAB Group,stock_swedish_mid,RED,-4.42,-4.42,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+172,ASSA-B.ST,ASSA ABLOY B,stock_swedish_mid,RED,1.15,-0.85,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+173,EVO.ST,Evolution,stock_swedish_mid,RED,-2.01,-2.01,True,0.00,False,0.20,0.5,STABLE,0.00,BLOCK,15.0
+174,CAST.ST,Castellum,stock_swedish_mid,RED,-2.93,-2.93,True,0.00,False,0.20,0.5,STABLE,0.00,BLOCK,15.0
+175,NFLX,Netflix,stock_us_tech,RED,-1.62,-1.62,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+176,ADBE,Adobe,stock_us_tech,RED,-1.56,-1.56,True,0.00,False,0.20,0.6,STABLE,0.00,BLOCK,15.0
+177,INTC,Intel,stock_us_tech,RED,1.47,-1.03,False,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+178,MU,Micron Technology,stock_us_tech,RED,1.77,-0.73,False,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,15.0
+179,AMAT,Applied Materials,stock_us_tech,RED,1.36,-1.14,False,0.00,True,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+180,LRCX,Lam Research,stock_us_tech,RED,1.36,-1.14,False,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,15.0
+181,KLAC,KLA Corporation,stock_us_tech,RED,1.78,-0.72,False,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,15.0
+182,SNPS,Synopsys,stock_us_tech,RED,-1.55,-1.55,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+183,MRVL,Marvell Technology,stock_us_tech,RED,1.95,-0.55,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+184,CRWD,CrowdStrike,stock_us_tech,RED,-3.75,-3.75,True,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+185,WDAY,Workday,stock_us_tech,RED,-1.13,-1.13,True,0.00,False,0.20,0.6,STABLE,0.00,BLOCK,15.0
+186,TEAM,Atlassian,stock_us_tech,RED,-2.96,-2.96,True,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+187,DDOG,Datadog,stock_us_tech,RED,-3.08,-3.08,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+188,SNOW,Snowflake,stock_us_tech,RED,1.94,-0.56,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+189,HPE,Hewlett Packard Enterprise,stock_us_tech,RED,1.75,-0.75,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+190,JNJ,Johnson & Johnson,stock_us_defensive,RED,0.64,-0.16,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+191,UNH,UnitedHealth Group,stock_us_defensive,RED,-1.79,-1.79,True,0.00,False,0.20,0.5,STABLE,0.00,BLOCK,15.0
+192,ABBV,AbbVie,stock_us_defensive,RED,1.26,-1.24,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+193,BMY,Bristol-Myers Squibb,stock_us_defensive,RED,1.02,-1.48,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+194,GILD,Gilead Sciences,stock_us_defensive,RED,1.12,-1.38,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+195,REGN,Regeneron Pharmaceuticals,stock_us_defensive,RED,1.51,-0.99,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+196,CI,Cigna,stock_us_defensive,RED,-1.39,-1.39,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+197,PG,Procter & Gamble,stock_us_defensive,RED,-0.93,-0.93,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+198,PEP,PepsiCo,stock_us_defensive,RED,0.73,-1.77,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+199,COST,Costco,stock_us_defensive,RED,-0.78,-0.78,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+200,CL,Colgate-Palmolive,stock_us_defensive,RED,-0.87,-0.87,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+201,KMB,Kimberly-Clark,stock_us_defensive,RED,-0.99,-0.99,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+202,GIS,General Mills,stock_us_defensive,RED,-0.89,-0.89,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+203,HSY,Hershey,stock_us_defensive,RED,0.92,-1.58,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+204,MO,Altria Group,stock_us_defensive,RED,-1.01,-1.01,True,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+205,DUK,Duke Energy,stock_us_defensive,RED,-1.50,-1.50,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+206,D,Dominion Energy,stock_us_defensive,RED,0.73,-1.77,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+207,EXC,Exelon,stock_us_defensive,RED,-1.30,-1.30,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+208,HD,Home Depot,stock_us_consumer,RED,-1.03,-1.03,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+209,F,Ford,stock_us_consumer,RED,1.18,-1.32,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+210,DIS,Disney,stock_us_consumer,RED,1.46,-1.04,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+211,CMCSA,Comcast,stock_us_consumer,RED,-1.06,-1.06,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+212,NKE,Nike,stock_us_consumer,RED,-1.14,-1.14,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+213,LULU,Lululemon,stock_us_consumer,RED,-1.10,-1.10,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+214,SBUX,Starbucks,stock_us_consumer,RED,-0.97,-0.97,True,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+215,YUM,Yum! Brands,stock_us_consumer,RED,1.27,-1.23,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+216,WFC,Wells Fargo,stock_us_finance,RED,0.83,-1.67,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+217,GS,Goldman Sachs,stock_us_finance,RED,1.38,-1.12,False,0.00,True,0.20,0.6,STABLE,0.00,BLOCK,15.0
+218,MS,Morgan Stanley,stock_us_finance,RED,1.82,-0.68,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+219,CAT,Caterpillar,stock_us_industrial,RED,1.58,-0.92,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+220,HON,Honeywell,stock_us_industrial,RED,-1.11,-1.11,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+221,RTX,Raytheon Technologies,stock_us_industrial,RED,1.71,-0.79,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+222,DE,Deere & Company,stock_us_industrial,RED,-1.12,-1.12,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+223,ETN,Eaton,stock_us_industrial,RED,-1.04,-1.04,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+224,UNP,Union Pacific,stock_us_industrial,RED,0.85,-1.65,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+225,EOG,EOG Resources,stock_us_energy,RED,-2.42,-2.42,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+226,MPC,Marathon Petroleum,stock_us_energy,RED,-1.54,-1.54,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+227,OXY,Occidental Petroleum,stock_us_energy,RED,-1.95,-1.95,True,0.00,False,0.20,0.5,STABLE,0.00,BLOCK,15.0
+228,SAP,SAP SE,stock_european,RED,-1.65,-1.65,True,0.00,False,0.20,0.6,STABLE,0.00,BLOCK,15.0
+229,NVO,Novo Nordisk (ADR),stock_european,RED,-1.14,-1.14,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+230,SNY,Sanofi (ADR),stock_european,RED,-1.47,-1.47,True,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+231,DEO,Diageo (ADR),stock_european,RED,-1.17,-1.17,True,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+232,ING,ING Group (ADR),stock_european,RED,1.56,-0.94,False,0.00,True,0.20,0.5,STABLE,0.00,BLOCK,15.0
+233,IEF,iShares 7-10 Year Treasury,etf_broad,RED,0.36,-0.34,False,0.00,True,0.20,0.2,CONTRACTING,0.00,BLOCK,15.0
+234,XLRE,Real Estate Select Sector,etf_sector,RED,-1.48,-1.48,True,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+235,VDC,Vanguard Consumer Staples,etf_sector,RED,-0.87,-0.87,True,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,15.0
+236,CRM,Salesforce,stock_us_tech,RED,1.38,-1.12,False,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,0.0
+237,ORCL,Oracle,stock_us_tech,RED,0.85,-1.65,False,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,0.0
+238,PANW,Palo Alto Networks,stock_us_tech,RED,1.78,-0.72,False,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,0.0
+239,NOW,ServiceNow,stock_us_tech,RED,1.15,-1.35,False,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,0.0
+240,MCD,McDonald's,stock_us_defensive,RED,0.72,-1.78,False,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,0.0
+241,SO,Southern Company,stock_us_defensive,RED,0.80,-1.70,False,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,0.0
+242,UAA,Under Armour,stock_us_consumer,RED,1.31,-1.19,False,0.00,False,0.20,1.0,EXPLOSIVE,0.00,BLOCK,0.0
+243,CMG,Chipotle,stock_us_consumer,RED,1.29,-1.21,False,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,0.0
+244,UL,Unilever (ADR),stock_european,RED,2.34,-0.16,False,0.00,False,0.20,0.2,CONTRACTING,0.00,BLOCK,0.0
+245,XLP,Consumer Staples,etf_sector,RED,0.40,-0.50,False,0.00,False,0.20,0.30000000000000004,CONTRACTING,0.00,BLOCK,0.0

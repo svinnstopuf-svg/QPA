@@ -1,0 +1,26 @@
+====================================================================================================
+📊 INSTRUMENT SCREENER V2.2 - CASINO-STYLE RISK IMPROVEMENTS
+====================================================================================================
+
+🚦 SIGNAL DISTRIBUTION
+----------------------------------------------------------------------------------------------------
+GREEN  (Strong Buy):  1 | YELLOW (Cautious):  13 | ORANGE (Neutral): 0 | RED (Avoid): 231
+
+📈 MARKET REGIME: CRISIS (0.2x positions)
+
+✅ TOP OPPORTUNITIES (ENTER SIGNALS)
+----------------------------------------------------------------------------------------------------
+Rank  Instrument                Signal   Net Edge   Alloc%   Breakout     Entry               
+----------------------------------------------------------------------------------------------------
+1     Samhällsbyggnadsbolaget   YELLOW      1.24%    0.01%  CONTRACTIN   ENTER               
+2     Vanguard Total Bond Mar   YELLOW      0.69%    0.01%  CONTRACTIN   ENTER               
+3     Communication Services    YELLOW     -0.77%    0.01%  CONTRACTIN   ENTER               
+
+🚫 BLOCKED: 242 instruments
+  Reasons: Below 200-day MA, negative net edge, contracting volatility
+
+====================================================================================================
+SUMMARY
+Total Analyzed: 245 | Actionable: 3 | Wait: 0 | Blocked: 242
+Recommended Total Allocation: 0.0%
+====================================================================================================
