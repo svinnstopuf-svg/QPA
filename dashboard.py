@@ -10,6 +10,7 @@ from src.risk.all_weather_config import (
     is_all_weather, get_all_weather_category, get_avanza_alternative,
     is_defensive_sector
 )
+from src.analysis.macro_indicators import MacroIndicators
 from datetime import datetime
 import os
 
@@ -127,7 +128,57 @@ def main():
                 print(f"      • {r.ticker}: {r.signal.name} (+{r.net_edge_after_costs:.2f}%)")
     
     # ========================================================================
-    # 3. TOP 3 OPPORTUNITIES (Om några finns)
+    # 3. SAFE HAVEN WATCH (Macro indicators)
+    # ========================================================================
+    print_section("SAFE HAVEN WATCH", "🛡️")
+    
+    # Initialize macro indicators
+    macro = MacroIndicators()
+    
+    # Analyze yield curve
+    yield_curve = macro.analyze_yield_curve()
+    if yield_curve:
+        print(f"\n📊 Räntekurva (Yield Curve):")
+        print(f"   Kort ränta (^IRX): {yield_curve.short_rate:.2f}%")
+        print(f"   Lång ränta (^TNX): {yield_curve.long_rate:.2f}%")
+        print(f"   Spread: {yield_curve.spread:+.2f}%")
+        print(f"   {yield_curve.message}")
+    
+    # Analyze credit spreads
+    credit_spreads = macro.analyze_credit_spreads()
+    if credit_spreads:
+        print(f"\n💰 Kreditspreadar (Corporate vs Treasury):")
+        print(f"   Treasury (TLT): {credit_spreads.treasury_return:+.2f}%")
+        print(f"   Corporate (LQD): {credit_spreads.corporate_return:+.2f}%")
+        print(f"   Spread: {credit_spreads.spread:+.2f}%")
+        print(f"   {credit_spreads.message}")
+    
+    # Safe haven watch
+    sp500_result = next((r for r in results if r.ticker == "^GSPC"), None)
+    sp500_signal = sp500_result.signal.name if sp500_result else "RED"
+    
+    safe_haven_watch = macro.analyze_safe_haven_watch(all_weather_results, sp500_signal)
+    print(f"\n🎯 Safe Haven Aktivitet:")
+    print(f"   Analyserade: {safe_haven_watch.total_safe_havens}")
+    print(f"   GREEN: {safe_haven_watch.green_count} | YELLOW: {safe_haven_watch.yellow_count} | RED: {safe_haven_watch.red_count}")
+    print(f"   Styrka: {safe_haven_watch.safe_haven_strength:.0f}%")
+    print(f"   {safe_haven_watch.message}")
+    
+    if safe_haven_watch.top_performers:
+        print(f"\n   Top Safe Havens:")
+        for ticker, name, edge in safe_haven_watch.top_performers[:3]:
+            print(f"      • {ticker}: +{edge:.2f}%")
+    
+    # Systemic risk score
+    if results:
+        risk_score, risk_message = macro.get_systemic_risk_score(
+            yield_curve, credit_spreads, safe_haven_watch, results[0].regime_multiplier
+        )
+        print(f"\n🚨 SYSTEMRISK-POIÄNG: {risk_score:.0f}/100")
+        print(f"   {risk_message}")
+    
+    # ========================================================================
+    # 4. TOP 3 OPPORTUNITIES (Om några finns)
     # ========================================================================
     if actionable:
         print_section("TOP 3 MÖJLIGHETER", "⭐")
@@ -141,7 +192,7 @@ def main():
             print(f"   Volatilitet: {r.volatility_regime}")
     
     # ========================================================================
-    # 4. VARNINGAR (Om något är viktigt)
+    # 5. VARNINGAR (Om något är viktigt)
     # ========================================================================
     print_section("VARNINGAR", "⚠️")
     
@@ -168,7 +219,7 @@ def main():
         print("  ✅ Inga varningar")
     
     # ========================================================================
-    # 5. NÄSTA STEG
+    # 6. NÄSTA STEG
     # ========================================================================
     print_section("NÄSTA STEG", "📋")
     
