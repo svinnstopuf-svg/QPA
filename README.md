@@ -2,7 +2,12 @@
 
 ## What Does This App Do?
 
-This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, and only play when they have an edge. This system does the same for stock trading.
+This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, minimize costs, and only play when they have an edge. This system does the same for stock trading.
+
+**Latest additions:**
+- 🛡️ **Execution Cost Guard** - Prevents trades where fees/slippage eat your edge
+- 🌪️ **All-Weather Crisis Mode** - 59 defensive instruments for market crashes
+- 📊 **Macro Indicators** - Professional risk detection (yield curve, credit spreads, safe haven watch)
 
 ---
 
@@ -109,11 +114,81 @@ Before buying, the app checks multiple filters:
 - Is the overall market HEALTHY or in CRISIS?
 - In CRISIS: reduces all positions or exits entirely
 
-**Casino analogy:** Don't play when the dealer is cheating (costs too high) or when the casino is on fire (market crisis).
+**E) Execution Cost Guard** 🆕
+- **FX Shield:** Warns if USD/SEK is >+2σ (overvalued) - don't buy at currency top
+- **Fee Calculator:** Warns if courtage + spreads >30% of your edge
+- **Liquidity Guard:** Warns if your position >2% of daily volume (slippage risk)
+- **Product Mapper:** Recommends best Avanza product (avoid daily reset ETFs, prefer low-fee options)
+- **Example:** Even if screener says BUY, Execution Guard blocks if fees eat the edge
+
+**Casino analogy:** Don't play when the dealer is cheating (costs too high), when the casino is on fire (market crisis), or when the exchange rate is terrible (FX risk).
 
 ---
 
-### 6. Profit-Targeting (When To Cash Out)
+### 6. All-Weather Crisis Mode 🆕
+
+When markets crash (CRISIS regime), most trading stops—but **59 defensive instruments** get **full allocation** (1.0x multiplier vs 0.2x for normal stocks):
+
+**Categories:**
+- **Inverse ETFs:** SH, PSQ, DOG, SQQQ, SPXS (profit from market declines)
+- **Precious Metals:** GLD, IAU, SLV (safe havens)
+- **Bonds:** TLT, IEF, BIL, AGG (flight to safety)
+- **Defensive Sectors:** XLU, XLP, XLV (utilities, staples, healthcare)
+- **Volatility:** VIXY, VIXM (VIX products)
+- **Commodities:** USO, UNG, DBA (real assets)
+
+**Philosophy:** "When the casino is on fire, switch to the fireproof table."
+
+**Example:**
+```
+Market: CRISIS (90% RED signals)
+Regular stocks: 0.2x allocation (minimal)
+All-Weather (XLU, TLT, GLD): 1.0x allocation (full)
+
+→ Dashboard prioritizes All-Weather signals first
+→ Shows Avanza alternatives (e.g., XACT Bear for SH)
+```
+
+---
+
+### 7. Macro Indicators (Professional Risk Detection) 🆕
+
+The system monitors **systemic risk** using three professional indicators:
+
+**A) Yield Curve Inversion**
+- Compares ^IRX (13-week T-bill) vs ^TNX (10-year T-note)
+- **Inverted curve** (short > long rates) predicts recession
+- Historical accuracy: 1989, 2000, 2006, 2019 recessions
+
+**B) Credit Spreads**
+- Compares LQD (corporate bonds) vs TLT (treasury bonds)
+- **Widening spreads** = capital flight from corporate to safe assets
+- Detects credit stress before equity crashes
+
+**C) Safe Haven Watch**
+- Monitors all 59 All-Weather instruments
+- **>30% GREEN while S&P RED** = capital flight to safety
+- Early warning system for market crashes
+
+**Systemic Risk Score:** Combines all three into 0-100 score
+- **0-30:** LOW risk
+- **31-60:** MEDIUM risk
+- **61-80:** HIGH risk
+- **81-100:** EXTREME risk
+
+**Philosophy:** "See the smoke before the fire starts."
+
+**Example:**
+```
+📊 Yield Curve: +0.64% (normal)
+💰 Credit Spreads: -0.47% (LOW stress)
+🛡️ Safe Haven Activity: 3% (LOW)
+🚨 SYSTEMRISK: 50/100 (⚠️ FÖRHÖJD systemrisk)
+```
+
+---
+
+### 8. Profit-Targeting (When To Cash Out)
 
 Once you own a stock, the app monitors when to sell using **sigma levels**:
 
@@ -136,7 +211,7 @@ Current price: $168 → You're at +2.6σ → SELL 50% NOW
 
 ---
 
-### 7. Monte Carlo Simulation (System Validation)
+### 9. Monte Carlo Simulation (System Validation)
 
 Quarterly, you run 10,000 simulated futures based on your actual trading stats:
 - What's the risk of a 20% drawdown?
@@ -201,13 +276,17 @@ python daglig_analys.py
    Edge: +0.84%
    V-Kelly Position: 2.5%
    Signal: BUY
+   🛡️ EXECUTION GUARD: 🟢 LOW (cost 0.56%)
 
 🟢 MSFT - Ascending Triangle
    Edge: +1.2%
    V-Kelly Position: 3.0%
    Signal: BUY
+   🛡️ EXECUTION GUARD: 🟢 LOW (cost 0.62%)
 
 MARKET REGIME: HEALTHY
+🛡️ Safe Haven Activity: 5% (LOW)
+🚨 Systemrisk: 35/100 (LOW)
 → 2 buy signals today
 ```
 
@@ -319,6 +398,9 @@ RECOMMENDATION:
 - `ENKEL_GUIDE.md` - Quick start
 - `VERSION_2.2_FEATURES.md` - Technical details
 - `POSITION_TRACKING.md` - How to track positions
+- `EXECUTION_COST_GUARD.md` - Minimize hidden costs (FX, fees, spreads, liquidity) 🆕
+- `ALL_WEATHER_CRISIS_MODE.md` - 59 defensive instruments for crashes 🆕
+- `MACRO_INDICATORS.md` - Professional risk detection 🆕
 
 ---
 
