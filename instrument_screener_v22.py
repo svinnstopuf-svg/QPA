@@ -29,6 +29,10 @@ from src.risk.regime_detection import RegimeDetector
 # V2.2 imports
 from src.entry.volatility_breakout import VolatilityBreakoutFilter
 from src.risk.cost_aware_filter import CostAwareFilter
+from src.risk.all_weather_config import (
+    is_all_weather, get_crisis_multiplier, get_all_weather_category,
+    is_defensive_sector, get_avanza_alternative
+)
 
 
 @dataclass
@@ -478,11 +482,16 @@ class InstrumentScreenerV22:
         }
         
         regime_result = self.regime_detector.detect_regime(signal_counts)
+        base_multiplier = regime_result.position_size_multiplier
         
-        # Apply multiplier to all
+        # Apply multiplier to all (with All-Weather exception)
         for result in results:
-            result.regime_multiplier = regime_result.position_size_multiplier
-            result.final_allocation *= regime_result.position_size_multiplier
+            # Check if All-Weather instrument or defensive sector
+            signal_str = result.signal.name if hasattr(result.signal, 'name') else str(result.signal)
+            actual_multiplier = get_crisis_multiplier(result.ticker, base_multiplier, signal_str)
+            
+            result.regime_multiplier = actual_multiplier
+            result.final_allocation *= actual_multiplier
     
     def _signal_to_text(self, signal: Signal) -> str:
         """Convert Signal enum to text."""

@@ -377,6 +377,76 @@ SECTOR_ETFS = [
     ("UNG", "United States Natural Gas", "etf_sector"),
 ]
 
+# ALL-WEATHER / DEFENSIVE ETF:ER (Crisis Protection)
+# Fokus: Avanza-tillgängliga instruments (US ETFs som proxy för Avanza-alternativ)
+ALL_WEATHER_ETFS = [
+    # Inverse ETFs (profit when market falls)
+    # Avanza-alternativ: XACT Bear, XACT Bear 2, diverse inversen certifikat
+    ("SH", "ProShares Short S&P500", "etf_all_weather"),
+    ("PSQ", "ProShares Short QQQ", "etf_all_weather"),
+    ("DOG", "ProShares Short Dow30", "etf_all_weather"),
+    ("RWM", "ProShares Short Russell 2000", "etf_all_weather"),
+    ("SQQQ", "ProShares UltraPro Short QQQ", "etf_all_weather"),  # 3x inverse Nasdaq
+    ("SPXS", "Direxion Daily S&P 500 Bear 3X", "etf_all_weather"),  # 3x inverse S&P
+    
+    # Safe havens - Gold/Precious Metals
+    # Avanza: XACT Guld (GULD), fysiskt guld, guldgruveaktier
+    ("GLD", "SPDR Gold Trust", "etf_all_weather"),
+    ("IAU", "iShares Gold Trust", "etf_all_weather"),
+    ("GDX", "VanEck Gold Miners", "etf_all_weather"),
+    ("GDXJ", "VanEck Junior Gold Miners", "etf_all_weather"),
+    ("SLV", "iShares Silver Trust", "etf_all_weather"),
+    ("PSLV", "Sprott Physical Silver Trust", "etf_all_weather"),
+    ("PHYS", "Sprott Physical Gold Trust", "etf_all_weather"),
+    
+    # Safe havens - Bonds
+    # Avanza: Obligationsfonder (korta/långa räntor), penningmarknadsfonder
+    ("TLT", "iShares 20+ Year Treasury", "etf_all_weather"),
+    ("IEF", "iShares 7-10 Year Treasury", "etf_all_weather"),
+    ("SHY", "iShares 1-3 Year Treasury", "etf_all_weather"),
+    ("BIL", "SPDR 1-3 Month T-Bill", "etf_all_weather"),
+    ("AGG", "iShares Core US Aggregate Bond", "etf_all_weather"),
+    ("BND", "Vanguard Total Bond Market", "etf_all_weather"),
+    ("LQD", "iShares iBoxx Investment Grade", "etf_all_weather"),  # Corporate bonds
+    ("HYG", "iShares iBoxx High Yield", "etf_all_weather"),  # High yield bonds
+    ("MUB", "iShares National Muni Bond", "etf_all_weather"),  # Municipal bonds
+    ("TIP", "iShares TIPS Bond", "etf_all_weather"),  # Inflation-protected
+    
+    # Commodities - Energy
+    # Avanza: Råoljefonder, energicertifikat
+    ("USO", "United States Oil Fund", "etf_all_weather"),
+    ("UNG", "United States Natural Gas", "etf_all_weather"),
+    ("XLE", "Energy Select Sector", "etf_all_weather"),  # Energy sector
+    ("VDE", "Vanguard Energy", "etf_all_weather"),
+    
+    # Commodities - Broad/Agriculture
+    # Avanza: Råvarufonder
+    ("DBA", "Invesco DB Agriculture", "etf_all_weather"),  # Agriculture
+    ("DBC", "Invesco DB Commodity", "etf_all_weather"),  # Broad commodities
+    
+    # Defensive Sectors (perform better in crisis)
+    # Avanza: Sektor-ETFer tillgängliga
+    ("XLU", "Utilities Select Sector", "etf_all_weather"),  # Utilities
+    ("XLP", "Consumer Staples", "etf_all_weather"),  # Consumer staples
+    ("VDC", "Vanguard Consumer Staples", "etf_all_weather"),
+    
+    # Healthcare (defensive)
+    # Avanza: Hälsovårdsfonder
+    ("XLV", "Health Care Select Sector", "etf_all_weather"),
+    ("VHT", "Vanguard Health Care", "etf_all_weather"),
+    
+    # Volatility plays
+    # Avanza: Volatilitetscertifikat
+    ("VIXY", "ProShares VIX Short-Term", "etf_all_weather"),
+    ("VIXM", "ProShares VIX Mid-Term", "etf_all_weather"),
+    ("UVXY", "ProShares Ultra VIX Short-Term", "etf_all_weather"),  # 2x VIX
+    
+    # International Safe Havens
+    # Avanza: Europa/Emerging Markets ETFer
+    ("EFA", "iShares MSCI EAFE", "etf_all_weather"),  # Developed markets ex-US
+    ("VWO", "Vanguard FTSE Emerging", "etf_all_weather"),  # Emerging markets
+]
+
 
 def get_all_instruments():
     """Returnera alla instrument som en sammanslagen lista."""
@@ -392,7 +462,8 @@ def get_all_instruments():
         US_ENERGY +
         EUROPEAN_STOCKS +
         BROAD_ETFS +
-        SECTOR_ETFS
+        SECTOR_ETFS +
+        ALL_WEATHER_ETFS
     )
 
 

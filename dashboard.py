@@ -6,6 +6,10 @@ Kör detta VARJE DAG för att få översikt.
 
 from instrument_screener_v22 import InstrumentScreenerV22, format_v22_report
 from instruments_universe import get_all_instruments
+from src.risk.all_weather_config import (
+    is_all_weather, get_all_weather_category, get_avanza_alternative,
+    is_defensive_sector
+)
 from datetime import datetime
 import os
 
@@ -39,13 +43,36 @@ def main():
     
     actionable = [r for r in results if r.entry_recommendation.startswith("ENTER")]
     
+    # Prioritize All-Weather during CRISIS
+    if results and results[0].regime_multiplier <= 0.2:  # CRISIS
+        # Separate All-Weather from normal
+        all_weather = [r for r in actionable if is_all_weather(r.ticker)]
+        normal = [r for r in actionable if not is_all_weather(r.ticker)]
+        actionable = all_weather + normal  # All-Weather first
+    
     if actionable:
         print(f"\n✅ {len(actionable)} KÖPSIGNALER idag:\n")
         for i, r in enumerate(actionable[:5], 1):  # Max 5
-            print(f"{i}. {r.name} ({r.ticker})")
+            # Mark All-Weather instruments
+            aw_marker = " 🛡️ [ALL-WEATHER]" if is_all_weather(r.ticker) else ""
+            print(f"{i}. {r.name} ({r.ticker}){aw_marker}")
             print(f"   Signal: {r.signal.name}")
             print(f"   Net Edge: {r.net_edge_after_costs:+.2f}%")
             print(f"   Position: {r.final_allocation:.2f}%")
+            
+            # All-Weather marker
+            if is_all_weather(r.ticker):
+                category = get_all_weather_category(r.ticker)
+                print(f"   Kategori: {category} (Crisis Protection)")
+                # Avanza alternative
+                avanza_alt = get_avanza_alternative(r.ticker)
+                if avanza_alt:
+                    print(f"   💡 Avanza: {avanza_alt}")
+            
+            # Defensive sector marker
+            elif is_defensive_sector(r.ticker):
+                print(f"   Kategori: Defensive Sector (0.5x allocation in CRISIS)")
+            
             print(f"   Entry: {r.entry_recommendation}")
             print()
     else:
@@ -60,6 +87,11 @@ def main():
     green = [r for r in results if r.signal.name == "GREEN"]
     yellow = [r for r in results if r.signal.name == "YELLOW"]
     red = [r for r in results if r.signal.name == "RED"]
+    
+    # All-Weather statistics
+    all_weather_results = [r for r in results if is_all_weather(r.ticker)]
+    aw_green = [r for r in all_weather_results if r.signal.name == "GREEN"]
+    aw_yellow = [r for r in all_weather_results if r.signal.name == "YELLOW"]
     
     total = len(results)
     red_pct = (len(red) / total * 100) if total > 0 else 0
@@ -84,6 +116,15 @@ def main():
         print(f"Regim: {regime}")
         print(f"Rekommendation: {advice}")
         print(f"RED-signaler: {red_pct:.0f}%")
+        print()
+        print(f"🛡️ All-Weather: {len(all_weather_results)} analyserade")
+        print(f"   GREEN/YELLOW: {len(aw_green) + len(aw_yellow)} (får 1.0x multiplier i CRISIS)")
+        
+        # Show All-Weather opportunities in CRISIS
+        if regime_mult <= 0.2 and (aw_green or aw_yellow):
+            print(f"\n   🎯 All-Weather opportunities (CRISIS protection):")
+            for r in (aw_green + aw_yellow)[:3]:
+                print(f"      • {r.ticker}: {r.signal.name} (+{r.net_edge_after_costs:.2f}%)")
     
     # ========================================================================
     # 3. TOP 3 OPPORTUNITIES (Om några finns)

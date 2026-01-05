@@ -1,0 +1,17 @@
+
+TRADING DASHBOARD - 2026-01-05
+============================================================
+
+ACTION ITEMS:
+  Köpsignaler: 2
+  Regime: 🔴 CRISIS
+  
+MARKNADSLÄGE:
+  GREEN: 1 | YELLOW: 12 | RED: 268
+  RED%: 94%
+  
+TOP OPPORTUNITY:
+  Texas Instruments
+  
+VARNINGAR:
+  2 aktiva
