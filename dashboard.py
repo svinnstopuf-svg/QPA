@@ -11,6 +11,7 @@ from src.risk.all_weather_config import (
     is_defensive_sector
 )
 from src.analysis.macro_indicators import MacroIndicators
+from src.risk.execution_guard import ExecutionGuard, AvanzaAccountType
 from datetime import datetime
 import os
 
@@ -27,6 +28,12 @@ def main():
     print("          TRADING DASHBOARD - Dagens Översikt")
     print("🎯 "*20)
     print(f"\n📅 Datum: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    
+    # Initialize Execution Guard
+    execution_guard = ExecutionGuard(
+        account_type=AvanzaAccountType.SMALL,  # Change to your account type
+        portfolio_value_sek=100000  # Change to your portfolio value
+    )
     
     # Run screening
     print("\n⏳ Analyserar 250 instruments...")
@@ -73,6 +80,28 @@ def main():
             # Defensive sector marker
             elif is_defensive_sector(r.ticker):
                 print(f"   Kategori: Defensive Sector (0.5x allocation in CRISIS)")
+            
+            # EXECUTION GUARD - Check execution costs
+            exec_result = execution_guard.analyze(
+                ticker=r.ticker,
+                category=r.category if hasattr(r, 'category') else 'default',
+                position_size_pct=r.final_allocation,
+                net_edge_pct=r.net_edge_after_costs
+            )
+            
+            # Display execution warnings
+            if exec_result.execution_risk_level in ["HIGH", "EXTREME"]:
+                print(f"   🛡️ EXECUTION GUARD: 🔴 {exec_result.execution_risk_level}")
+                for warning in exec_result.warnings:
+                    print(f"      • {warning}")
+                print(f"      • Total kostnad: {exec_result.total_execution_cost_pct:.2f}%")
+                print(f"      • Rekommendation: {exec_result.avanza_recommendation}")
+            elif exec_result.execution_risk_level == "MEDIUM":
+                print(f"   🛡️ EXECUTION GUARD: 🟡 {exec_result.execution_risk_level}")
+                if exec_result.warnings:
+                    print(f"      • {exec_result.warnings[0]}")
+            else:
+                print(f"   🛡️ EXECUTION GUARD: 🟢 {exec_result.execution_risk_level} (kostnad {exec_result.total_execution_cost_pct:.2f}%)")
             
             print(f"   Entry: {r.entry_recommendation}")
             print()
@@ -190,6 +219,17 @@ def main():
             print(f"   Net Edge: {r.net_edge_after_costs:+.2f}%")
             print(f"   Allokering: {r.final_allocation:.2f}%")
             print(f"   Volatilitet: {r.volatility_regime}")
+            
+            # Execution Guard summary
+            exec_result = execution_guard.analyze(
+                ticker=r.ticker,
+                category=r.category if hasattr(r, 'category') else 'default',
+                position_size_pct=r.final_allocation,
+                net_edge_pct=r.net_edge_after_costs
+            )
+            print(f"   Execution Risk: {exec_result.execution_risk_level}")
+            if exec_result.warnings:
+                print(f"   ⚠️ {exec_result.warnings[0]}")
     
     # ========================================================================
     # 5. VARNINGAR (Om något är viktigt)
