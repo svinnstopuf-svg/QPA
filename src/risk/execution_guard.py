@@ -68,6 +68,7 @@ class ExecutionGuardResult:
     liquidity: LiquidityAnalysis
     isk_analysis: Optional[ISKOptimizationResult]  # ISK-specific analysis
     total_execution_cost_pct: float  # All costs combined
+    net_edge_after_execution: float  # Net edge after ALL execution costs
     execution_risk_level: str  # LOW, MEDIUM, HIGH, EXTREME
     warnings: list  # List of warning messages
     avanza_recommendation: str  # Product recommendation
@@ -454,12 +455,16 @@ class ExecutionGuard:
         if isk_analysis:
             avanza_rec = isk_analysis.recommendation
         
+        # Calculate net edge after ALL execution costs
+        net_edge_after_execution = net_edge_pct - total_execution_cost_pct
+        
         return ExecutionGuardResult(
             fx_risk=fx_risk,
             fee_analysis=fee_analysis,
             liquidity=liquidity,
             isk_analysis=isk_analysis,
             total_execution_cost_pct=total_execution_cost_pct,
+            net_edge_after_execution=net_edge_after_execution,
             execution_risk_level=execution_risk_level,
             warnings=warnings,
             avanza_recommendation=avanza_rec

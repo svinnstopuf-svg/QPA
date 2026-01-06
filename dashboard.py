@@ -4,8 +4,16 @@
 Kör detta VARJE DAG för att få översikt.
 """
 
+import sys
+import io
+
+# Fix Windows console encoding for emojis
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 from instrument_screener_v22 import InstrumentScreenerV22, format_v22_report
-from instruments_universe import get_all_instruments
+# Switch to 800-ticker universe for expanded market coverage
+from instruments_universe_800 import get_all_800_instruments
 from src.risk.all_weather_config import (
     is_all_weather, get_all_weather_category, get_avanza_alternative,
     is_defensive_sector
@@ -39,9 +47,9 @@ def main():
     )
     
     # Run screening
-    print("\n⏳ Analyserar 250 instruments...")
+    print("\n⏳ Analyserar 800 instruments...")
     screener = InstrumentScreenerV22(enable_v22_filters=True)
-    instruments = get_all_instruments()
+    instruments = get_all_800_instruments()
     results = screener.screen_instruments(instruments)
     
     # Create reports dir
@@ -61,14 +69,51 @@ def main():
         normal = [r for r in actionable if not is_all_weather(r.ticker)]
         actionable = all_weather + normal  # All-Weather first
     
-    if actionable:
-        print(f"\n✅ {len(actionable)} KÖPSIGNALER idag:\n")
-        for i, r in enumerate(actionable[:5], 1):  # Max 5
+    # ========================================================================
+    # Analyze all actionable with Execution Guard and categorize
+    # ========================================================================
+    investable = []  # Net edge > 0 after ALL costs
+    watchlist = []   # Technical signal but blocked by execution costs
+    
+    for r in actionable:
+        # EXECUTION GUARD - Check execution costs (with ISK optimization)
+        exec_result = execution_guard.analyze(
+            ticker=r.ticker,
+            category=r.category if hasattr(r, 'category') else 'default',
+            position_size_pct=r.final_allocation,
+            net_edge_pct=r.net_edge_after_costs,
+            product_name=r.name,  # For ISK product classification
+            holding_period_days=5  # Default 5-day holding period
+        )
+        
+        # Store exec_result with the signal
+        r.exec_result = exec_result
+        
+        # Categorize: INVESTABLE if net edge after execution costs > 0
+        if exec_result.net_edge_after_execution > 0:
+            investable.append(r)
+        else:
+            watchlist.append(r)
+    
+    # ========================================================================
+    # Display header with counts
+    # ========================================================================
+    print(f"\n✅ {len(investable)} INVESTERBARA | 📋 {len(watchlist)} PÅ BEVAKNING\n")
+    
+    # ========================================================================
+    # 🚀 INVESTERBARA - Full details (Net Edge > 0 efter alla kostnader)
+    # ========================================================================
+    if investable:
+        print("\n" + "="*80)
+        print("🚀 INVESTERBARA (Matematiskt lönsamma efter alla avgifter)")
+        print("="*80 + "\n")
+        
+        for i, r in enumerate(investable, 1):
             # Mark All-Weather instruments
             aw_marker = " 🛡️ [ALL-WEATHER]" if is_all_weather(r.ticker) else ""
             print(f"{i}. {r.name} ({r.ticker}){aw_marker}")
             print(f"   Signal: {r.signal.name}")
-            print(f"   Net Edge: {r.net_edge_after_costs:+.2f}%")
+            print(f"   Teknisk Edge: {r.net_edge_after_costs:+.2f}%")
             print(f"   Position: {r.final_allocation:.2f}%")
             
             # All-Weather marker
@@ -84,22 +129,15 @@ def main():
             elif is_defensive_sector(r.ticker):
                 print(f"   Kategori: Defensive Sector (0.5x allocation in CRISIS)")
             
-            # EXECUTION GUARD - Check execution costs (with ISK optimization)
-            exec_result = execution_guard.analyze(
-                ticker=r.ticker,
-                category=r.category if hasattr(r, 'category') else 'default',
-                position_size_pct=r.final_allocation,
-                net_edge_pct=r.net_edge_after_costs,
-                product_name=r.name,  # For ISK product classification
-                holding_period_days=5  # Default 5-day holding period
-            )
+            # Display execution analysis
+            exec_result = r.exec_result
             
-            # Display execution warnings (including ISK-specific)
             if exec_result.execution_risk_level in ["HIGH", "EXTREME"]:
                 print(f"   🛡️ EXECUTION GUARD: 🔴 {exec_result.execution_risk_level}")
                 for warning in exec_result.warnings:
                     print(f"      • {warning}")
                 print(f"      • Total kostnad: {exec_result.total_execution_cost_pct:.2f}%")
+                print(f"      • Net Edge efter execution: {exec_result.net_edge_after_execution:+.2f}%")
                 print(f"      • Rekommendation: {exec_result.avanza_recommendation}")
                 # ISK-specific details
                 if exec_result.isk_analysis:
@@ -108,6 +146,8 @@ def main():
                     print(f"         Net edge efter ISK: {isk.net_edge_after_isk:.2%}")
             elif exec_result.execution_risk_level == "MEDIUM":
                 print(f"   🛡️ EXECUTION GUARD: 🟡 {exec_result.execution_risk_level}")
+                print(f"      • Total kostnad: {exec_result.total_execution_cost_pct:.2f}%")
+                print(f"      • Net Edge efter execution: {exec_result.net_edge_after_execution:+.2f}%")
                 if exec_result.warnings:
                     print(f"      • {exec_result.warnings[0]}")
                 # ISK-specific details
@@ -116,7 +156,9 @@ def main():
                     if isk.is_foreign:
                         print(f"      🇸🇪 ISK: FX-kostnad {isk.fx_conversion_cost_pct:.2%}")
             else:
-                print(f"   🛡️ EXECUTION GUARD: 🟢 {exec_result.execution_risk_level} (kostnad {exec_result.total_execution_cost_pct:.2f}%)")
+                print(f"   🛡️ EXECUTION GUARD: 🟢 {exec_result.execution_risk_level}")
+                print(f"      • Total kostnad: {exec_result.total_execution_cost_pct:.2f}%")
+                print(f"      • Net Edge efter execution: {exec_result.net_edge_after_execution:+.2f}%")
                 # ISK-specific details for GREEN signals
                 if exec_result.isk_analysis:
                     isk = exec_result.isk_analysis
@@ -125,8 +167,32 @@ def main():
             print(f"   Entry: {r.entry_recommendation}")
             print()
     else:
-        print("\n❌ Inga köpsignaler idag.")
-        print("   → Vänta. Marknad är i CRISIS-läge.\n")
+        print("\n" + "="*80)
+        print("🚀 INVESTERBARA")
+        print("="*80)
+        print("\n❌ Inga investerbara signaler idag.")
+        print("   → Alla signaler blockerade av courtage/FX-kostnader.\n")
+    
+    # ========================================================================
+    # 📋 BEVAKNINGSLISTA - Minimal info (Teknisk signal men blockerad)
+    # ========================================================================
+    if watchlist:
+        print("\n" + "="*80)
+        print("📋 BEVAKNINGSLISTA (Teknisk signal men blockerad av kostnader)")
+        print("="*80 + "\n")
+        
+        for r in watchlist:
+            # Get primary blocking reason from exec_result
+            exec_result = r.exec_result
+            if "AVSTÅ" in exec_result.avanza_recommendation:
+                block_reason = exec_result.warnings[0] if exec_result.warnings else "Courtage-spärr"
+            else:
+                block_reason = "Negativ net edge efter kostnader"
+            
+            print(f"• {r.ticker:10s} | {r.signal.name:6s} | Teknisk: {r.net_edge_after_costs:+.1f}% | {block_reason}")
+        
+        print(f"\n💡 Dessa instrument har tekniska köpsignaler men blir olönsamma på grund av")
+        print(f"   Avanzas avgifter (courtage, FX, spread). Vänta på bättre entry eller högre position.\n")
     
     # ========================================================================
     # 2. MARKNADSLÄGE (Snabb överblick)

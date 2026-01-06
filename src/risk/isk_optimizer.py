@@ -26,12 +26,12 @@ class ProductType(Enum):
 
 
 class CourtageTier(Enum):
-    """Avanza courtagemodeller för ISK"""
+    """Avanza courtagemodeller för ISK (2024 prislista)"""
     START = {"name": "Start", "percent": 0.0025, "min": 39, "max": 99}
-    MINI = {"name": "Mini", "percent": 0.0019, "min": 39, "max": 89}
-    SMALL = {"name": "Small", "percent": 0.0015, "min": 39, "max": 79}
-    MEDIUM = {"name": "Medium", "percent": 0.0010, "min": 39, "max": 69}
-    LARGE = {"name": "Large", "percent": 0.0007, "min": 29, "max": 49}
+    MINI = {"name": "Mini", "percent": 0.0019, "min": 1, "max": 89}  # 1 SEK minimum!
+    SMALL = {"name": "Small", "percent": 0.0015, "min": 7, "max": 79}  # 7 SEK minimum
+    MEDIUM = {"name": "Medium", "percent": 0.0010, "min": 15, "max": 69}  # 15 SEK minimum
+    LARGE = {"name": "Large", "percent": 0.0007, "min": 25, "max": 49}  # 25 SEK minimum
 
 
 @dataclass
@@ -74,10 +74,12 @@ class ISKOptimizer:
     FX_COST_BUY = 0.0025  # 0.25%
     FX_COST_SELL = 0.0025  # 0.25%
     FX_TOTAL_ROUNDTRIP = FX_COST_BUY + FX_COST_SELL  # 0.5%
+    FX_NORDIC_ROUNDTRIP = 0.0025  # 0.25% (nordiska valutor = lägre spread)
     
-    # Suffixer för utländska marknader
-    FOREIGN_SUFFIXES = ['.TO', '.V', '', '.US', '.L', '.PA', '.DE', '.HK']
-    SWEDISH_SUFFIXES = ['.ST', '.OL', '.HE', '.CO']
+    # Suffixer för olika marknader
+    SWEDISH_SUFFIXES = ['.ST']  # Endast Sverige = 0% FX
+    NORDIC_SUFFIXES = ['.OL', '.HE', '.CO']  # Norge/Finland/Danmark = låg FX (0.25%)
+    FOREIGN_SUFFIXES = ['.TO', '.V', '', '.US', '.L', '.PA', '.DE', '.HK']  # Hög FX (0.5%)
     
     # Product health scores (0-100)
     PRODUCT_HEALTH = {
@@ -105,28 +107,33 @@ class ISKOptimizer:
         self.portfolio_size = portfolio_size
         self.min_edge_threshold = min_edge_threshold
     
-    def _detect_market(self, ticker: str) -> tuple[bool, str]:
+    def _detect_market(self, ticker: str) -> tuple[bool, str, str]:
         """
         Detektera om ticker är utländsk (kräver valutaväxling).
         
         Returns:
-            (is_foreign, market_name)
+            (is_foreign, market_name, market_type) where market_type = 'swedish'|'nordic'|'foreign'
         """
         ticker_upper = ticker.upper()
         
-        # Kolla svenska/nordiska suffixer först
+        # Kolla svenska suffixer (0% FX)
         for suffix in self.SWEDISH_SUFFIXES:
             if ticker_upper.endswith(suffix):
-                return False, self._get_market_name(suffix)
+                return False, self._get_market_name(suffix), 'swedish'
         
-        # Om inget nordiskt suffix, anta utländsk
+        # Kolla nordiska suffixer (låg FX)
+        for suffix in self.NORDIC_SUFFIXES:
+            if ticker_upper.endswith(suffix):
+                return True, self._get_market_name(suffix), 'nordic'
+        
+        # Annars utländsk (hög FX)
         for suffix in self.FOREIGN_SUFFIXES:
             if suffix == '' and '.' not in ticker_upper:
-                return True, "USA"
+                return True, "USA", 'foreign'
             elif suffix and ticker_upper.endswith(suffix):
-                return True, self._get_market_name(suffix)
+                return True, self._get_market_name(suffix), 'foreign'
         
-        return True, "Unknown"
+        return True, "Unknown", 'foreign'
     
     def _get_market_name(self, suffix: str) -> str:
         """Översätt suffix till marknadsnamn"""
@@ -161,7 +168,7 @@ class ISKOptimizer:
             return ProductType.OPENEND_CERTIFICATE
         
         # Aktier
-        is_foreign, _ = self._detect_market(ticker)
+        is_foreign, _, market_type = self._detect_market(ticker)
         return ProductType.FOREIGN_STOCK if is_foreign else ProductType.SWEDISH_STOCK
     
     def _calculate_courtage(self, position_size_sek: float) -> tuple[float, float]:
@@ -200,8 +207,15 @@ class ISKOptimizer:
         """
         
         # 1. FX-VÄXLINGSVAKT
-        is_foreign, market_name = self._detect_market(ticker)
-        fx_cost = self.FX_TOTAL_ROUNDTRIP if is_foreign else 0.0
+        is_foreign, market_name, market_type = self._detect_market(ticker)
+        
+        # Använd olika FX-kostnader beroende på marknad
+        if market_type == 'swedish':
+            fx_cost = 0.0
+        elif market_type == 'nordic':
+            fx_cost = self.FX_NORDIC_ROUNDTRIP  # 0.25% för Norge/Finland/Danmark
+        else:
+            fx_cost = self.FX_TOTAL_ROUNDTRIP  # 0.5% för USA/övriga
         
         currency_warning = None
         if is_foreign:
