@@ -5,6 +5,10 @@
 This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, minimize costs, and only play when they have an edge. This system does the same for stock trading.
 
 **Latest additions:**
+- 🎯 **800-Ticker Universe** - Expanded from 250 to 800 instruments (Sweden, Nordic neighbors, US, All-Weather)
+- 💰 **Fixed ISK Courtage** - Correct Avanza costs (MINI: 1 SEK, SMALL: 7 SEK, MEDIUM: 15 SEK)
+- 📊 **Minimum Position Filter** - Blocks trades <50 SEK where courtage makes them unprofitable
+- 🚀 **INVESTERBARA vs BEVAKNINGSLISTA** - Clear separation between profitable and blocked signals
 - 🇸🇪 **ISK Optimization** - Swedish ISK-specific cost protection (FX, courtage, product health)
 - 🛡️ **Execution Cost Guard** - Prevents trades where fees/slippage eat your edge
 - 🌪️ **All-Weather Crisis Mode** - 59 defensive instruments for market crashes
@@ -29,7 +33,7 @@ This app finds profitable stock trades by **thinking like a casino**. Casinos do
 ## How It Works (Simple Explanation)
 
 ### 1. Pattern Detection (Finding Opportunities)
-The app scans 250 stocks/ETFs daily, looking for **chart patterns** that historically predict price moves:
+The app scans **800 stocks/ETFs** daily (expanded from 250), looking for **chart patterns** that historically predict price moves:
 - Bullish flags (continuation patterns)
 - Head & shoulders (reversal patterns)
 - Triangles (breakout patterns)
@@ -123,10 +127,11 @@ Before buying, the app checks multiple filters:
 - **Example:** Even if screener says BUY, Execution Guard blocks if fees eat the edge
 
 **F) ISK Optimization** 🇸🇪 (For Swedish Investors)
-- **FX-Växlingsvakt:** Adds 0.5% FX cost for foreign stocks (0.25% buy + 0.25% sell)
+- **FX-Växlingsvakt:** 3-tier FX costs: Sverige 0%, Norden 0.25%, Övriga 0.5%
 - **Tracking Error Filter:** Product health scoring (0-100) - warns for Bull/Bear daily reset >3 days
-- **Courtage-trappan:** Blocks positions where MINI courtage (39 SEK) eats >0.5% of position
-- **Example:** ERO.TO with 0.8% edge → -1.26% after ISK costs → 🔴 AVSTÅ
+- **Courtage-trappan (FIXED):** Correct Avanza costs - MINI: 1 SEK min, SMALL: 7 SEK, MEDIUM: 15 SEK
+- **Minimum Position:** Blocks positions <50 SEK where courtage would eat >4% of capital
+- **Example:** 10 SEK position with 1 SEK courtage = 20% round-trip cost → 🔴 BLOCKERAD
 
 **Casino analogy:** Don't play when the dealer is cheating (costs too high), when the casino is on fire (market crisis), or when the exchange rate is terrible (FX risk).
 
@@ -233,10 +238,14 @@ Quarterly, you run 10,000 simulated futures based on your actual trading stats:
 
 ### Daily (2 minutes)
 ```bash
-python daglig_analys.py
+python dashboard.py
 ```
-**Shows:** Buy signals today, top opportunities, market regime
-**Action:** Buy if GREEN signals exist in HEALTHY market
+**Shows:** 
+- **🚀 INVESTERBARA:** Signals with positive net edge after ALL costs (courtage, FX, spread)
+- **📋 BEVAKNINGSLISTA:** Technical signals blocked by costs (monitor for better entry)
+- Market regime, All-Weather opportunities, systemic risk
+
+**Action:** Buy only from INVESTERBARA list - these are mathematically profitable after fees
 
 ---
 
@@ -274,32 +283,47 @@ python kvartalsvis_analys.py
 
 **Monday morning:**
 ```bash
-python daglig_analys.py
+python dashboard.py
 ```
 
 **Output:**
 ```
-🟢 AAPL - Bullish Flag
-   Edge: +0.84%
-   V-Kelly Position: 2.5%
-   Signal: BUY
-   🛡️ EXECUTION GUARD: 🔴 EXTREME
-      • ⚠️ FX-VARNING: Edge efter valutaväxling (0.34%) är låg
-      🇸🇪 ISK: Utländsk aktie | Net edge: 0.34%
+✅ 2 INVESTERBARA | 📋 3 PÅ BEVAKNING
 
-🟢 MSFT - Ascending Triangle
-   Edge: +1.2%
-   V-Kelly Position: 3.0%
-   Signal: BUY
-   🛡️ EXECUTION GUARD: 🟢 LOW (cost 0.62%)
+🚀 INVESTERBARA (Matematiskt lönsamma efter alla avgifter)
+
+1. MSFT (Microsoft)
+   Signal: GREEN
+   Teknisk Edge: +1.20%
+   Position: 3.0%
+   🛡️ EXECUTION GUARD: 🟢 LOW
+      • Total kostnad: 0.62%
+      • Net Edge efter execution: +0.58%
+      🇸🇪 ISK: Utländsk aktie | Net edge: 0.58%
+   Entry: ENTER
+
+2. BILI-A.ST (Bilia)
+   Signal: GREEN
+   Teknisk Edge: +2.50%
+   Position: 1.2%
+   🛡️ EXECUTION GUARD: 🟢 LOW
+      • Total kostnad: 0.38%
+      • Net Edge efter execution: +2.12%
+      🇸🇪 ISK: Svensk aktie | Net edge: 2.12%
+   Entry: ENTER
+
+📋 BEVAKNINGSLISTA (Teknisk signal men blockerad av kostnader)
+
+• AAPL       | GREEN  | Teknisk: +0.8% | ⚠️ FX-VARNING: Edge efter valutaväxling (0.30%) för låg
+• NVDA       | YELLOW | Teknisk: +0.5% | Position för liten (10 SEK) - courtage 20%
+• TGT        | YELLOW | Teknisk: +1.2% | ⚠️ FX + courtage äter 0.9% av 1.2% edge
 
 MARKET REGIME: HEALTHY
 🛡️ Safe Haven Activity: 5% (LOW)
 🚨 Systemrisk: 35/100 (LOW)
-→ 2 buy signals today
 ```
 
-**You do:** Buy AAPL (2.5% of portfolio) and MSFT (3.0% of portfolio)
+**You do:** Buy ONLY from INVESTERBARA (MSFT 3.0%, BILI-A.ST 1.2%). Ignore BEVAKNINGSLISTA.
 
 ---
 
@@ -446,16 +470,20 @@ Net edge: -1.26% ❌
 Recommendation: 🔴 AVSTÅ
 ```
 
-### 2. 🚫 COURTAGE-FÄLLAN (Minimum Fee Trap)
-**Problem:** Small positions where 39 SEK minimum courtage eats >0.5%  
-**Cost:** 39 SEK × 2 = 78 SEK roundtrip  
+### 2. 🚫 COURTAGE-FÄLLAN (Minimum Fee Trap) - FIXED ✅
+**Problem:** Small positions where minimum courtage eats the edge
+**Correct Costs (2024):**
+- MINI: 1 SEK min
+- SMALL: 7 SEK min  
+- MEDIUM: 15 SEK min
+**Automatic Protection:** System blocks positions <50 SEK (courtage >4% round-trip)
 **Example:**
 ```
-2000 SEK position
-Courtage: 78 SEK (3.9%)
-Edge: 1.2%
-Net edge: -3.2% ❌
-Solution: Increase to ≥7800 SEK or skip trade
+CRISIS regime: V-Kelly says 10 SEK position
+Courtage: 1 SEK × 2 = 2 SEK roundtrip (20%)
+Edge: 0.8%
+Net edge: -19.2% ❌
+→ Automatically BLOCKED by minimum position filter
 ```
 
 ### 3. 🚫 URHOLKNINGSFÄLLAN (Daily Reset Trap)
@@ -470,10 +498,12 @@ Recommendation: Switch to physical ETF (GZUR)
 ```
 
 ### ISK Best Practices
-✅ **Swedish stocks** (no FX costs)  
-✅ **Positions ≥7800 SEK** (efficient courtage)  
+✅ **Swedish stocks** (0% FX costs - prioritize these!)  
+✅ **Nordic neighbors** (Norge/Finland/Danmark: 0.25% FX cost vs 0.5% for USA)
+✅ **Positions ≥50 SEK** (automatic minimum - system protects you)
+✅ **MINI courtage** (1 SEK min) - efficient for positions >100 SEK
 ✅ **Physical ETFs** for long-term (low holding costs)  
-✅ **Edge after ISK >1.0%** (sustainable strategy)  
+✅ **Only trade INVESTERBARA** - ignore BEVAKNINGSLISTA (costs too high)
 
 **See `ISK_OPTIMIZATION.md` for full details.**
 

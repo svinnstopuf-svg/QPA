@@ -60,7 +60,10 @@ def main():
     # ========================================================================
     print_section("DAGENS ACTION ITEMS", "🎯")
     
-    actionable = [r for r in results if r.entry_recommendation.startswith("ENTER")]
+    # Include all GREEN/YELLOW signals, regardless of ENTER or BLOCK status
+    # This ensures technically strong signals blocked by costs appear in watchlist
+    from instrument_screener_v22 import Signal
+    actionable = [r for r in results if r.signal in [Signal.GREEN, Signal.YELLOW]]
     
     # Prioritize All-Weather during CRISIS
     if results and results[0].regime_multiplier <= 0.2:  # CRISIS
@@ -76,6 +79,12 @@ def main():
     watchlist = []   # Technical signal but blocked by execution costs
     
     for r in actionable:
+        # Check if signal was already blocked by screener (e.g., position too small)
+        if "BLOCK" in r.entry_recommendation or r.final_allocation == 0.0:
+            # Skip Execution Guard - already blocked, add directly to watchlist
+            watchlist.append(r)
+            continue
+        
         # EXECUTION GUARD - Check execution costs (with ISK optimization)
         exec_result = execution_guard.analyze(
             ticker=r.ticker,
@@ -182,12 +191,20 @@ def main():
         print("="*80 + "\n")
         
         for r in watchlist:
-            # Get primary blocking reason from exec_result
-            exec_result = r.exec_result
-            if "AVSTÅ" in exec_result.avanza_recommendation:
-                block_reason = exec_result.warnings[0] if exec_result.warnings else "Courtage-spärr"
+            # Get primary blocking reason
+            # Check if signal was blocked before Execution Guard (by screener)
+            if "BLOCK" in r.entry_recommendation:
+                # Extract reason from entry_recommendation (e.g., "BLOCK - Position too small for viable courtage")
+                block_reason = r.entry_recommendation.replace("BLOCK - ", "")
+            elif hasattr(r, 'exec_result'):
+                # Blocked by Execution Guard
+                exec_result = r.exec_result
+                if "AVSTÅ" in exec_result.avanza_recommendation:
+                    block_reason = exec_result.warnings[0] if exec_result.warnings else "Courtage-spärr"
+                else:
+                    block_reason = "Negativ net edge efter kostnader"
             else:
-                block_reason = "Negativ net edge efter kostnader"
+                block_reason = "Blockerad av filter"
             
             print(f"• {r.ticker:10s} | {r.signal.name:6s} | Teknisk: {r.net_edge_after_costs:+.1f}% | {block_reason}")
         
