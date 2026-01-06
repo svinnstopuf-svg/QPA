@@ -6,6 +6,7 @@ Ensures theoretical edge actually lands in your account by accounting for:
 2. Transaction fees - Avanza courtage
 3. Spreads - Bid-ask spread costs
 4. Liquidity - Slippage risk
+5. ISK-specific costs - FX conversion, product health, courtage tiers
 
 Philosophy: "Don't let execution costs eat your edge"
 """
@@ -15,6 +16,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Optional, Dict
 from enum import Enum
+from .isk_optimizer import ISKOptimizer, ISKOptimizationResult, CourtageTier
 
 
 class AvanzaAccountType(Enum):
@@ -64,6 +66,7 @@ class ExecutionGuardResult:
     fx_risk: Optional[FXRiskAnalysis]
     fee_analysis: FeeAnalysis
     liquidity: LiquidityAnalysis
+    isk_analysis: Optional[ISKOptimizationResult]  # ISK-specific analysis
     total_execution_cost_pct: float  # All costs combined
     execution_risk_level: str  # LOW, MEDIUM, HIGH, EXTREME
     warnings: list  # List of warning messages
@@ -93,17 +96,32 @@ class ExecutionGuard:
     def __init__(
         self,
         account_type: AvanzaAccountType = AvanzaAccountType.SMALL,
-        portfolio_value_sek: float = 100000
+        portfolio_value_sek: float = 100000,
+        use_isk_optimizer: bool = True,
+        isk_courtage_tier: CourtageTier = CourtageTier.MINI
     ):
         """
         Initialize execution guard.
         
         Args:
-            account_type: Avanza account type (START/SMALL/MEDIUM)
+            account_type: Avanza account type (START/SMALL/MEDIUM) - legacy
             portfolio_value_sek: Total portfolio value in SEK
+            use_isk_optimizer: Enable ISK-specific optimization
+            isk_courtage_tier: ISK courtage tier (default: MINI)
         """
         self.account_type = account_type
         self.portfolio_value_sek = portfolio_value_sek
+        self.use_isk_optimizer = use_isk_optimizer
+        
+        # Initialize ISK optimizer
+        if use_isk_optimizer:
+            self.isk_optimizer = ISKOptimizer(
+                courtage_tier=isk_courtage_tier,
+                portfolio_size=portfolio_value_sek,
+                min_edge_threshold=0.010
+            )
+        else:
+            self.isk_optimizer = None
     
     def analyze_fx_risk(self, ticker: str) -> Optional[FXRiskAnalysis]:
         """
@@ -354,7 +372,9 @@ class ExecutionGuard:
         ticker: str,
         category: str,
         position_size_pct: float,
-        net_edge_pct: float
+        net_edge_pct: float,
+        product_name: str = "",
+        holding_period_days: int = 5
     ) -> ExecutionGuardResult:
         """
         Complete execution guard analysis.
@@ -364,6 +384,8 @@ class ExecutionGuard:
             category: Instrument category
             position_size_pct: Position size as % of portfolio
             net_edge_pct: Expected net edge %
+            product_name: Product name for ISK classification
+            holding_period_days: Expected holding period
             
         Returns:
             ExecutionGuardResult with all analyses
@@ -378,10 +400,26 @@ class ExecutionGuard:
         position_value_sek = (position_size_pct / 100) * self.portfolio_value_sek
         liquidity = self.analyze_liquidity(ticker, position_value_sek)
         
+        # ISK-specific analysis
+        isk_analysis = None
+        if self.use_isk_optimizer and self.isk_optimizer:
+            isk_analysis = self.isk_optimizer.optimize(
+                ticker=ticker,
+                expected_edge=net_edge_pct / 100,  # Convert to decimal
+                position_size_sek=position_value_sek,
+                holding_period_days=holding_period_days,
+                product_name=product_name
+            )
+        
         # Total execution cost
-        total_execution_cost_pct = fee_analysis.total_cost_pct + liquidity.estimated_slippage_pct
-        if fx_risk and fx_risk.is_expensive:
-            total_execution_cost_pct += 1.0  # Add FX risk premium
+        if isk_analysis:
+            # Use ISK optimizer's total cost
+            total_execution_cost_pct = isk_analysis.total_isk_cost_pct * 100  # Convert to %
+        else:
+            # Legacy calculation
+            total_execution_cost_pct = fee_analysis.total_cost_pct + liquidity.estimated_slippage_pct
+            if fx_risk and fx_risk.is_expensive:
+                total_execution_cost_pct += 1.0  # Add FX risk premium
         
         # Collect warnings
         warnings = []
@@ -391,6 +429,15 @@ class ExecutionGuard:
             warnings.append(fee_analysis.message)
         if liquidity.has_liquidity_risk:
             warnings.append(liquidity.message)
+        
+        # Add ISK-specific warnings
+        if isk_analysis:
+            if isk_analysis.currency_warning:
+                warnings.append(isk_analysis.currency_warning)
+            if isk_analysis.courtage_warning:
+                warnings.append(isk_analysis.courtage_warning)
+            if isk_analysis.daily_reset_warning:
+                warnings.append(isk_analysis.daily_reset_warning)
         
         # Determine overall execution risk level
         if len(warnings) >= 3 or (fx_risk and fx_risk.risk_level == "EXTREME"):
@@ -404,11 +451,14 @@ class ExecutionGuard:
         
         # Get Avanza recommendation
         avanza_rec = self.get_avanza_recommendation(ticker, category, fx_risk)
+        if isk_analysis:
+            avanza_rec = isk_analysis.recommendation
         
         return ExecutionGuardResult(
             fx_risk=fx_risk,
             fee_analysis=fee_analysis,
             liquidity=liquidity,
+            isk_analysis=isk_analysis,
             total_execution_cost_pct=total_execution_cost_pct,
             execution_risk_level=execution_risk_level,
             warnings=warnings,

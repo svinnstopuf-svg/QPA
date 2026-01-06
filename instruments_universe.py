@@ -264,7 +264,7 @@ US_INDUSTRIAL = [
     ("UNP", "Union Pacific", "stock_us_industrial"),
 ]
 
-# AMERIKANSKA ENERGIBOLAG
+# AMERIKANSKA ENERGY & MINING
 US_ENERGY = [
     ("XOM", "ExxonMobil", "stock_us_energy"),
     ("CVX", "Chevron", "stock_us_energy"),
@@ -278,6 +278,9 @@ US_ENERGY = [
     ("HAL", "Halliburton", "stock_us_energy"),
     ("BKR", "Baker Hughes", "stock_us_energy"),
     ("KMI", "Kinder Morgan", "stock_us_energy"),
+    ("AA", "Alcoa", "stock_us_energy"),  # Aluminum/metals
+    ("KNT.TO", "K92 Mining", "stock_us_energy"),  # Canadian gold/copper mining
+    ("ERO.TO", "Ero Copper", "stock_us_energy"),  # Canadian copper mining
 ]
 
 # STORA EUROPEISKA BOLAG (endast de med US ADR eller brett tillgängliga)

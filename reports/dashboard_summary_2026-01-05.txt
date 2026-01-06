@@ -3,7 +3,7 @@ TRADING DASHBOARD - 2026-01-05
 ============================================================
 
 ACTION ITEMS:
-  Köpsignaler: 2
+  Köpsignaler: 1
   Regime: 🔴 CRISIS
   
 MARKNADSLÄGE:
@@ -11,7 +11,7 @@ MARKNADSLÄGE:
   RED%: 94%
   
 TOP OPPORTUNITY:
-  Texas Instruments
+  Communication Services
   
 VARNINGAR:
   2 aktiva
