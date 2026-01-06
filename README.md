@@ -5,6 +5,7 @@
 This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, minimize costs, and only play when they have an edge. This system does the same for stock trading.
 
 **Latest additions:**
+- 🇸🇪 **ISK Optimization** - Swedish ISK-specific cost protection (FX, courtage, product health)
 - 🛡️ **Execution Cost Guard** - Prevents trades where fees/slippage eat your edge
 - 🌪️ **All-Weather Crisis Mode** - 59 defensive instruments for market crashes
 - 📊 **Macro Indicators** - Professional risk detection (yield curve, credit spreads, safe haven watch)
@@ -120,6 +121,12 @@ Before buying, the app checks multiple filters:
 - **Liquidity Guard:** Warns if your position >2% of daily volume (slippage risk)
 - **Product Mapper:** Recommends best Avanza product (avoid daily reset ETFs, prefer low-fee options)
 - **Example:** Even if screener says BUY, Execution Guard blocks if fees eat the edge
+
+**F) ISK Optimization** 🇸🇪 (For Swedish Investors)
+- **FX-Växlingsvakt:** Adds 0.5% FX cost for foreign stocks (0.25% buy + 0.25% sell)
+- **Tracking Error Filter:** Product health scoring (0-100) - warns for Bull/Bear daily reset >3 days
+- **Courtage-trappan:** Blocks positions where MINI courtage (39 SEK) eats >0.5% of position
+- **Example:** ERO.TO with 0.8% edge → -1.26% after ISK costs → 🔴 AVSTÅ
 
 **Casino analogy:** Don't play when the dealer is cheating (costs too high), when the casino is on fire (market crisis), or when the exchange rate is terrible (FX risk).
 
@@ -276,7 +283,9 @@ python daglig_analys.py
    Edge: +0.84%
    V-Kelly Position: 2.5%
    Signal: BUY
-   🛡️ EXECUTION GUARD: 🟢 LOW (cost 0.56%)
+   🛡️ EXECUTION GUARD: 🔴 EXTREME
+      • ⚠️ FX-VARNING: Edge efter valutaväxling (0.34%) är låg
+      🇸🇪 ISK: Utländsk aktie | Net edge: 0.34%
 
 🟢 MSFT - Ascending Triangle
    Edge: +1.2%
@@ -398,6 +407,7 @@ RECOMMENDATION:
 - `ENKEL_GUIDE.md` - Quick start
 - `VERSION_2.2_FEATURES.md` - Technical details
 - `POSITION_TRACKING.md` - How to track positions
+- `ISK_OPTIMIZATION.md` - ISK-specific cost optimization (Swedish investors) 🆕 🇸🇪
 - `EXECUTION_COST_GUARD.md` - Minimize hidden costs (FX, fees, spreads, liquidity) 🆕
 - `ALL_WEATHER_CRISIS_MODE.md` - 59 defensive instruments for crashes 🆕
 - `MACRO_INDICATORS.md` - Professional risk detection 🆕
@@ -416,6 +426,56 @@ pip install -r requirements.txt
 ```
 
 **Note:** The app automatically fetches real market data from Yahoo Finance. No API key required.
+
+---
+
+## ISK Optimization (For Swedish Investors) 🇸🇪
+
+If you trade on an **Investeringssparkonto (ISK)** through Avanza, the system protects you from three common ISK traps:
+
+### 1. 🚫 FX-FÄLLAN (Currency Exchange Trap)
+**Problem:** Buying foreign stocks when edge < 1.0%  
+**Cost:** 0.5% FX roundtrip (0.25% buy + 0.25% sell)  
+**Example:**
+```
+ERO.TO (Canadian mining stock)
+Edge before ISK: 0.8%
+FX cost: 0.5%
+Courtage: 1.56%
+Net edge: -1.26% ❌
+Recommendation: 🔴 AVSTÅ
+```
+
+### 2. 🚫 COURTAGE-FÄLLAN (Minimum Fee Trap)
+**Problem:** Small positions where 39 SEK minimum courtage eats >0.5%  
+**Cost:** 39 SEK × 2 = 78 SEK roundtrip  
+**Example:**
+```
+2000 SEK position
+Courtage: 78 SEK (3.9%)
+Edge: 1.2%
+Net edge: -3.2% ❌
+Solution: Increase to ≥7800 SEK or skip trade
+```
+
+### 3. 🚫 URHOLKNINGSFÄLLAN (Daily Reset Trap)
+**Problem:** Bull/Bear products with daily rebalancing held >3 days  
+**Cost:** ~0.1-0.3% daily decay in sideways markets  
+**Example:**
+```
+Bull Guld X2 (10 days holding)
+Product Health: 20/100
+Daily reset warning: ⚠️ Urholkningsrisk
+Recommendation: Switch to physical ETF (GZUR)
+```
+
+### ISK Best Practices
+✅ **Swedish stocks** (no FX costs)  
+✅ **Positions ≥7800 SEK** (efficient courtage)  
+✅ **Physical ETFs** for long-term (low holding costs)  
+✅ **Edge after ISK >1.0%** (sustainable strategy)  
+
+**See `ISK_OPTIMIZATION.md` for full details.**
 
 ---
 
