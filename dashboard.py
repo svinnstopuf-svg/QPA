@@ -12,6 +12,7 @@ from src.risk.all_weather_config import (
 )
 from src.analysis.macro_indicators import MacroIndicators
 from src.risk.execution_guard import ExecutionGuard, AvanzaAccountType
+from src.risk.isk_optimizer import CourtageTier
 from datetime import datetime
 import os
 
@@ -29,10 +30,12 @@ def main():
     print("🎯 "*20)
     print(f"\n📅 Datum: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     
-    # Initialize Execution Guard
+    # Initialize Execution Guard with ISK optimization
     execution_guard = ExecutionGuard(
-        account_type=AvanzaAccountType.SMALL,  # Change to your account type
-        portfolio_value_sek=100000  # Change to your portfolio value
+        account_type=AvanzaAccountType.SMALL,  # Legacy parameter
+        portfolio_value_sek=100000,  # Change to your portfolio value
+        use_isk_optimizer=True,  # Enable ISK-specific cost analysis
+        isk_courtage_tier=CourtageTier.MINI  # Your Avanza courtage class
     )
     
     # Run screening
@@ -81,27 +84,43 @@ def main():
             elif is_defensive_sector(r.ticker):
                 print(f"   Kategori: Defensive Sector (0.5x allocation in CRISIS)")
             
-            # EXECUTION GUARD - Check execution costs
+            # EXECUTION GUARD - Check execution costs (with ISK optimization)
             exec_result = execution_guard.analyze(
                 ticker=r.ticker,
                 category=r.category if hasattr(r, 'category') else 'default',
                 position_size_pct=r.final_allocation,
-                net_edge_pct=r.net_edge_after_costs
+                net_edge_pct=r.net_edge_after_costs,
+                product_name=r.name,  # For ISK product classification
+                holding_period_days=5  # Default 5-day holding period
             )
             
-            # Display execution warnings
+            # Display execution warnings (including ISK-specific)
             if exec_result.execution_risk_level in ["HIGH", "EXTREME"]:
                 print(f"   🛡️ EXECUTION GUARD: 🔴 {exec_result.execution_risk_level}")
                 for warning in exec_result.warnings:
                     print(f"      • {warning}")
                 print(f"      • Total kostnad: {exec_result.total_execution_cost_pct:.2f}%")
                 print(f"      • Rekommendation: {exec_result.avanza_recommendation}")
+                # ISK-specific details
+                if exec_result.isk_analysis:
+                    isk = exec_result.isk_analysis
+                    print(f"      🇸🇪 ISK: {isk.product_type.value} (Health: {isk.product_health_score}/100)")
+                    print(f"         Net edge efter ISK: {isk.net_edge_after_isk:.2%}")
             elif exec_result.execution_risk_level == "MEDIUM":
                 print(f"   🛡️ EXECUTION GUARD: 🟡 {exec_result.execution_risk_level}")
                 if exec_result.warnings:
                     print(f"      • {exec_result.warnings[0]}")
+                # ISK-specific details
+                if exec_result.isk_analysis:
+                    isk = exec_result.isk_analysis
+                    if isk.is_foreign:
+                        print(f"      🇸🇪 ISK: FX-kostnad {isk.fx_conversion_cost_pct:.2%}")
             else:
                 print(f"   🛡️ EXECUTION GUARD: 🟢 {exec_result.execution_risk_level} (kostnad {exec_result.total_execution_cost_pct:.2f}%)")
+                # ISK-specific details for GREEN signals
+                if exec_result.isk_analysis:
+                    isk = exec_result.isk_analysis
+                    print(f"      🇸🇪 ISK: {isk.product_type.value} | Net edge: {isk.net_edge_after_isk:.2%}")
             
             print(f"   Entry: {r.entry_recommendation}")
             print()
@@ -220,12 +239,14 @@ def main():
             print(f"   Allokering: {r.final_allocation:.2f}%")
             print(f"   Volatilitet: {r.volatility_regime}")
             
-            # Execution Guard summary
+            # Execution Guard summary (with ISK optimization)
             exec_result = execution_guard.analyze(
                 ticker=r.ticker,
                 category=r.category if hasattr(r, 'category') else 'default',
                 position_size_pct=r.final_allocation,
-                net_edge_pct=r.net_edge_after_costs
+                net_edge_pct=r.net_edge_after_costs,
+                product_name=r.name,
+                holding_period_days=5
             )
             print(f"   Execution Risk: {exec_result.execution_risk_level}")
             if exec_result.warnings:
