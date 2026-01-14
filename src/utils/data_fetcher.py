@@ -21,7 +21,8 @@ class DataFetcher:
         self,
         ticker: str,
         period: str = "2y",
-        interval: str = "1d"
+        interval: str = "1d",
+        end_date: Optional[datetime] = None
     ) -> Optional[MarketData]:
         """
         Hämtar aktiedata från Yahoo Finance.
@@ -30,6 +31,7 @@ class DataFetcher:
             ticker: Aktiesymbol (t.ex. "AAPL", "MSFT", "^GSPC" för S&P 500)
             period: Tidsperiod att hämta ("1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max")
             interval: Dataintervall ("1d", "1wk", "1mo")
+            end_date: Optional end date for point-in-time analysis
             
         Returns:
             MarketData objekt eller None om det misslyckas
@@ -37,7 +39,25 @@ class DataFetcher:
         try:
             print(f"Hämtar data för {ticker}...")
             stock = yf.Ticker(ticker)
-            df = stock.history(period=period, interval=interval)
+            
+            if end_date:
+                # Point-in-time: use start/end dates instead of period
+                # Calculate start date based on period
+                if period == "15y":
+                    start_date = end_date - timedelta(days=15*365)
+                elif period == "10y":
+                    start_date = end_date - timedelta(days=10*365)
+                elif period == "5y":
+                    start_date = end_date - timedelta(days=5*365)
+                elif period == "2y":
+                    start_date = end_date - timedelta(days=2*365)
+                else:
+                    start_date = end_date - timedelta(days=2*365)  # default 2y
+                
+                # Add 1 day since yfinance end_date is exclusive
+                df = stock.history(start=start_date, end=end_date + timedelta(days=1), interval=interval)
+            else:
+                df = stock.history(period=period, interval=interval)
             
             if df.empty:
                 print(f"Ingen data hittades för {ticker}")

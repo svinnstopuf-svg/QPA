@@ -261,7 +261,8 @@ class ExecutionGuard:
         self,
         ticker: str,
         position_value_sek: float,
-        avg_price: float = 100
+        avg_price: float = 100,
+        volatility_regime: str = "STABLE"
     ) -> LiquidityAnalysis:
         """
         Analyze liquidity and slippage risk.
@@ -270,6 +271,7 @@ class ExecutionGuard:
             ticker: Instrument ticker
             position_value_sek: Position size in SEK
             avg_price: Average price for shares calculation
+            volatility_regime: Volatility regime (STABLE, EXPANDING, EXPLOSIVE, CONTRACTING)
             
         Returns:
             LiquidityAnalysis
@@ -297,23 +299,40 @@ class ExecutionGuard:
             # Position vs daily volume
             position_vs_volume_pct = (shares_to_buy / avg_volume) * 100 if avg_volume > 0 else 0
             
-            # Estimate slippage based on position size
+            # Base slippage from position size
             if position_vs_volume_pct > 5:
-                estimated_slippage_pct = 1.0  # Very high slippage
+                base_slippage_pct = 1.0  # Very high slippage
                 has_liquidity_risk = True
                 message = f"🚨 LIKVIDITETSRISK: Position är {position_vs_volume_pct:.1f}% av volymen!"
             elif position_vs_volume_pct > 2:
-                estimated_slippage_pct = 0.5
+                base_slippage_pct = 0.5
                 has_liquidity_risk = True
                 message = f"⚠️ LÅG LIKVIDITET: Position är {position_vs_volume_pct:.1f}% av volymen"
             elif position_vs_volume_pct > 1:
-                estimated_slippage_pct = 0.2
+                base_slippage_pct = 0.2
                 has_liquidity_risk = False
                 message = f"Måttlig likviditet ({position_vs_volume_pct:.1f}% av volym)"
             else:
-                estimated_slippage_pct = 0.05
+                base_slippage_pct = 0.05
                 has_liquidity_risk = False
                 message = f"✅ God likviditet ({position_vs_volume_pct:.2f}% av volym)"
+            
+            # UPPDATERING: Volatility-aware slippage adjustment
+            # I volatila marknader rör sig priset snabbare än du hinner klicka
+            volatility_multiplier = {
+                'CONTRACTING': 1.0,  # Normal slippage
+                'STABLE': 1.0,       # Normal slippage
+                'EXPANDING': 2.0,    # Dubbel slippage
+                'EXPLOSIVE': 4.0,    # 4x slippage
+                'IMPROVING': 1.5,
+                'DEGRADING': 2.5
+            }.get(volatility_regime, 1.0)
+            
+            estimated_slippage_pct = base_slippage_pct * volatility_multiplier
+            
+            # Uppdatera meddelande om volatility ökar slippage
+            if volatility_multiplier > 1.0:
+                message += f" (×{volatility_multiplier:.1f} för {volatility_regime} volatilitet)"
             
             return LiquidityAnalysis(
                 avg_volume=avg_volume,

@@ -93,7 +93,8 @@ class InstrumentScreenerV22:
         self,
         min_data_years: float = 5.0,
         min_avg_volume: float = 50000,
-        enable_v22_filters: bool = True
+        enable_v22_filters: bool = True,
+        analysis_date = None
     ):
         """
         Initialize unified screener.
@@ -102,10 +103,12 @@ class InstrumentScreenerV22:
             min_data_years: Minst X års historik
             min_avg_volume: Minsta snittvolym per dag
             enable_v22_filters: Enable V2.2 filters (volatility + cost)
+            analysis_date: Optional date for point-in-time analysis (datetime object)
         """
         self.min_data_years = min_data_years
         self.min_avg_volume = min_avg_volume
         self.enable_v22_filters = enable_v22_filters
+        self.analysis_date = analysis_date
         
         # Core components (V2.0)
         self.data_fetcher = DataFetcher()
@@ -183,7 +186,17 @@ class InstrumentScreenerV22:
         """Analyze single instrument with V2.2 workflow."""
         
         # 1. Fetch data
-        market_data = self.data_fetcher.fetch_stock_data(ticker, period="15y")
+        if self.analysis_date:
+            # Point-in-time: endast data fram till analysis_date
+            market_data = self.data_fetcher.fetch_stock_data(
+                ticker, 
+                period="15y",
+                end_date=self.analysis_date
+            )
+        else:
+            # Normal: all available data
+            market_data = self.data_fetcher.fetch_stock_data(ticker, period="15y")
+        
         if market_data is None:
             return None
         
