@@ -5,6 +5,11 @@
 This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, minimize costs, and only play when they have an edge. This system does the same for stock trading.
 
 **Latest additions:**
+- 🕙 **Historical Backfill System** - Point-in-time analysis for strategy validation (30+ days, 800 instruments)
+- 📈 **Weekly Analyzer Auto-Detection** - Automatically reads all available dashboard data
+- 🔻 **Momentum Crash Protection** - Full penalty range (-15 to +15) catches falling stocks
+- 🌪️ **Volatility-Aware Slippage** - Dynamic slippage (EXPLOSIVE: 4x, EXPANDING: 2x)
+- 🎯 **Higher Consistency Thresholds** - BUY requires 5 days, STRONG BUY requires 10 days (of 30)
 - 🎯 **800-Ticker Universe** - Expanded from 250 to 800 instruments (Sweden, Nordic neighbors, US, All-Weather)
 - 💰 **Fixed ISK Courtage** - Correct Avanza costs (MINI: 1 SEK, SMALL: 7 SEK, MEDIUM: 15 SEK)
 - 📊 **Minimum Position Filter** - Blocks trades <50 SEK where courtage makes them unprofitable
@@ -234,7 +239,7 @@ Quarterly, you run 10,000 simulated futures based on your actual trading stats:
 
 ---
 
-## The Three Commands You Use
+## The Four Commands You Use
 
 ### Daily (2 minutes)
 ```bash
@@ -254,13 +259,38 @@ python dashboard.py
 python veckovis_analys.py
 ```
 **Shows:** 
-- What changed since last week (new GREEN, new RED)
+- **Top Conviction Trades** ranked by consistency + quality + momentum (30 days)
+- **Momentum crash protection** - catches stocks degrading rapidly
+- **Risk analysis** - Monte Carlo stop-out probabilities
+- **Re-entry triggers** - exact conditions needed for AVOID → BUY
 - Exit checks for your positions (profit-targeting)
 
 **Action:** 
-- Buy new GREEN signals
+- Buy instruments with Conviction Score ≥50 AND days_investable ≥5
+- STRONG BUY requires Score ≥70 AND days_investable ≥10
 - Sell RED signals
 - Take profits at +2σ / +3σ
+
+---
+
+### Historical Backfill (1-2 hours, initial setup)
+```bash
+# Full month of data (30 trading days)
+python historical_backfill.py --period "senaste månaden"
+
+# Quick test (100 instruments instead of 800)
+python historical_backfill.py --days 7 --quick
+```
+**Shows:**
+- Point-in-time analysis for each trading day
+- Synthetic consistency scores over full period
+- Regime distribution (how many days in CRISIS vs HEALTHY)
+- Cost-adjusted reality (execution guard on historical data)
+
+**Action:**
+- Run once to generate 30 days of synthetic history
+- Then run dashboard daily to add new data
+- Weekly analyzer automatically uses all available data
 
 ---
 
@@ -431,6 +461,7 @@ RECOMMENDATION:
 - `ENKEL_GUIDE.md` - Quick start
 - `VERSION_2.2_FEATURES.md` - Technical details
 - `POSITION_TRACKING.md` - How to track positions
+- `HISTORICAL_BACKFILL.md` - Point-in-time analysis system 🆕
 - `ISK_OPTIMIZATION.md` - ISK-specific cost optimization (Swedish investors) 🆕 🇸🇪
 - `EXECUTION_COST_GUARD.md` - Minimize hidden costs (FX, fees, spreads, liquidity) 🆕
 - `ALL_WEATHER_CRISIS_MODE.md` - 59 defensive instruments for crashes 🆕
