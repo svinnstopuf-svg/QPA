@@ -77,7 +77,10 @@ class PermutationTester:
         
         for _ in range(self.n_permutations):
             # Randomly select pattern_size returns from all market returns
-            if len(all_market_returns) >= pattern_size:
+            if len(all_market_returns) == 0:
+                # No data available, skip
+                continue
+            elif len(all_market_returns) >= pattern_size:
                 random_indices = rng.choice(len(all_market_returns), size=pattern_size, replace=False)
                 random_returns = all_market_returns[random_indices]
                 random_means.append(np.mean(random_returns))

@@ -406,14 +406,27 @@ class WeeklyAnalyzer:
                 
                 t = tracking[ticker]
                 t['days_seen'] += 1
-                t['days_on_watchlist'] += 1
+                
+                # 100K SYSTEMATIC OVERLAY: Count 1500-floor positions as investable
+                # If entry_recommendation starts with "ENTER", it's a valid position
+                # (includes "ENTER - 1500 floor" from systematic overlay)
+                entry_rec = instrument.get('entry_recommendation', '')
+                if entry_rec.startswith('ENTER'):
+                    t['days_investable'] += 1
+                    # Use actual net edge after execution and position
+                    t['net_edges'].append(instrument.get('net_edge_after_execution', 0.0))
+                    t['positions'].append(instrument.get('position', 0.0))
+                    t['execution_risks'].append(instrument.get('execution_risk', 'UNKNOWN'))
+                else:
+                    t['days_on_watchlist'] += 1
+                    t['net_edges'].append(0.0)  # Blocked watchlist has no net edge
+                    t['positions'].append(0.0)
+                    t['execution_risks'].append('BLOCKED')
+                
                 t['scores'].append(instrument['score'])
-                t['net_edges'].append(0.0)  # Watchlist has no net edge
                 t['technical_edges'].append(instrument['technical_edge'])
                 t['dates'].append(date)
                 t['signals'].append(instrument['signal'])
-                t['execution_risks'].append('BLOCKED')
-                t['positions'].append(0.0)
         
         # Convert to InstrumentTracking objects
         result = {}

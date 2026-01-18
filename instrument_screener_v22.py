@@ -506,15 +506,18 @@ class InstrumentScreenerV22:
             result.regime_multiplier = actual_multiplier
             result.final_allocation *= actual_multiplier
             
-            # MINIMUM POSITION SIZE: Enforce minimum to make courtage viable
-            # For 100k SEK portfolio with MINI courtage (1 SEK), need at least 0.05% (50 SEK)
-            # to keep courtage below 4% (2 SEK roundtrip / 50 SEK = 4%)
-            MIN_POSITION_PCT = 0.05  # 0.05% = 50 SEK on 100k portfolio
+            # 100K SYSTEMATIC OVERLAY: 1500 SEK minimum position floor
+            # 1500 SEK (1.5%) courtage: 2 SEK roundtrip = 0.13% (acceptable)
+            # This enables systematic trading even in CRISIS with cost-efficient positions
+            MIN_POSITION_PCT = 1.5  # 1.5% = 1500 SEK on 100k portfolio
             
             if result.final_allocation > 0 and result.final_allocation < MIN_POSITION_PCT:
-                # Position too small for courtage - block it
-                result.final_allocation = 0.0
-                result.entry_recommendation = "BLOCK - Position too small for viable courtage"
+                # V-Kelly suggests smaller position, but enforce 1500 SEK floor for cost efficiency
+                result.final_allocation = MIN_POSITION_PCT
+                result.entry_recommendation = result.entry_recommendation.replace("BLOCK", "ENTER - 1500 floor")
+                
+                # In CRISIS: keep at floor (minimal exposure)
+                # In HEALTHY: V-Kelly can scale above floor naturally
     
     def _signal_to_text(self, signal: Signal) -> str:
         """Convert Signal enum to text."""

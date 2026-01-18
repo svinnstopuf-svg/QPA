@@ -21,7 +21,8 @@ from src.risk.all_weather_config import (
 from src.analysis.macro_indicators import MacroIndicators
 from src.risk.execution_guard import ExecutionGuard, AvanzaAccountType
 from src.risk.isk_optimizer import CourtageTier
-from datetime import datetime
+from src.reporting.weekly_report import WeeklyReportGenerator
+from datetime import datetime, timedelta
 import os
 
 def print_section(title, emoji="📊"):
@@ -54,6 +55,7 @@ def main():
     
     # Create reports dir
     os.makedirs("reports", exist_ok=True)
+    
     
     # ========================================================================
     # 1. DAGENS ACTION ITEMS (Viktigast!)
@@ -378,7 +380,7 @@ def main():
         print("3. Läs veckorapport på söndag")
     
     # ========================================================================
-    # SAVE SUMMARY
+    # SAVE SUMMARY AND DATA FOR WEEKLY ANALYSIS
     # ========================================================================
     today = datetime.now().strftime("%Y-%m-%d")
     summary_file = f"reports/dashboard_summary_{today}.txt"
@@ -389,15 +391,16 @@ TRADING DASHBOARD - {today}
 {'='*60}
 
 ACTION ITEMS:
-  Köpsignaler: {len(actionable)}
+  Investerbara: {len(investable)}
+  Bevakningslista: {len(watchlist)}
   Regime: {regime if results else 'N/A'}
   
 MARKNADSLÄGE:
   GREEN: {len(green)} | YELLOW: {len(yellow)} | RED: {len(red)}
   RED%: {red_pct:.0f}%
   
-TOP OPPORTUNITY:
-  {actionable[0].name if actionable else 'Ingen'}
+TOP INVESTABLE:
+  {investable[0].name if investable else 'Ingen'}
   
 VARNINGAR:
   {len(warnings)} aktiva
@@ -407,6 +410,54 @@ VARNINGAR:
         f.write(summary)
     
     print(f"\n💾 Dashboard sammanfattning sparad: {summary_file}")
+    
+    # Save actionable data for weekly analysis
+    import json
+    actionable_file = f"reports/actionable_{today}.json"
+    actionable_data = {
+        'date': today,
+        'regime': regime if results else 'N/A',
+        'regime_multiplier': results[0].regime_multiplier if results else 0,
+        'investable': [
+            {
+                'ticker': r.ticker,
+                'name': r.name,
+                'signal': r.signal.name,
+                'score': r.final_score,
+                'technical_edge': r.net_edge_after_costs,
+                'net_edge_after_execution': r.exec_result.net_edge_after_execution if hasattr(r, 'exec_result') else r.net_edge_after_costs,
+                'position': r.final_allocation,
+                'execution_risk': r.exec_result.execution_risk_level if hasattr(r, 'exec_result') else 'UNKNOWN',
+                'category': r.category if hasattr(r, 'category') else 'unknown'
+            }
+            for r in investable
+        ],
+        'watchlist': [
+            {
+                'ticker': r.ticker,
+                'name': r.name,
+                'signal': r.signal.name,
+                'score': r.final_score,
+                'technical_edge': r.net_edge_after_costs,
+                'net_edge_after_execution': r.exec_result.net_edge_after_execution if hasattr(r, 'exec_result') else r.net_edge_after_costs,
+                'position': r.final_allocation,
+                'execution_risk': r.exec_result.execution_risk_level if hasattr(r, 'exec_result') else 'BLOCKED',
+                'category': r.category if hasattr(r, 'category') else 'unknown',
+                'entry_recommendation': r.entry_recommendation
+            }
+            for r in watchlist[:20]  # Top 20
+        ],
+        'market_stats': {
+            'total': len(results),
+            'green': len(green),
+            'yellow': len(yellow),
+            'red': len(red),
+            'red_pct': red_pct
+        }
+    }
+    
+    with open(actionable_file, 'w', encoding='utf-8') as f:
+        json.dump(actionable_data, f, indent=2, ensure_ascii=False)
     
     print("\n" + "🎯 "*20)
     print("          Dashboard klar!")
