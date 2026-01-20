@@ -15,6 +15,9 @@ import yfinance as yf
 from collections import defaultdict
 import statistics
 
+# V3.0: Recency Weighting (Week 2 MEDIUM PRIORITY)
+from src.filters.recency_weighting import RecencyWeighting
+
 @dataclass
 class InstrumentTracking:
     """Spårar ett instrument över veckan."""
@@ -153,6 +156,13 @@ class WeeklyAnalyzer:
     def __init__(self, reports_dir: str = "reports", portfolio_value_sek: float = 100000, use_backfill: bool = False):
         self.portfolio_value_sek = portfolio_value_sek
         self.use_backfill = use_backfill
+        
+        # V3.0: Initialize Recency Weighting
+        self.recency_weighting = RecencyWeighting(
+            full_strength_days=30,
+            half_strength_days=60,
+            minimum_weight=0.1
+        )
         
         # Smart directory selection: kolla båda platser
         backfill_dir = Path("reports/backfill")
@@ -398,14 +408,15 @@ class WeeklyAnalyzer:
                         'days_seen': 0,
                         'days_investable': 0,
                         'days_on_watchlist': 0,
-                        'scores': [],
-                        'net_edges': [],
-                        'technical_edges': [],
-                        'dates': [],
-                        'signals': [],
-                        'execution_risks': [],
-                        'positions': []
-                    }
+                'scores': [],
+                'net_edges': [],
+                'technical_edges': [],
+                'positions': [],
+                'execution_risks': [],
+                'dates': [],
+                'signals': [],
+                'investable_flags': []  # V3.0: For recency-weighted consistency
+            }
                 
                 t = tracking[ticker]
                 t['days_seen'] += 1
@@ -430,6 +441,9 @@ class WeeklyAnalyzer:
                 t['technical_edges'].append(instrument['technical_edge'])
                 t['dates'].append(date)
                 t['signals'].append(instrument['signal'])
+                
+                # V3.0: Track investable flags for recency-weighted consistency
+                t['investable_flags'].append(entry_rec.startswith('ENTER'))
         
         # Convert to InstrumentTracking objects
         result = {}
@@ -513,8 +527,23 @@ class WeeklyAnalyzer:
         
         for ticker, track in tracking.items():
             # 1. Consistency Component (40%)
-            # Baserat på hur många dagar instrumentet varit investable
-            consistency = track.consistency_score * 0.4
+            # V3.0: Recency-Weighted Consistency - Recent investable days weigh more
+            # Old: unweighted consistency_score
+            # New: weighted consistency based on recency
+            
+            # Build investable flags from daily_edges (>0 = investable)
+            investable_flags = [edge > 0 for edge in track.daily_edges]
+            
+            if investable_flags and track.daily_dates:
+                weighted_consistency = self.recency_weighting.calculate_weighted_consistency(
+                    investable_flags,
+                    track.daily_dates
+                )
+            else:
+                # Fallback to unweighted
+                weighted_consistency = track.consistency_score
+            
+            consistency = weighted_consistency * 0.4
             
             # 2. Quality Component (30%)
             # Baserat på genomsnittlig score och net edge
@@ -578,8 +607,16 @@ class WeeklyAnalyzer:
                 'DEGRADING': 2.5
             }.get(track.volatility_trend, 1.5)
             
+            # V3.0: Recency-Weighted SNR - Recent edges weigh more
+            # Old SNR (unweighted): avg_net_edge / ATR
+            # New SNR (weighted): weighted_avg_net_edge / ATR
+            weighted_net_edge = self.recency_weighting.calculate_weighted_average(
+                track.daily_edges,
+                track.daily_dates
+            ) if track.daily_edges and track.daily_dates else track.avg_net_edge
+            
             # SNR på Net Edge (efter kostnader) - för BUY-beslut
-            snr = track.avg_net_edge / atr_estimate if atr_estimate > 0 else 0
+            snr = weighted_net_edge / atr_estimate if atr_estimate > 0 else 0
             high_confidence = snr > 1.0
             
             # SNR på Technical Edge (innan kostnader) - för Architect's Opportunity
