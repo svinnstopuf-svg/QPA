@@ -21,6 +21,9 @@ class BayesianEdgeEstimate:
     probability_above_threshold: float  # P(edge > threshold)
     sample_size: int
     uncertainty_level: str  # 'high', 'medium', 'low'
+    
+    # V3.0: Survivorship bias adjustment
+    bias_adjusted_edge: float = 0.0  # Edge after -20% survivorship penalty
 
 
 class BayesianEdgeEstimator:
@@ -41,7 +44,8 @@ class BayesianEdgeEstimator:
         prior_mean: float = 0.0,  # Assume no edge a priori
         prior_std: float = 0.01,  # 1% daily volatility
         min_threshold: float = 0.001,  # 0.1% edge threshold
-        adaptive_threshold: bool = True  # Adjust threshold by volatility
+        adaptive_threshold: bool = True,  # Adjust threshold by volatility
+        survivorship_bias_penalty: float = 0.20  # V3.0: 20% penalty for delisted stocks
     ):
         """
         Initialize Bayesian estimator.
@@ -55,6 +59,7 @@ class BayesianEdgeEstimator:
         self.prior_std = prior_std
         self.min_threshold = min_threshold
         self.adaptive_threshold = adaptive_threshold
+        self.survivorship_bias_penalty = survivorship_bias_penalty
     
     def estimate_edge(
         self,
@@ -88,12 +93,21 @@ class BayesianEdgeEstimator:
         sample_mean = np.mean(returns)
         sample_std = np.std(returns, ddof=1) if n > 1 else self.prior_std
         
+        # Ensure sample_std is not zero to avoid division by zero
+        if sample_std == 0 or np.isnan(sample_std):
+            sample_std = self.prior_std
+        
         # Bayesian update (normal-normal conjugate)
         # Posterior mean: weighted average of prior and sample
         prior_precision = 1 / (self.prior_std ** 2)
         sample_precision = n / (sample_std ** 2)
         
         posterior_precision = prior_precision + sample_precision
+        
+        # Avoid division by zero
+        if posterior_precision == 0 or np.isnan(posterior_precision) or np.isinf(posterior_precision):
+            posterior_precision = prior_precision
+        
         posterior_mean = (prior_precision * self.prior_mean + sample_precision * sample_mean) / posterior_precision
         posterior_std = np.sqrt(1 / posterior_precision)
         
@@ -115,8 +129,12 @@ class BayesianEdgeEstimator:
         if self.adaptive_threshold:
             # High vol = lower threshold, Low vol = higher threshold
             vol_adjustment = sample_std / 0.01  # Normalize to 1% daily vol
-            adaptive_min_threshold = self.min_threshold / vol_adjustment
-            adaptive_min_threshold = max(0.0005, min(0.002, adaptive_min_threshold))  # 0.05%-0.2% range
+            # Prevent division by zero or invalid calculations
+            if vol_adjustment == 0 or np.isnan(vol_adjustment) or np.isinf(vol_adjustment):
+                adaptive_min_threshold = self.min_threshold
+            else:
+                adaptive_min_threshold = self.min_threshold / vol_adjustment
+                adaptive_min_threshold = max(0.0005, min(0.002, adaptive_min_threshold))  # 0.05%-0.2% range
         else:
             adaptive_min_threshold = self.min_threshold
         
@@ -137,6 +155,11 @@ class BayesianEdgeEstimator:
         else:
             uncertainty = 'low'
         
+        # V3.0: Apply survivorship bias penalty
+        # Backtest edges are inflated because delisted (failed) companies are missing
+        # Apply conservative -20% penalty to account for this
+        bias_adjusted_edge = posterior_mean * (1 - self.survivorship_bias_penalty)
+        
         return BayesianEdgeEstimate(
             point_estimate=posterior_mean,
             credible_interval_95=ci_95,
@@ -144,7 +167,8 @@ class BayesianEdgeEstimator:
             probability_positive=prob_positive,
             probability_above_threshold=prob_above_threshold,
             sample_size=n,
-            uncertainty_level=uncertainty
+            uncertainty_level=uncertainty,
+            bias_adjusted_edge=bias_adjusted_edge
         )
     
     def compare_patterns(
