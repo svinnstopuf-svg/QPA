@@ -1,0 +1,323 @@
+{
+  "date": "2025-12-31",
+  "regime": "🔴 CRISIS",
+  "regime_multiplier": 0.2,
+  "investable": [
+    {
+      "ticker": "ELUX-B.ST",
+      "name": "Swedish - ELUX-B.ST",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 0.7704615246129298,
+      "net_edge_after_execution": 0.3904615246129298,
+      "position": 1.5,
+      "execution_risk": "MEDIUM"
+    },
+    {
+      "ticker": "NOBI.ST",
+      "name": "Swedish - NOBI.ST",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 1.543043719960501,
+      "net_edge_after_execution": 1.163043719960501,
+      "position": 1.5,
+      "execution_risk": "MEDIUM"
+    },
+    {
+      "ticker": "NOLA-B.ST",
+      "name": "Swedish - NOLA-B.ST",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 1.438796046351993,
+      "net_edge_after_execution": 1.058796046351993,
+      "position": 1.5,
+      "execution_risk": "MEDIUM"
+    }
+  ],
+  "watchlist": [
+    {
+      "ticker": "SAGA-D.ST",
+      "name": "Swedish - SAGA-D.ST",
+      "category": "stock_swedish",
+      "signal": "GREEN",
+      "score": 63.004046059529465,
+      "technical_edge": 0.2570809211905894,
+      "net_edge_after_execution": -0.12291907880941061,
+      "position": 1.5,
+      "execution_risk": "MEDIUM"
+    },
+    {
+      "ticker": "VLO",
+      "name": "US Large Cap - VLO",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 60.844938379933275,
+      "technical_edge": 0.4138987675986656,
+      "net_edge_after_execution": -0.4661012324013344,
+      "position": 1.5,
+      "execution_risk": "HIGH"
+    },
+    {
+      "ticker": "ZS",
+      "name": "US Large Cap - ZS",
+      "category": "stock_us_large",
+      "signal": "GREEN",
+      "score": 60.15,
+      "technical_edge": 0.7575373815407391,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "SBB-B.ST",
+      "name": "Swedish - SBB-B.ST",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 50.15,
+      "technical_edge": 1.2413863590258223,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "HUSQ-B.ST",
+      "name": "Swedish - HUSQ-B.ST",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 50.15,
+      "technical_edge": 0.9809690184059143,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "TXN",
+      "name": "US Large Cap - TXN",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 50.15,
+      "technical_edge": 1.844372305042041,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "TGT",
+      "name": "US Large Cap - TGT",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 48.39764022816222,
+      "technical_edge": 0.16495280456324446,
+      "net_edge_after_execution": -0.7150471954367555,
+      "position": 1.5,
+      "execution_risk": "HIGH"
+    },
+    {
+      "ticker": "IYW",
+      "name": "Sector/REIT - IYW",
+      "category": "etf_sector_reit",
+      "signal": "YELLOW",
+      "score": 46.89404917475872,
+      "technical_edge": 0.1348809834951744,
+      "net_edge_after_execution": -0.7451190165048256,
+      "position": 1.5,
+      "execution_risk": "HIGH"
+    },
+    {
+      "ticker": "MET",
+      "name": "US Large Cap - MET",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 45.88897976142165,
+      "technical_edge": 0.11477959522843306,
+      "net_edge_after_execution": -0.7652204047715669,
+      "position": 1.5,
+      "execution_risk": "HIGH"
+    },
+    {
+      "ticker": "FTV",
+      "name": "US Large Cap - FTV",
+      "category": "stock_us_large",
+      "signal": "GREEN",
+      "score": 42.38227284136137,
+      "technical_edge": -0.13838635793193133,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "KMI",
+      "name": "US Large Cap - KMI",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 40.34771654566107,
+      "technical_edge": 0.003954330913221393,
+      "net_edge_after_execution": -0.8760456690867786,
+      "position": 1.5,
+      "execution_risk": "HIGH"
+    },
+    {
+      "ticker": "VGK",
+      "name": "Global/EM - VGK",
+      "category": "etf_global_em",
+      "signal": "YELLOW",
+      "score": 29.533597690254233,
+      "technical_edge": -0.28082011548728847,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "ARE",
+      "name": "Sector/REIT - ARE",
+      "category": "etf_sector_reit",
+      "signal": "YELLOW",
+      "score": 29.29341793882693,
+      "technical_edge": 0.08286835877653864,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "META",
+      "name": "US Large Cap - META",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 28.851624022504033,
+      "technical_edge": 0.0740324804500807,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "MMC",
+      "name": "US Large Cap - MMC",
+      "category": "stock_us_large",
+      "signal": "GREEN",
+      "score": 28.615131249519237,
+      "technical_edge": -0.07674343752403812,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "CTVA",
+      "name": "US Large Cap - CTVA",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 26.880656348675938,
+      "technical_edge": 0.034613126973518815,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "BETCO.ST",
+      "name": "Swedish - BETCO.ST",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 26.720570869871832,
+      "technical_edge": 0.03141141739743669,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "NETC.CO",
+      "name": "Swedish - NETC.CO",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -0.6967003722788563,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "SALM.OL",
+      "name": "Swedish - SALM.OL",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -0.879241098362652,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "KESKOB.HE",
+      "name": "Swedish - KESKOB.HE",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -1.639861568062651,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "DFE",
+      "name": "Global/EM - DFE",
+      "category": "etf_global_em",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -1.7758696715627473,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "IEV",
+      "name": "Global/EM - IEV",
+      "category": "etf_global_em",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -1.8167495780126486,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "EWG",
+      "name": "Global/EM - EWG",
+      "category": "etf_global_em",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -1.7204632475204515,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "PNDORA.CO",
+      "name": "Swedish - PNDORA.CO",
+      "category": "stock_swedish",
+      "signal": "YELLOW",
+      "score": 10.15,
+      "technical_edge": -0.9340177308639868,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    },
+    {
+      "ticker": "TMUS",
+      "name": "US Large Cap - TMUS",
+      "category": "stock_us_large",
+      "signal": "YELLOW",
+      "score": 10.15,
+      "technical_edge": -0.6564772761181312,
+      "net_edge_after_execution": 0,
+      "position": 0.0,
+      "execution_risk": "UNKNOWN"
+    }
+  ],
+  "market_stats": {
+    "total_analyzed": 681,
+    "green_signals": 4,
+    "yellow_signals": 24,
+    "red_signals": 646
+  }
+}

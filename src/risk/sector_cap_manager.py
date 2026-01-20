@@ -65,16 +65,16 @@ class SectorCapManager:
         'ALFA.ST': 'Industrials',
         'ATCO-A.ST': 'Industrials',
         'ATCO-B.ST': 'Industrials',
+        'NOLA-B.ST': 'Industrials',  # Nolato - Medical technology & industrial plastics
         'SBB-B.ST': 'Real Estate',
         'SBB-D.ST': 'Real Estate',
-        'NOLA-B.ST': 'Real Estate',
         'SAGA-A.ST': 'Real Estate',
         'SAGA-B.ST': 'Real Estate',
         'SAGA-D.ST': 'Real Estate',
         'HM-B.ST': 'Retail',
         'ICA.ST': 'Retail',
         'ASSA-B.ST': 'Security',
-        'BOL.ST': 'Healthcare',
+        'BOL.ST': 'Materials',  # Boliden - Mining (copper, zinc, gold)
         'GETI-B.ST': 'Healthcare',
         
         # US stocks - based on ticker patterns (simplified)

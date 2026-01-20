@@ -1,0 +1,97 @@
+{
+  "week_start": "2026-01-05",
+  "week_end": "2026-01-11",
+  "timestamp": "2026-01-11T19:20:15.787401",
+  "total_instruments": 681,
+  "signal_distribution": {
+    "GREEN": 6,
+    "YELLOW": 36,
+    "ORANGE": 8,
+    "RED": 631
+  },
+  "top_opportunities": [
+    {
+      "ticker": "ELUX-B.ST",
+      "name": "Swedish - ELUX-B.ST",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 0.7704607812381861,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "SBB-B.ST",
+      "name": "Swedish - SBB-B.ST",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 1.241385249912132,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "NOBI.ST",
+      "name": "Swedish - NOBI.ST",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 1.5430402961346756,
+      "confidence": "LÅG"
+    },
+    {
+      "ticker": "NOLA-B.ST",
+      "name": "Swedish - NOLA-B.ST",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 1.4387920659483282,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "TXN",
+      "name": "US Large Cap - TXN",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 1.8443741002719494,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "MLM",
+      "name": "US Large Cap - MLM",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 0.8863807373265034,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "SNOW",
+      "name": "US Large Cap - SNOW",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 1.142887602897734,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "BND",
+      "name": "All-Weather - BND",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "edge": 0.5943998760198361,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "SAGA-D.ST",
+      "name": "Swedish - SAGA-D.ST",
+      "signal": "GREEN",
+      "score": 63.004096613653765,
+      "edge": 0.25708193227307535,
+      "confidence": "MÅTTLIG"
+    },
+    {
+      "ticker": "VLO",
+      "name": "US Large Cap - VLO",
+      "signal": "YELLOW",
+      "score": 60.84501389043519,
+      "edge": 0.41390027780870375,
+      "confidence": "MÅTTLIG"
+    }
+  ],
+  "avg_edge": -1.0999042101826062,
+  "avg_confidence": 0.5556534508076378,
+  "market_temperature": "FROZEN"
+}

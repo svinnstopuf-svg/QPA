@@ -213,7 +213,9 @@ class QuantPatternAnalyzer:
                     'stability_score': pattern_eval.stability_score,
                     'mean_return': outcome_stats.mean_return,
                     'win_rate': outcome_stats.win_rate,
-                    'metadata': situation.metadata  # Include for warning checks
+                    'metadata': situation.metadata,  # Include for warning checks
+                    'bayesian_edge': bayesian_estimate.bias_adjusted_edge if bayesian_estimate else outcome_stats.mean_return,  # V3.0: Use Bayesian survivorship-adjusted edge
+                    'bayesian_uncertainty': bayesian_estimate.uncertainty_level if bayesian_estimate else 'UNKNOWN'
                 })
         
         print(f"Hittade {len(significant_patterns)} signifikanta mönster")

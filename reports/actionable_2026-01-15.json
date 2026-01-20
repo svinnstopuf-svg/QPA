@@ -1,0 +1,175 @@
+{
+  "date": "2026-01-15",
+  "regime": "🔴 CRISIS",
+  "regime_multiplier": 0.2,
+  "investable": [],
+  "watchlist": [
+    {
+      "ticker": "BND",
+      "name": "All-Weather - BND",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 0.5943989389778066,
+      "blocked_reason": "Cost filter"
+    },
+    {
+      "ticker": "AGG",
+      "name": "All-Weather - AGG",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -0.5785264022286551,
+      "blocked_reason": "BLOCK - Negative net edge after costs"
+    },
+    {
+      "ticker": "SLV",
+      "name": "All-Weather - SLV",
+      "signal": "YELLOW",
+      "score": 25.15,
+      "technical_edge": -1.354393348162838,
+      "blocked_reason": "BLOCK - Negative net edge after costs"
+    },
+    {
+      "ticker": "BILI-A.ST",
+      "name": "Swedish - BILI-A.ST",
+      "signal": "GREEN",
+      "score": 75.15,
+      "technical_edge": 0.9689559831502681,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "ELUX-B.ST",
+      "name": "Swedish - ELUX-B.ST",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 0.7704597427310695,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "SBB-B.ST",
+      "name": "Swedish - SBB-B.ST",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 1.2413873511842588,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "NOLA-B.ST",
+      "name": "Swedish - NOLA-B.ST",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 1.4387878814943933,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "TXN",
+      "name": "US Large Cap - TXN",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 1.8443754335355977,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "MLM",
+      "name": "US Large Cap - MLM",
+      "signal": "YELLOW",
+      "score": 65.15,
+      "technical_edge": 0.7190194098203906,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "SAGA-D.ST",
+      "name": "Swedish - SAGA-D.ST",
+      "signal": "GREEN",
+      "score": 63.003876207034374,
+      "technical_edge": 0.25707752414068746,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "HUSQ-B.ST",
+      "name": "Swedish - HUSQ-B.ST",
+      "signal": "YELLOW",
+      "score": 50.15,
+      "technical_edge": 0.9809693016639458,
+      "blocked_reason": "BLOCK - Below 200-day MA"
+    },
+    {
+      "ticker": "NOBI.ST",
+      "name": "Swedish - NOBI.ST",
+      "signal": "YELLOW",
+      "score": 50.15,
+      "technical_edge": 1.5430407550813525,
+      "blocked_reason": "BLOCK - Below 200-day MA"
+    },
+    {
+      "ticker": "SNOW",
+      "name": "US Large Cap - SNOW",
+      "signal": "YELLOW",
+      "score": 50.15,
+      "technical_edge": 1.142887602897734,
+      "blocked_reason": "BLOCK - Below 200-day MA"
+    },
+    {
+      "ticker": "ZS",
+      "name": "US Large Cap - ZS",
+      "signal": "YELLOW",
+      "score": 50.15,
+      "technical_edge": 0.7575373815407391,
+      "blocked_reason": "BLOCK - Below 200-day MA"
+    },
+    {
+      "ticker": "TGT",
+      "name": "US Large Cap - TGT",
+      "signal": "YELLOW",
+      "score": 48.39772778899326,
+      "technical_edge": 0.16495455577986518,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "IYW",
+      "name": "Sector/REIT - IYW",
+      "signal": "YELLOW",
+      "score": 46.365899517640806,
+      "technical_edge": 0.1243179903528161,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "MET",
+      "name": "US Large Cap - MET",
+      "signal": "YELLOW",
+      "score": 45.888976786271414,
+      "technical_edge": 0.11477953572542832,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "ROK",
+      "name": "US Large Cap - ROK",
+      "signal": "GREEN",
+      "score": 44.31272562753423,
+      "technical_edge": -0.041863718623288526,
+      "blocked_reason": "BLOCK - Negative net edge after costs"
+    },
+    {
+      "ticker": "FOXA",
+      "name": "US Large Cap - FOXA",
+      "signal": "YELLOW",
+      "score": 44.1378842311255,
+      "technical_edge": 0.07975768462250998,
+      "blocked_reason": "BLOCK - Position too small for viable courtage"
+    },
+    {
+      "ticker": "FTV",
+      "name": "US Large Cap - FTV",
+      "signal": "GREEN",
+      "score": 42.38245326808031,
+      "technical_edge": -0.1383773365959845,
+      "blocked_reason": "BLOCK - Negative net edge after costs"
+    }
+  ],
+  "market_stats": {
+    "total": 681,
+    "green": 7,
+    "yellow": 35,
+    "red": 630,
+    "red_pct": 92.51101321585902
+  }
+}

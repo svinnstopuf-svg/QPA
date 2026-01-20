@@ -1,0 +1,43 @@
+{
+  "date": "2026-01-10",
+  "regime": "🔴 CRISIS",
+  "regime_multiplier": 0.2,
+  "investable": [
+    {
+      "ticker": "ELUX-B.ST",
+      "name": "Swedish - ELUX-B.ST",
+      "signal": "YELLOW",
+      "score": 67.0,
+      "technical_edge": 0.85,
+      "net_edge_after_execution": 0.62,
+      "position": 0.05,
+      "execution_risk": "LOW",
+      "category": "stock_swedish"
+    }
+  ],
+  "watchlist": [
+    {
+      "ticker": "BND",
+      "name": "All-Weather - BND",
+      "signal": "YELLOW",
+      "score": 65.2,
+      "technical_edge": 0.59,
+      "blocked_reason": "Negativ net edge efter kostnader"
+    },
+    {
+      "ticker": "SAGA-D.ST",
+      "name": "Swedish - SAGA-D.ST",
+      "signal": "GREEN",
+      "score": 63.0,
+      "technical_edge": 0.26,
+      "blocked_reason": "Position too small for viable courtage"
+    }
+  ],
+  "market_stats": {
+    "total": 681,
+    "green": 6,
+    "yellow": 36,
+    "red": 631,
+    "red_pct": 92.7
+  }
+}

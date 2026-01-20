@@ -1,0 +1,191 @@
+{
+  "week": "2026_W03",
+  "analysis_period": {
+    "start_date": "2025-12-08",
+    "end_date": "2026-01-16",
+    "days_analyzed": 30
+  },
+  "regime": "🔴 CRISIS",
+  "regime_multiplier": 0.2,
+  "pattern_performance": [
+    {
+      "ticker": "NOLA-B.ST",
+      "name": "Swedish - NOLA-B.ST",
+      "conviction_score": 56.36336101061612,
+      "net_edge": 1.0587898065739596,
+      "days_investable": 25,
+      "recommendation": "BUY",
+      "expected_value_sek": 15.881847098609395,
+      "snr": 1.0587898065739596,
+      "high_confidence": true
+    },
+    {
+      "ticker": "BILI-A.ST",
+      "name": "Swedish - BILI-A.ST",
+      "conviction_score": 47.38620761684097,
+      "net_edge": 0.5889624522775331,
+      "days_investable": 20,
+      "recommendation": "WATCH",
+      "expected_value_sek": 8.834436784162996,
+      "snr": 0.5889624522775331,
+      "high_confidence": false
+    },
+    {
+      "ticker": "ELUX-B.ST",
+      "name": "Swedish - ELUX-B.ST",
+      "conviction_score": 42.53921565037565,
+      "net_edge": 0.19523027283385155,
+      "days_investable": 15,
+      "recommendation": "WATCH",
+      "expected_value_sek": 2.9284540925077733,
+      "snr": 0.19523027283385155,
+      "high_confidence": false
+    },
+    {
+      "ticker": "SBB-B.ST",
+      "name": "Swedish - SBB-B.ST",
+      "conviction_score": 37.99398749158611,
+      "net_edge": 0.20098981040194422,
+      "days_investable": 7,
+      "recommendation": "WATCH",
+      "expected_value_sek": 3.0148471560291634,
+      "snr": 0.20098981040194422,
+      "high_confidence": false
+    },
+    {
+      "ticker": "NOBI.ST",
+      "name": "Swedish - NOBI.ST",
+      "conviction_score": 31.882161475144414,
+      "net_edge": 0.46521614751444146,
+      "days_investable": 12,
+      "recommendation": "WATCH",
+      "expected_value_sek": 0.0,
+      "snr": 0.46521614751444146,
+      "high_confidence": false
+    },
+    {
+      "ticker": "SNOW",
+      "name": "US Large Cap - SNOW",
+      "conviction_score": 31.69212998024272,
+      "net_edge": 0.21508985691632776,
+      "days_investable": 18,
+      "recommendation": "WATCH",
+      "expected_value_sek": 0.0,
+      "snr": 0.21508985691632776,
+      "high_confidence": false
+    },
+    {
+      "ticker": "TXN",
+      "name": "US Large Cap - TXN",
+      "conviction_score": 29.8477161196113,
+      "net_edge": 0.3928923060094587,
+      "days_investable": 11,
+      "recommendation": "AVOID",
+      "expected_value_sek": 5.8933845901418795,
+      "snr": 0.3928923060094587,
+      "high_confidence": false
+    },
+    {
+      "ticker": "MLM",
+      "name": "US Large Cap - MLM",
+      "conviction_score": 22.608111081198317,
+      "net_edge": 0.034654917836347436,
+      "days_investable": 7,
+      "recommendation": "AVOID",
+      "expected_value_sek": 0.0,
+      "snr": 0.034654917836347436,
+      "high_confidence": false
+    },
+    {
+      "ticker": "LIAB.ST",
+      "name": "Swedish - LIAB.ST",
+      "conviction_score": 19.58735150728694,
+      "net_edge": 0.2557426099577048,
+      "days_investable": 3,
+      "recommendation": "AVOID",
+      "expected_value_sek": 3.8361391493655725,
+      "snr": 0.2557426099577048,
+      "high_confidence": false
+    },
+    {
+      "ticker": "BND",
+      "name": "All-Weather - BND",
+      "conviction_score": 13.030000000000001,
+      "net_edge": 0.0,
+      "days_investable": 0,
+      "recommendation": "AVOID",
+      "expected_value_sek": 0.0,
+      "snr": 0.0,
+      "high_confidence": false
+    }
+  ],
+  "degraded_patterns": [
+    {
+      "ticker": "SNOW",
+      "name": "US Large Cap - SNOW",
+      "conviction_score": 31.69212998024272,
+      "momentum_component": -6.94331404346601,
+      "degradation_pct": -21.908638036618434,
+      "urgent": false
+    }
+  ],
+  "edge_leakage": {
+    "total_blocked_instruments": 6,
+    "total_technical_edge_lost": 3.772573016774339,
+    "blocked_opportunities": [
+      {
+        "ticker": "BND",
+        "name": "All-Weather - BND",
+        "avg_score": 65.15,
+        "avg_technical_edge": 0.5944009207520362,
+        "days_seen": 24,
+        "latest_signal": "YELLOW"
+      },
+      {
+        "ticker": "SAGA-D.ST",
+        "name": "Swedish - SAGA-D.ST",
+        "avg_score": 63.00407209590622,
+        "avg_technical_edge": 0.2570814419181243,
+        "days_seen": 30,
+        "latest_signal": "GREEN"
+      },
+      {
+        "ticker": "VLO",
+        "name": "US Large Cap - VLO",
+        "avg_score": 60.84505542355081,
+        "avg_technical_edge": 0.41390110847101624,
+        "days_seen": 22,
+        "latest_signal": "YELLOW"
+      },
+      {
+        "ticker": "ZS",
+        "name": "US Large Cap - ZS",
+        "avg_score": 57.483333333333334,
+        "avg_technical_edge": 0.7575373815407391,
+        "days_seen": 30,
+        "latest_signal": "YELLOW"
+      },
+      {
+        "ticker": "LNG",
+        "name": "US Large Cap - LNG",
+        "avg_score": 50.15,
+        "avg_technical_edge": 0.7686817643857055,
+        "days_seen": 2,
+        "latest_signal": "YELLOW"
+      },
+      {
+        "ticker": "HUSQ-B.ST",
+        "name": "Swedish - HUSQ-B.ST",
+        "avg_score": 50.15,
+        "avg_technical_edge": 0.9809703997067177,
+        "days_seen": 26,
+        "latest_signal": "YELLOW"
+      }
+    ]
+  },
+  "high_confidence_summary": {
+    "count": 1,
+    "avg_snr": 1.0587898065739596,
+    "total_expected_value": 15.881847098609395
+  }
+}

@@ -258,11 +258,18 @@ class InstrumentScreenerV22:
         best_pattern_name = "Inget"
         
         for pattern in significant_patterns:
-            if 'mean_return' in pattern:
+            # V3.0: Use Bayesian survivorship-adjusted edge (conservative, realistic)
+            # Falls back to mean_return if bayesian_edge not available
+            if 'bayesian_edge' in pattern:
+                edge = pattern['bayesian_edge'] * 100
+            elif 'mean_return' in pattern:
                 edge = pattern['mean_return'] * 100
-                if abs(edge) > abs(best_edge):
-                    best_edge = edge
-                    best_pattern_name = pattern.get('description', 'Inget')
+            else:
+                continue
+            
+            if abs(edge) > abs(best_edge):
+                best_edge = edge
+                best_pattern_name = pattern.get('description', 'Inget')
         
         # 6. V-Kelly position sizing (V2.1)
         # Calculate ATR and adjust position

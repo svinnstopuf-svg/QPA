@@ -1,13 +1,13 @@
 
-TRADING DASHBOARD - 2026-01-06
+TRADING DASHBOARD - 2026-01-10
 ============================================================
 
 ACTION ITEMS:
-  Köpsignaler: 1
+  Köpsignaler: 42
   Regime: 🔴 CRISIS
   
 MARKNADSLÄGE:
-  GREEN: 6 | YELLOW: 31 | RED: 636
+  GREEN: 6 | YELLOW: 36 | RED: 631
   RED%: 93%
   
 TOP OPPORTUNITY:

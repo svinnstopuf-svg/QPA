@@ -1,0 +1,20 @@
+{
+  "week": "2026_W04",
+  "analysis_period": {
+    "start_date": "2025-12-08",
+    "end_date": "2026-01-16",
+    "days_analyzed": 30
+  },
+  "regime": "🔴 CRISIS",
+  "regime_multiplier": 0.2,
+  "pattern_performance": [
+    {
+      "ticker": "NOLA-B.ST",
+      "name": "Swedish - NOLA-B.ST",
+      "conviction_score": 63.03002767728278,
+      "net_edge": 1.0587898065739596,
+      "days_investable": 25,
+      "recommendation": "BUY",
+      "expected_value_sek": 15.881847098609395,
+      "snr": 1.0587897602052325,
+      "high_confidence": 

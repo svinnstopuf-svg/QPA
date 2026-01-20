@@ -1,0 +1,31 @@
+{
+  "date": "2026-01-05",
+  "regime": "🔴 CRISIS",
+  "regime_multiplier": 0.2,
+  "investable": [],
+  "watchlist": [
+    {
+      "ticker": "ELUX-B.ST",
+      "name": "Swedish - ELUX-B.ST",
+      "signal": "YELLOW",
+      "score": 65.2,
+      "technical_edge": 0.77,
+      "blocked_reason": "Cost filter"
+    },
+    {
+      "ticker": "BND",
+      "name": "All-Weather - BND",
+      "signal": "YELLOW",
+      "score": 65.2,
+      "technical_edge": 0.59,
+      "blocked_reason": "Cost filter"
+    }
+  ],
+  "market_stats": {
+    "total": 281,
+    "green": 1,
+    "yellow": 12,
+    "red": 268,
+    "red_pct": 95.4
+  }
+}

@@ -497,8 +497,8 @@ VARNINGAR:
         'v30_breadth': {
             'breadth_pct': breadth_result.breadth_pct if breadth_result else None,
             'regime': breadth_result.breadth_regime if breadth_result else None,
-            'above_200ma': breadth_result.above_200ma if breadth_result else None,
-            'total_checked': breadth_result.total_checked if breadth_result else None
+            'above_200ma': breadth_result.constituents_above_200ma if breadth_result else None,
+            'total_checked': breadth_result.constituents_analyzed if breadth_result else None
         } if breadth_result else None
     }
     

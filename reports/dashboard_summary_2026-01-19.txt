@@ -1,17 +1,18 @@
 
-TRADING DASHBOARD - 2026-01-06
+TRADING DASHBOARD - 2026-01-19
 ============================================================
 
 ACTION ITEMS:
-  Köpsignaler: 1
+  Investerbara: 4
+  Bevakningslista: 34
   Regime: 🔴 CRISIS
   
 MARKNADSLÄGE:
-  GREEN: 6 | YELLOW: 31 | RED: 636
+  GREEN: 6 | YELLOW: 32 | RED: 632
   RED%: 93%
   
-TOP OPPORTUNITY:
-  All-Weather - BND
+TOP INVESTABLE:
+  Swedish - BILI-A.ST
   
 VARNINGAR:
   3 aktiva

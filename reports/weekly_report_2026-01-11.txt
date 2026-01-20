@@ -1,0 +1,22 @@
+================================================================================
+VECKORAPPORT - DELTA-ANALYS
+================================================================================
+Period: 2026-01-05 till 2026-01-11
+Genererad: 2026-01-11 20:28
+
+--------------------------------------------------------------------------------
+NUVARANDE MARKNADSSTATUS
+--------------------------------------------------------------------------------
+Total instrument analyserade: 681
+Marknadstemperatur: FROZEN
+
+Signalfördelning:
+  🟢 GREEN   :   6 (  0.9%)
+  🟡 YELLOW  :  36 (  5.3%)
+  🟠 ORANGE  :   8 (  1.2%)
+  🔴 RED     : 631 ( 92.7%)
+
+Genomsnittlig edge: -1.0999%
+Genomsnittlig konfidens: 55.6%
+
+⚠️  Ingen tidigare vecka att jämföra med - detta är första körningen.

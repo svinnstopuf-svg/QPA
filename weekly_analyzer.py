@@ -178,13 +178,13 @@ class WeeklyAnalyzer:
         )
         
         # V3.0: Initialize Sector Cap Manager
-        self.sector_cap = SectorCapManager(max_sector_exposure_pct=40.0)
+        self.sector_cap = SectorCapManager(max_sector_pct=0.40)
         
         # V3.0: Initialize Beta-Alpha Separator
-        self.beta_alpha = BetaAlphaSeparator(benchmark_ticker="^OMX")
+        self.beta_alpha = BetaAlphaSeparator(market_ticker="^OMX")
         
         # V3.0: Initialize MAE Optimizer
-        self.mae_optimizer = MAEOptimizer(lookback_days=252)
+        self.mae_optimizer = MAEOptimizer()
         
         # Smart directory selection: kolla båda platser
         backfill_dir = Path("reports/backfill")
@@ -404,7 +404,8 @@ class WeeklyAnalyzer:
                         'dates': [],
                         'signals': [],
                         'execution_risks': [],
-                        'positions': []
+                        'positions': [],
+                        'investable_flags': []  # V3.0: For recency-weighted consistency
                     }
                 
                 t = tracking[ticker]
@@ -417,6 +418,7 @@ class WeeklyAnalyzer:
                 t['signals'].append(instrument['signal'])
                 t['execution_risks'].append(instrument['execution_risk'])
                 t['positions'].append(instrument['position'])
+                t['investable_flags'].append(True)  # V3.0: Always True for investable
             
             # Process watchlist instruments
             for instrument in file_data['watchlist']:
