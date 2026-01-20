@@ -25,6 +25,11 @@ from src.reporting.weekly_report import WeeklyReportGenerator
 from datetime import datetime, timedelta
 import os
 
+# V3.0: Additional Risk Guards
+from src.filters.event_guard import EventGuard
+from src.risk.market_breadth import MarketBreadthIndicator
+from src.validation.data_sanity_checker import DataSanityChecker
+
 def print_section(title, emoji="📊"):
     """Print section header."""
     print("\n" + "="*80)
@@ -38,6 +43,25 @@ def main():
     print("          TRADING DASHBOARD - Dagens Översikt")
     print("🎯 "*20)
     print(f"\n📅 Datum: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    
+    # V3.0: Initialize risk guards
+    event_guard = EventGuard(earnings_blackout_hours=48)
+    market_breadth = MarketBreadthIndicator()
+    
+    # V3.0: Market Breadth Check (pre-flight)
+    print("\n🌍 V3.0: Market Breadth Check...")
+    try:
+        breadth_result = market_breadth.analyze_breadth()
+        print(f"   OMXS30 Breadth: {breadth_result.breadth_pct:.0f}% ({breadth_result.constituents_above_200ma}/{breadth_result.constituents_analyzed} above 200MA)")
+        print(f"   Market Regime: {breadth_result.breadth_regime}")
+        
+        if not breadth_result.tradable:
+            print(f"   ⚠️ WARNING: Weak market breadth - consider reducing positions!")
+        else:
+            print(f"   ✅ {breadth_result.breadth_regime} market")
+    except Exception as e:
+        print(f"   ⚠️ Could not fetch breadth: {e}")
+        breadth_result = None
     
     # Initialize Execution Guard with ISK optimization
     execution_guard = ExecutionGuard(
@@ -100,8 +124,17 @@ def main():
         # Store exec_result with the signal
         r.exec_result = exec_result
         
-        # Categorize: INVESTABLE if net edge after execution costs > 0
-        if exec_result.net_edge_after_execution > 0:
+        # V3.0: Event Guard - Block if earnings within 48h
+        try:
+            event_check = event_guard.check(r.ticker)
+            r.event_safe = event_check.safe_to_trade
+            r.event_reason = event_check.block_reason if not event_check.safe_to_trade else None
+        except:
+            r.event_safe = True
+            r.event_reason = None
+        
+        # Categorize: INVESTABLE if net edge > 0 AND no earnings event
+        if exec_result.net_edge_after_execution > 0 and r.event_safe:
             investable.append(r)
         else:
             watchlist.append(r)
@@ -428,7 +461,10 @@ VARNINGAR:
                 'net_edge_after_execution': r.exec_result.net_edge_after_execution if hasattr(r, 'exec_result') else r.net_edge_after_costs,
                 'position': r.final_allocation,
                 'execution_risk': r.exec_result.execution_risk_level if hasattr(r, 'exec_result') else 'UNKNOWN',
-                'category': r.category if hasattr(r, 'category') else 'unknown'
+                'category': r.category if hasattr(r, 'category') else 'unknown',
+                # V3.0: Event Guard data
+                'event_safe': r.event_safe if hasattr(r, 'event_safe') else True,
+                'event_reason': r.event_reason if hasattr(r, 'event_reason') else None
             }
             for r in investable
         ],
@@ -443,7 +479,10 @@ VARNINGAR:
                 'position': r.final_allocation,
                 'execution_risk': r.exec_result.execution_risk_level if hasattr(r, 'exec_result') else 'BLOCKED',
                 'category': r.category if hasattr(r, 'category') else 'unknown',
-                'entry_recommendation': r.entry_recommendation
+                'entry_recommendation': r.entry_recommendation,
+                # V3.0: Event Guard data
+                'event_safe': r.event_safe if hasattr(r, 'event_safe') else True,
+                'event_reason': r.event_reason if hasattr(r, 'event_reason') else None
             }
             for r in watchlist[:20]  # Top 20
         ],
@@ -453,7 +492,14 @@ VARNINGAR:
             'yellow': len(yellow),
             'red': len(red),
             'red_pct': red_pct
-        }
+        },
+        # V3.0: Market Breadth data
+        'v30_breadth': {
+            'breadth_pct': breadth_result.breadth_pct if breadth_result else None,
+            'regime': breadth_result.breadth_regime if breadth_result else None,
+            'above_200ma': breadth_result.above_200ma if breadth_result else None,
+            'total_checked': breadth_result.total_checked if breadth_result else None
+        } if breadth_result else None
     }
     
     with open(actionable_file, 'w', encoding='utf-8') as f:

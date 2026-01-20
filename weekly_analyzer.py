@@ -17,6 +17,12 @@ import statistics
 
 # V3.0: Recency Weighting (Week 2 MEDIUM PRIORITY)
 from src.filters.recency_weighting import RecencyWeighting
+# V3.0: Sector Cap (Week 3 - portfolio intelligence)
+from src.risk.sector_cap_manager import SectorCapManager
+# V3.0: Beta-Alpha Separation (Week 2 - quality filter)
+from src.analysis.beta_alpha_separator import BetaAlphaSeparator
+# V3.0: MAE Optimizer (Week 3 - stop-loss calculation)
+from src.risk.mae_optimizer import MAEOptimizer
 
 @dataclass
 class InstrumentTracking:
@@ -113,12 +119,19 @@ class WeeklyConviction:
     # Re-Entry Trigger (Modul 6)
     re_entry_trigger: str = ""  # Vad krävs för att gå från AVOID till BUY?
     
-    # Mathematical Edge (Casino Logic)
-    expected_value_sek: float  # EV i kronor
-    signal_to_noise_ratio: float  # Edge / Volatilitet
-    breakeven_move_pct: float  # % rörelse för breakeven
-    high_confidence: bool  # SNR > 1.0
-    avanza_viable: bool  # Net Edge > Breakeven
+    # V3.0: Beta-Alpha Separation
+    alpha_vs_benchmark: float = 0.0  # Alpha vs OMXS30
+    beta: float = 0.0  # Beta coefficient
+    has_positive_alpha: bool = False
+    
+    # V3.0: Sector Cap
+    sector: str = "unknown"
+    sector_allocation_pct: float = 0.0  # Portfolio % in this sector
+    exceeds_sector_cap: bool = False
+    
+    # V3.0: MAE Stop-Loss
+    optimal_stop_loss_pct: float = 0.0  # MAE-based stop
+    mae_confidence: str = "UNKNOWN"  # LOW, MEDIUM, HIGH
 
 @dataclass
 class PatternPerformance:
@@ -163,6 +176,15 @@ class WeeklyAnalyzer:
             half_strength_days=60,
             minimum_weight=0.1
         )
+        
+        # V3.0: Initialize Sector Cap Manager
+        self.sector_cap = SectorCapManager(max_sector_exposure_pct=40.0)
+        
+        # V3.0: Initialize Beta-Alpha Separator
+        self.beta_alpha = BetaAlphaSeparator(benchmark_ticker="^OMX")
+        
+        # V3.0: Initialize MAE Optimizer
+        self.mae_optimizer = MAEOptimizer(lookback_days=252)
         
         # Smart directory selection: kolla båda platser
         backfill_dir = Path("reports/backfill")
@@ -628,10 +650,35 @@ class WeeklyAnalyzer:
             breakeven_pct = 0.75 if is_foreign else 0.25
             avanza_viable = track.avg_net_edge > breakeven_pct
             
-            # Recommendation (justerad med matematisk edge)
+            # === V3.0: BETA-ALPHA SEPARATION ===
+            # Calculate alpha vs OMXS30 to filter out pure beta plays
+            alpha = 0.0
+            beta = 0.0
+            has_positive_alpha = False
+            try:
+                result = self.beta_alpha.analyze(ticker, lookback_days=90)
+                alpha = result.alpha_pct
+                beta = result.beta
+                has_positive_alpha = result.has_alpha
+            except:
+                pass  # Skip if no data available
+            
+            # === V3.0: MAE OPTIMIZER ===
+            # Calculate optimal stop-loss from historical MAE
+            optimal_stop_pct = 0.0
+            mae_confidence = "UNKNOWN"
+            try:
+                mae_result = self.mae_optimizer.calculate_optimal_stop(ticker)
+                optimal_stop_pct = mae_result.optimal_stop_pct
+                mae_confidence = mae_result.confidence_level
+            except:
+                pass  # Skip if no data available
+            
+            # Recommendation (justerad med matematisk edge + V3.0 filters)
             # UPPDATERING: Högre krav på consistency (5 och 10 dagar istället för 2 och 3)
+            # V3.0: Also require positive alpha for STRONG BUY
             recommendation = "AVOID"
-            if conviction_score >= 70 and track.days_investable >= 10 and high_confidence:
+            if conviction_score >= 70 and track.days_investable >= 10 and high_confidence and has_positive_alpha:
                 recommendation = "STRONG BUY"
             elif conviction_score >= 50 and track.days_investable >= 5 and avanza_viable:
                 recommendation = "BUY"
@@ -655,11 +702,48 @@ class WeeklyAnalyzer:
                 signal_to_noise_ratio=snr,
                 breakeven_move_pct=breakeven_pct,
                 high_confidence=high_confidence,
-                avanza_viable=avanza_viable
+                avanza_viable=avanza_viable,
+                # V3.0: Beta-Alpha
+                alpha_vs_benchmark=alpha,
+                beta=beta,
+                has_positive_alpha=has_positive_alpha,
+                # V3.0: Sector Cap (will be filled after sorting)
+                sector="unknown",
+                sector_allocation_pct=0.0,
+                exceeds_sector_cap=False,
+                # V3.0: MAE Stop-Loss
+                optimal_stop_loss_pct=optimal_stop_pct,
+                mae_confidence=mae_confidence
             ))
         
         # Sortera efter conviction score
         convictions.sort(key=lambda x: x.conviction_score, reverse=True)
+        
+        # === V3.0: SECTOR CAP ENFORCEMENT ===
+        # Apply sector cap to prevent correlation risk
+        # Build portfolio from top convictions and track sector exposure
+        sector_allocations = {}  # sector -> total_pct
+        
+        for conv in convictions:
+            # Get sector classification
+            try:
+                sector_info = self.sector_cap.classify_ticker(conv.ticker)
+                conv.sector = sector_info.sector
+            except:
+                conv.sector = "unknown"
+            
+            # Calculate position size for this conviction
+            position_pct = conv.avg_net_edge * 0.5 if conv.avg_net_edge > 0 else 0  # Rough estimate
+            
+            # Check if adding this would exceed sector cap
+            current_sector_pct = sector_allocations.get(conv.sector, 0.0)
+            if current_sector_pct + position_pct > 40.0:
+                conv.exceeds_sector_cap = True
+            else:
+                conv.exceeds_sector_cap = False
+                sector_allocations[conv.sector] = current_sector_pct + position_pct
+            
+            conv.sector_allocation_pct = sector_allocations.get(conv.sector, 0.0)
         
         return convictions
     
