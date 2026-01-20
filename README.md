@@ -5,6 +5,18 @@
 This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, minimize costs, and only play when they have an edge. This system does the same for stock trading.
 
 **Latest additions:**
+- 🚀 **V3.0 MASTER SYSTEM UPGRADE** - 16 institutional-grade features (~3,700 LOC, 13 modules)
+  - 🌡️ **Market Breadth** - OMXS30 health check (<40% = warning)
+  - 🚫 **Event Guard** - Blocks trades 48h before earnings
+  - 📊 **Beta-Alpha Separation** - Filters out pure beta plays (requires alpha > 0)
+  - 🎯 **Sector Cap** - Max 40% portfolio exposure per sector
+  - 🛑 **MAE Optimizer** - Optimal stop-loss from historical Maximum Adverse Excursion
+  - ⏱️ **Signal Decay** - Stale signals lose conviction (0.75^days)
+  - 📈 **Recency Weighting** - Recent data weighs heavier in analysis
+  - 🔄 **RVOL Filter** - Relative volume confirmation
+  - 🎢 **Trend Elasticity** - Elastic trend scoring (0-15) + mean reversion
+  - 💀 **Survivorship Bias Penalty** - -20% edge adjustment for delisted stocks
+  - 🧪 **Data Sanity Checker** - Anomaly detection
 - 🕙 **Historical Backfill System** - Point-in-time analysis for strategy validation (30+ days, 800 instruments)
 - 📈 **Weekly Analyzer Auto-Detection** - Automatically reads all available dashboard data
 - 🔻 **Momentum Crash Protection** - Full penalty range (-15 to +15) catches falling stocks
@@ -466,6 +478,7 @@ RECOMMENDATION:
 - `EXECUTION_COST_GUARD.md` - Minimize hidden costs (FX, fees, spreads, liquidity) 🆕
 - `ALL_WEATHER_CRISIS_MODE.md` - 59 defensive instruments for crashes 🆕
 - `MACRO_INDICATORS.md` - Professional risk detection 🆕
+- `V3.0_MASTER_SYSTEM.md` - Complete V3.0 upgrade documentation (16 features) 🆕
 
 ---
 
