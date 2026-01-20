@@ -29,10 +29,12 @@ class TrendAnalysis:
     """Trend analysis result."""
     price: float
     ma_200: float
-    distance_from_ma: float  # % above/below MA
-    regime: TrendRegime
-    allow_long: bool  # Whether to allow long positions
-    recommendation: str  # Action recommendation
+    ma_50: float = 0.0  # V3.0: For trend elasticity
+    distance_from_ma: float = 0.0  # % above/below MA
+    regime: TrendRegime = TrendRegime.DOWNTREND
+    allow_long: bool = False  # Whether to allow long positions
+    recommendation: str = ""  # Action recommendation
+    trend_score: float = 0.0  # V3.0: 0-15 points (elastic scale)
 
 
 class TrendFilter:
@@ -54,7 +56,9 @@ class TrendFilter:
         self,
         ma_period: int = 200,
         strong_trend_threshold: float = 10.0,  # % for strong trend
-        allow_slight_below: bool = False  # Allow slightly below MA
+        allow_slight_below: bool = False,  # Allow slightly below MA
+        enable_elasticity: bool = True,  # V3.0: Enable trend elasticity
+        enable_the_stretch: bool = True  # V3.0: Enable mean reversion at extreme dips
     ):
         """
         Initialize trend filter.
@@ -63,10 +67,14 @@ class TrendFilter:
             ma_period: Moving average period (default 200 days)
             strong_trend_threshold: Threshold for strong trend (%)
             allow_slight_below: Allow positions slightly below MA
+            enable_elasticity: V3.0 - Use sliding scale 50MA-200MA instead of binary
+            enable_the_stretch: V3.0 - Allow mean reversion at >20% dips
         """
         self.ma_period = ma_period
         self.strong_trend_threshold = strong_trend_threshold
         self.allow_slight_below = allow_slight_below
+        self.enable_elasticity = enable_elasticity
+        self.enable_the_stretch = enable_the_stretch
     
     def calculate_sma(self, prices: np.ndarray, period: int = None) -> np.ndarray:
         """
@@ -97,6 +105,10 @@ class TrendFilter:
         """
         Analyze trend and determine if trading is allowed.
         
+        V3.0 Enhancements:
+        - Trend Elasticity: Sliding scale between 50MA and 200MA
+        - The Stretch: Mean reversion mode at >20% dips
+        
         Args:
             prices: Price series
             current_signal: Current traffic light signal
@@ -108,21 +120,27 @@ class TrendFilter:
         
         # Calculate 200-day MA
         ma_200 = self.calculate_sma(prices, self.ma_period)
-        current_ma = ma_200[-1]
+        current_ma_200 = ma_200[-1]
         
-        if current_ma == 0:
+        # V3.0: Calculate 50-day MA for elasticity
+        ma_50 = self.calculate_sma(prices, 50)
+        current_ma_50 = ma_50[-1]
+        
+        if current_ma_200 == 0:
             # Not enough data
             return TrendAnalysis(
                 price=current_price,
                 ma_200=0,
+                ma_50=0,
                 distance_from_ma=0,
                 regime=TrendRegime.DOWNTREND,
                 allow_long=False,
-                recommendation="SKIP - Insufficient data"
+                recommendation="SKIP - Insufficient data",
+                trend_score=0.0
             )
         
-        # Calculate distance from MA
-        distance_pct = ((current_price - current_ma) / current_ma) * 100
+        # Calculate distance from 200MA
+        distance_pct = ((current_price - current_ma_200) / current_ma_200) * 100
         
         # Determine regime
         if distance_pct > self.strong_trend_threshold:
@@ -134,8 +152,19 @@ class TrendFilter:
         else:
             regime = TrendRegime.STRONG_DOWNTREND
         
-        # Determine if long positions allowed
-        if regime in [TrendRegime.UPTREND, TrendRegime.STRONG_UPTREND]:
+        # V3.0: Calculate elastic trend score (0-15 points)
+        trend_score = self._calculate_trend_score(
+            current_price, current_ma_50, current_ma_200, distance_pct
+        )
+        
+        # V3.0: THE STRETCH - Mean reversion at extreme dips
+        is_stretch_mode = False
+        if self.enable_the_stretch and distance_pct < -20.0:
+            # >20% below 200MA = extreme dip = mean reversion opportunity
+            is_stretch_mode = True
+            allow_long = True  # Override normal trend filter
+        # Normal trend logic
+        elif regime in [TrendRegime.UPTREND, TrendRegime.STRONG_UPTREND]:
             allow_long = True
         elif self.allow_slight_below and distance_pct > -2.0:
             # Allow if within 2% below MA
@@ -145,26 +174,71 @@ class TrendFilter:
         
         # Generate recommendation
         recommendation = self._generate_recommendation(
-            regime, current_signal, distance_pct, allow_long
+            regime, current_signal, distance_pct, allow_long, is_stretch_mode
         )
         
         return TrendAnalysis(
             price=current_price,
-            ma_200=current_ma,
+            ma_200=current_ma_200,
+            ma_50=current_ma_50,
             distance_from_ma=distance_pct,
             regime=regime,
             allow_long=allow_long,
-            recommendation=recommendation
+            recommendation=recommendation,
+            trend_score=trend_score
         )
+    
+    def _calculate_trend_score(
+        self,
+        price: float,
+        ma_50: float,
+        ma_200: float,
+        distance_pct: float
+    ) -> float:
+        """
+        V3.0: Calculate elastic trend score (0-15 points).
+        
+        Logic:
+        - Above 200MA: 15 points (full)
+        - Between 50MA and 200MA: 7.5-15 points (sliding scale)
+        - Below 50MA: 0 points
+        """
+        if not self.enable_elasticity:
+            # Old binary logic
+            return 15.0 if distance_pct > 0 else 0.0
+        
+        if price > ma_200:
+            # Above 200MA = full strength
+            return 15.0
+        elif price > ma_50 and ma_50 > 0:
+            # Between 50MA and 200MA = sliding scale
+            if ma_200 == ma_50:
+                return 7.5  # Avoid division by zero
+            
+            # Calculate position in gap
+            gap_total = ma_200 - ma_50
+            distance_from_50 = price - ma_50
+            position_in_gap = distance_from_50 / gap_total if gap_total > 0 else 0
+            
+            # Scale from 7.5 to 15 points
+            trend_score = 7.5 + (position_in_gap * 7.5)
+            return max(0, min(15, trend_score))
+        else:
+            # Below 50MA = no points
+            return 0.0
     
     def _generate_recommendation(
         self,
         regime: TrendRegime,
         signal: str,
         distance_pct: float,
-        allow_long: bool
+        allow_long: bool,
+        is_stretch_mode: bool = False
     ) -> str:
         """Generate action recommendation."""
+        if is_stretch_mode:
+            return f"ENTER - Mean Reversion ({distance_pct:.1f}% dip from 200MA)"
+        
         if not allow_long:
             if signal in ["GREEN", "YELLOW"]:
                 return f"OVERRIDE - Below 200 MA ({distance_pct:.1f}%) - Fallande kniv!"

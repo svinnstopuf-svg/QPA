@@ -52,6 +52,9 @@ class InstrumentTracking:
     daily_scores: List[float]
     daily_edges: List[float]
     daily_dates: List[str]
+    
+    # V3.0: Signal Decay
+    days_since_last_investable: int = 0  # Staleness metric
 
 @dataclass
 class RiskAnalysis:
@@ -448,6 +451,27 @@ class WeeklyAnalyzer:
             from src.risk.all_weather_config import is_all_weather
             is_aw = is_all_weather(ticker)
             
+            # V3.0: Calculate days since last investable (signal decay metric)
+            days_since_last_investable = 0
+            if data['dates']:
+                # Find the most recent date where instrument was investable
+                last_investable_date = None
+                for i in range(len(data['dates']) - 1, -1, -1):
+                    # Check if this was an investable day (has net edge)
+                    if data['net_edges'][i] > 0:
+                        last_investable_date = data['dates'][i]
+                        break
+                
+                if last_investable_date:
+                    # Calculate days since then
+                    try:
+                        from datetime import datetime
+                        last_date = datetime.strptime(last_investable_date, "%Y-%m-%d")
+                        most_recent = datetime.strptime(data['dates'][-1], "%Y-%m-%d")
+                        days_since_last_investable = (most_recent - last_date).days
+                    except:
+                        days_since_last_investable = 0
+            
             result[ticker] = InstrumentTracking(
                 ticker=ticker,
                 name=data['name'],
@@ -470,7 +494,8 @@ class WeeklyAnalyzer:
                 is_all_weather=is_aw,
                 daily_scores=data['scores'],
                 daily_edges=data['net_edges'],
-                daily_dates=data['dates']
+                daily_dates=data['dates'],
+                days_since_last_investable=days_since_last_investable
             )
         
         return result
@@ -514,9 +539,18 @@ class WeeklyAnalyzer:
             edge_momentum_points = max(-15, min(15, edge_momentum_points))  # Clamp to [-15, +15]
             momentum += edge_momentum_points
             
-            # Total Conviction Score
+            # Total Conviction Score (before decay)
             conviction_score = consistency + quality + momentum
             conviction_score = max(0, min(100, conviction_score))
+            
+            # V3.0: Signal Decay - Stale signals lose conviction
+            # decay_factor = 0.75 ** days_since_last_investable
+            # After 3 days: 0.75^3 = 0.42 (conviction halves)
+            # After 7 days: 0.75^7 = 0.13 (conviction dies)
+            decay_factor = 1.0
+            if track.days_since_last_investable > 0:
+                decay_factor = 0.75 ** track.days_since_last_investable
+                conviction_score *= decay_factor
             
             # === MODUL 1: MATHEMATICAL EDGE ENGINE (Casino Logic) ===
             

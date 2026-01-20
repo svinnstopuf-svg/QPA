@@ -34,6 +34,9 @@ from src.risk.all_weather_config import (
     is_defensive_sector, get_avanza_alternative
 )
 
+# V3.0 imports (Week 1 HIGH PRIORITY)
+from src.filters.rvol_filter import RVOLFilter
+
 
 @dataclass
 class InstrumentScoreV22:
@@ -63,6 +66,10 @@ class InstrumentScoreV22:
     volatility_regime: str  # CONTRACTING, STABLE, EXPANDING, EXPLOSIVE
     net_edge_after_costs: float  # Edge - costs
     cost_profitable: bool  # Net edge > 0?
+    
+    # V3.0 Features (Week 1)
+    rvol: float  # Relative volume ratio
+    rvol_conviction: str  # HIGH, MEDIUM, LOW
     
     # Combined metrics
     final_allocation: float  # Final position size (%) after all filters
@@ -128,6 +135,9 @@ class InstrumentScreenerV22:
         if enable_v22_filters:
             self.breakout_filter = VolatilityBreakoutFilter()
             self.cost_filter = CostAwareFilter()
+        
+        # V3.0 components (Week 1 HIGH PRIORITY)
+        self.rvol_filter = RVOLFilter()
     
     def screen_instruments(
         self,
@@ -284,12 +294,13 @@ class InstrumentScreenerV22:
             print(f"    ⚠️ V-Kelly sizing failed: {e}")
             v_kelly_position = 1.0  # Default
         
-        # 7. Trend filter (V2.1)
+        # 7. Trend filter (V2.1 + V3.0 Elasticity)
         trend_analysis = self.trend_filter.analyze_trend(
             prices=market_data.close_prices,
             current_signal=traffic_result.signal.name
         )
         trend_aligned = trend_analysis.allow_long
+        trend_score = trend_analysis.trend_score  # V3.0: 0-15 elastic score
         
         # Initialize V2.2 defaults
         breakout_confidence = "N/A"
@@ -328,6 +339,22 @@ class InstrumentScreenerV22:
             except Exception as e:
                 print(f"    ⚠️ Cost filter failed: {e}")
         
+        # 9B. RVOL Filter (V3.0 - Week 1)
+        rvol = 1.0  # Default (neutral)
+        rvol_conviction = "UNKNOWN"
+        try:
+            rvol_analysis = self.rvol_filter.analyze_rvol(
+                volume=market_data.volume
+            )
+            rvol = rvol_analysis.rvol
+            rvol_conviction = rvol_analysis.conviction_level
+            
+            # Apply RVOL penalty to score
+            if rvol_analysis.score_multiplier < 1.0:
+                print(f"    {rvol_analysis.recommendation}")
+        except Exception as e:
+            print(f"    ⚠️ RVOL filter failed: {e}")
+        
         # 10. Calculate final allocation and recommendation
         final_allocation, entry_recommendation = self._calculate_final_allocation(
             traffic_signal=traffic_result.signal,
@@ -337,15 +364,17 @@ class InstrumentScreenerV22:
             cost_profitable=cost_profitable
         )
         
-        # 11. Calculate final score
+        # 11. Calculate final score (with RVOL + V3.0 elastic trend)
         final_score = self._calculate_final_score(
             traffic_result=traffic_result,
             best_edge=best_edge,
             net_edge=net_edge_after_costs,
             v_kelly_position=v_kelly_position,
             trend_aligned=trend_aligned,
+            trend_score=trend_score,
             breakout_confidence=breakout_confidence,
-            cost_profitable=cost_profitable
+            cost_profitable=cost_profitable,
+            rvol=rvol
         )
         
         # 12. Recommended allocation based on signal
@@ -381,7 +410,9 @@ class InstrumentScreenerV22:
             entry_recommendation=entry_recommendation,
             data_points=data_points,
             period_years=period_years,
-            avg_volume=avg_volume
+            avg_volume=avg_volume,
+            rvol=rvol,
+            rvol_conviction=rvol_conviction
         )
     
     def _calculate_final_allocation(
@@ -433,10 +464,12 @@ class InstrumentScreenerV22:
         net_edge: float,
         v_kelly_position: float,
         trend_aligned: bool,
+        trend_score: float,
         breakout_confidence: str,
-        cost_profitable: bool
+        cost_profitable: bool,
+        rvol: float = 1.0
     ) -> float:
-        """Calculate final score (0-100) incorporating all filters."""
+        """Calculate final score (0-100) incorporating all filters including RVOL and elastic trend."""
         
         score = 0.0
         
@@ -463,9 +496,9 @@ class InstrumentScreenerV22:
         kelly_score = min(15, (v_kelly_position / 5.0) * 15)
         score += kelly_score
         
-        # 4. Trend alignment (15%)
-        if trend_aligned:
-            score += 15
+        # 4. Trend alignment (15%) - V3.0 ELASTIC
+        # Use elastic trend score instead of binary
+        score += trend_score  # 0-15 points based on position between 50MA-200MA
         
         # 5. Volatility breakout (10%)
         if breakout_confidence == "EXTREME":
@@ -480,6 +513,16 @@ class InstrumentScreenerV22:
         # 6. Cost profitability (5%)
         if cost_profitable:
             score += 5
+        
+        # 7. RVOL Filter (V3.0) - Apply multiplier to final score
+        # RVOL < 0.5: score *= 0.0 (block)
+        # RVOL 0.5-1.0: score *= 0.5 (reduce)
+        # RVOL >= 1.0: score *= 1.0 (full strength)
+        if rvol < 0.5:
+            score *= 0.0  # Dead zone
+        elif rvol < 1.0:
+            score *= 0.5  # Weak volume
+        # else: full strength (no change)
         
         return max(0, min(100, score))
     
