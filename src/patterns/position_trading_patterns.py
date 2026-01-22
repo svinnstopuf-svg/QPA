@@ -57,64 +57,171 @@ class PositionTradingPatternDetector:
         self.lookback_decline = lookback_decline
         self.min_stabilization_days = min_stabilization_days
     
+    def find_pivot_lows(
+        self,
+        prices: np.ndarray,
+        volume: np.ndarray,
+        window: int = 5
+    ) -> List[Tuple[int, float, float]]:
+        """
+        Find significant pivot lows (local minima with volume context).
+        
+        Returns:
+            List of (index, price, volume) tuples
+        """
+        pivots = []
+        
+        for i in range(window, len(prices) - window):
+            # Check if this is a local minimum
+            is_low = True
+            for j in range(i - window, i + window + 1):
+                if j != i and prices[j] < prices[i]:
+                    is_low = False
+                    break
+            
+            if is_low:
+                pivots.append((i, prices[i], volume[i]))
+        
+        return pivots
+    
+    def find_pivot_highs(
+        self,
+        prices: np.ndarray,
+        window: int = 5
+    ) -> List[Tuple[int, float]]:
+        """
+        Find significant pivot highs (local maxima).
+        
+        Returns:
+            List of (index, price) tuples
+        """
+        pivots = []
+        
+        for i in range(window, len(prices) - window):
+            # Check if this is a local maximum
+            is_high = True
+            for j in range(i - window, i + window + 1):
+                if j != i and prices[j] > prices[i]:
+                    is_high = False
+                    break
+            
+            if is_high:
+                pivots.append((i, prices[i]))
+        
+        return pivots
+    
     def detect_double_bottom(
         self,
         market_data: MarketData,
-        tolerance: float = 0.03  # 3% tolerance for "same" low
+        price_tolerance: float = 0.02,  # 2% tolerance for "same" low
+        min_bounce_pct: float = 0.05  # 5% minimum bounce
     ) -> List[MarketSituation]:
         """
-        Detect double bottom (W-pattern).
+        Detect double bottom (W-pattern) using pivot-based analysis.
         
-        Criteria:
-        1. Price makes a low
-        2. Bounces up
-        3. Comes back down to test same low (within tolerance)
-        4. Starts to move up again
+        Advanced Criteria:
+        1. Pivot Low 1: Significant local bottom
+        2. Reaction High: Peak at least 5% above Low 1
+        3. Pivot Low 2: New bottom within +/- 2% of Low 1 price
+        4. Volume Check: Volume at Low 2 < Volume at Low 1 (sellers exhausted)
+        5. Trigger: Price breaks above Reaction High on high volume
         """
         situations = []
         prices = market_data.close_prices
+        volume = market_data.volume
         
-        # Need at least 40 days of data
-        if len(prices) < 40:
+        # Need sufficient data
+        if len(prices) < 60:
             return situations
         
-        # Scan for double bottoms
-        for i in range(30, len(prices) - 10):
-            # Look back 20 days for first low
-            lookback_window = prices[i-20:i]
-            first_low_idx = i - 20 + np.argmin(lookback_window)
-            first_low = prices[first_low_idx]
+        # Find all pivot lows and highs
+        pivot_lows = self.find_pivot_lows(prices, volume, window=5)
+        pivot_highs = self.find_pivot_highs(prices, window=5)
+        
+        if len(pivot_lows) < 2:
+            return situations
+        
+        # Look for W-patterns
+        for i in range(len(pivot_lows) - 1):
+            low1_idx, low1_price, low1_vol = pivot_lows[i]
             
-            # Look for second low (current area)
-            current_low = np.min(prices[i:i+10])
-            
-            # Check if they're similar (double bottom)
-            if abs(current_low - first_low) / first_low <= tolerance:
-                # Check if there was a peak between them
-                middle_section = prices[first_low_idx:i]
-                if len(middle_section) > 0:
-                    peak = np.max(middle_section)
-                    bounce_height = (peak - first_low) / first_low
+            # Look for second low after first
+            for j in range(i + 1, len(pivot_lows)):
+                low2_idx, low2_price, low2_vol = pivot_lows[j]
+                
+                # Must be at least 10 days apart
+                if low2_idx - low1_idx < 10:
+                    continue
+                
+                # Check if Low 2 is within tolerance of Low 1 ("same" level)
+                price_diff = abs(low2_price - low1_price) / low1_price
+                if price_diff > price_tolerance:
+                    continue
+                
+                # Find reaction high between the two lows
+                highs_between = [h for h in pivot_highs if low1_idx < h[0] < low2_idx]
+                if not highs_between:
+                    continue
+                
+                # Get the highest peak between lows
+                reaction_high_idx, reaction_high_price = max(highs_between, key=lambda x: x[1])
+                bounce_height = (reaction_high_price - low1_price) / low1_price
+                
+                # Reaction high must be significant (5%+ bounce)
+                if bounce_height < min_bounce_pct:
+                    continue
+                
+                # VOLUME CHECK: Volume at Low 2 should be lower (sellers exhausted)
+                volume_declining = low2_vol < low1_vol
+                
+                # Check for prior decline before Low 1
+                decline_start_idx = max(0, low1_idx - self.lookback_decline)
+                decline_high = np.max(prices[decline_start_idx:low1_idx])
+                decline_pct = ((low1_price - decline_high) / decline_high) * 100
+                
+                if abs(decline_pct) < self.min_decline_pct:
+                    continue
+                
+                # Check if we're past Low 2 and potentially triggering
+                current_idx = len(prices) - 1
+                if low2_idx < current_idx:
+                    # Check if price has broken above reaction high
+                    price_after_low2 = prices[low2_idx:]
+                    triggered = np.any(price_after_low2 > reaction_high_price)
                     
-                    # Valid double bottom if bounce was significant
-                    if bounce_height > 0.05:  # 5% bounce
-                        # Check for prior decline
-                        decline_start_idx = max(0, i - self.lookback_decline)
-                        decline_high = np.max(prices[decline_start_idx:first_low_idx])
-                        decline_pct = ((first_low - decline_high) / decline_high) * 100
-                        
-                        if abs(decline_pct) >= self.min_decline_pct:
-                            situations.append(MarketSituation(
-                                description=f"Double Bottom (W-Pattern) after {decline_pct:.0f}% decline",
-                                timestamp_indices=np.array([i]),
-                                metadata={
-                                    'signal_type': 'structural_reversal',
-                                    'pattern': 'double_bottom',
-                                    'priority': 'PRIMARY',
-                                    'decline_pct': decline_pct,
-                                    'bounce_height': bounce_height * 100
-                                }
-                            ))
+                    # Check volume on breakout
+                    if triggered:
+                        breakout_idx = low2_idx + np.argmax(price_after_low2 > reaction_high_price)
+                        breakout_vol = volume[breakout_idx]
+                        avg_vol = np.mean(volume[max(0, breakout_idx-20):breakout_idx])
+                        high_volume_breakout = breakout_vol > avg_vol * 1.5
+                    else:
+                        breakout_idx = low2_idx
+                        high_volume_breakout = False
+                    
+                    situations.append(MarketSituation(
+                        description=f"Double Bottom (W-Pattern) after {decline_pct:.0f}% decline",
+                        timestamp_indices=np.array([breakout_idx if triggered else low2_idx]),
+                        metadata={
+                            'signal_type': 'structural_reversal',
+                            'pattern': 'double_bottom',
+                            'priority': 'PRIMARY',
+                            'decline_pct': decline_pct,
+                            'bounce_height': bounce_height * 100,
+                            'low1_idx': low1_idx,
+                            'low2_idx': low2_idx,
+                            'reaction_high_idx': reaction_high_idx,
+                            'volume_declining': volume_declining,
+                            'triggered': triggered,
+                            'high_volume_breakout': high_volume_breakout if triggered else False
+                        }
+                    ))
+                    
+                    # Only report most recent double bottom per instrument
+                    break
+            
+            if situations:
+                break
         
         return situations
     
