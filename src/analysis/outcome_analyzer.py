@@ -71,8 +71,15 @@ class OutcomeAnalyzer:
         std_return = np.std(returns)
         
         # Fördelningsegenskaper
-        skewness = float(stats.skew(returns))
-        kurtosis = float(stats.kurtosis(returns))
+        try:
+            skewness = float(stats.skew(returns)) if len(returns) > 2 else 0.0
+        except:
+            skewness = 0.0
+        
+        try:
+            kurtosis = float(stats.kurtosis(returns)) if len(returns) > 3 else 0.0
+        except:
+            kurtosis = 0.0
         
         # Extremvärden
         min_return = np.min(returns)

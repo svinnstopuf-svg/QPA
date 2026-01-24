@@ -40,9 +40,18 @@ def main():
     """Simple daily dashboard."""
     
     print("\n" + "🎯 "*20)
-    print("          TRADING DASHBOARD - Dagens Översikt")
+    print("          POSITION TRADING DASHBOARD - Sunday Review")
     print("🎯 "*20)
     print(f"\n📅 Datum: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    
+    # Days until weekend
+    today = datetime.now()
+    days_until_weekend = (6 - today.weekday()) % 7
+    if days_until_weekend == 0:
+        weekend_msg = "TODAY IS SUNDAY - REVIEW DAY!"
+    else:
+        weekend_msg = f"{days_until_weekend} days until next Sunday"
+    print(f"📆 Weekend Countdown: {weekend_msg}")
     
     # V3.0: Initialize risk guards
     event_guard = EventGuard(earnings_blackout_hours=48)
@@ -140,16 +149,16 @@ def main():
             watchlist.append(r)
     
     # ========================================================================
-    # Display header with counts
+    # Display header with counts - CHANGED TO POTENTIAL
     # ========================================================================
-    print(f"\n✅ {len(investable)} INVESTERBARA | 📋 {len(watchlist)} PÅ BEVAKNING\n")
+    print(f"\n🎯 {len(investable)} POTENTIAL FOR SUNDAY REVIEW | 📋 {len(watchlist)} WAIT\n")
     
     # ========================================================================
-    # 🚀 INVESTERBARA - Full details (Net Edge > 0 efter alla kostnader)
+    # 🎯 POTENTIAL - Position trading setups (21/42/63 days)
     # ========================================================================
     if investable:
         print("\n" + "="*80)
-        print("🚀 INVESTERBARA (Matematiskt lönsamma efter alla avgifter)")
+        print("🎯 POTENTIAL FOR SUNDAY REVIEW (21/42/63 Day Holds)")
         print("="*80 + "\n")
         
         for i, r in enumerate(investable, 1):

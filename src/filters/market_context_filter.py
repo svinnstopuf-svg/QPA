@@ -43,7 +43,7 @@ class MarketContextFilter:
     
     def __init__(
         self,
-        min_decline_pct: float = 15.0,  # Minimum decline from high
+        min_decline_pct: float = 10.0,  # Minimum decline from high (relaxed from 15% for broader scanning)
         lookback_high: int = 90,  # Days to look back for high
         ema_period: int = 200  # EMA period for trend
     ):
@@ -192,10 +192,10 @@ def format_context_report(context: MarketContext, ticker: str = "") -> str:
     
     lines.append(f"\nDECLINE FILTER:")
     lines.append(f"  Decline from High: {context.decline_from_high:.1f}%")
-    if context.decline_from_high <= -15.0:
+    if context.decline_from_high <= -10.0:
         lines.append(f"  Status: PASS (sufficient decline)")
     else:
-        lines.append(f"  Status: FAIL (need -15% minimum)")
+        lines.append(f"  Status: FAIL (need -10% minimum)")
     
     lines.append(f"\nTREND FILTER:")
     lines.append(f"  Price vs EMA200: {context.price_vs_ema200:.1f}%")

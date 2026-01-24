@@ -455,6 +455,9 @@ RECOMMENDATION:
 **Position Sizing:** Volatility-adjusted Kelly (V-Kelly)  
 **Risk Management:** Multi-layer filters (trend, volatility, cost, regime)
 
+**For complete technical documentation of how the system works end-to-end, see:**
+- **SYSTEM_ARCHITECTURE.md** - Complete system flow (data fetching → pattern detection → backtesting → risk management → final recommendations)
+
 ---
 
 ## Files You Need To Know
@@ -470,15 +473,16 @@ RECOMMENDATION:
 - `kvartalsvis_analys.py` - System validation
 
 **Documentation:**
+- `SYSTEM_ARCHITECTURE.md` - **📚 COMPLETE TECHNICAL GUIDE** - End-to-end system flow (START HERE) 🆕
 - `ENKEL_GUIDE.md` - Quick start
 - `VERSION_2.2_FEATURES.md` - Technical details
 - `POSITION_TRACKING.md` - How to track positions
-- `HISTORICAL_BACKFILL.md` - Point-in-time analysis system 🆕
-- `ISK_OPTIMIZATION.md` - ISK-specific cost optimization (Swedish investors) 🆕 🇸🇪
-- `EXECUTION_COST_GUARD.md` - Minimize hidden costs (FX, fees, spreads, liquidity) 🆕
-- `ALL_WEATHER_CRISIS_MODE.md` - 59 defensive instruments for crashes 🆕
-- `MACRO_INDICATORS.md` - Professional risk detection 🆕
-- `V3.0_MASTER_SYSTEM.md` - Complete V3.0 upgrade documentation (16 features) 🆕
+- `HISTORICAL_BACKFILL.md` - Point-in-time analysis system
+- `ISK_OPTIMIZATION.md` - ISK-specific cost optimization (Swedish investors) 🇸🇪
+- `EXECUTION_COST_GUARD.md` - Minimize hidden costs (FX, fees, spreads, liquidity)
+- `ALL_WEATHER_CRISIS_MODE.md` - 59 defensive instruments for crashes
+- `MACRO_INDICATORS.md` - Professional risk detection
+- `V3.0_MASTER_SYSTEM.md` - Complete V3.0 upgrade documentation (16 features)
 
 ---
 

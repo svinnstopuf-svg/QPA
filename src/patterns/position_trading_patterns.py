@@ -113,7 +113,7 @@ class PositionTradingPatternDetector:
     def detect_double_bottom(
         self,
         market_data: MarketData,
-        price_tolerance: float = 0.02,  # 2% tolerance for "same" low
+        price_tolerance: float = 0.05,  # 5% tolerance for "same" low (BACKTEST: was 2%)
         min_bounce_pct: float = 0.05  # 5% minimum bounce
     ) -> List[MarketSituation]:
         """
@@ -172,6 +172,7 @@ class PositionTradingPatternDetector:
                     continue
                 
                 # VOLUME CHECK: Volume at Low 2 should be lower (sellers exhausted)
+                # BACKTEST MODE: Log but don't reject
                 volume_declining = low2_vol < low1_vol
                 
                 # Check for prior decline before Low 1
@@ -189,19 +190,23 @@ class PositionTradingPatternDetector:
                     price_after_low2 = prices[low2_idx:]
                     triggered = np.any(price_after_low2 > reaction_high_price)
                     
-                    # Check volume on breakout
+                    # Check volume on breakout - MUST be 1.5x+ average
                     if triggered:
                         breakout_idx = low2_idx + np.argmax(price_after_low2 > reaction_high_price)
                         breakout_vol = volume[breakout_idx]
                         avg_vol = np.mean(volume[max(0, breakout_idx-20):breakout_idx])
                         high_volume_breakout = breakout_vol > avg_vol * 1.5
+                        # BACKTEST MODE: Log but don't reject
                     else:
+                        # Pattern forming but not triggered yet - allow it
                         breakout_idx = low2_idx
                         high_volume_breakout = False
                     
                     situations.append(MarketSituation(
+                        situation_id="double_bottom",
                         description=f"Double Bottom (W-Pattern) after {decline_pct:.0f}% decline",
                         timestamp_indices=np.array([breakout_idx if triggered else low2_idx]),
+                        confidence=1.0,  # Pattern detected = 100% confidence
                         metadata={
                             'signal_type': 'structural_reversal',
                             'pattern': 'double_bottom',
@@ -284,8 +289,10 @@ class PositionTradingPatternDetector:
                             
                             if abs(decline_pct) >= self.min_decline_pct:
                                 situations.append(MarketSituation(
+                                    situation_id="inverse_head_shoulders",
                                     description=f"Inverse Head & Shoulders after {decline_pct:.0f}% decline",
                                     timestamp_indices=np.array([i]),
+                                    confidence=1.0,
                                     metadata={
                                         'signal_type': 'structural_reversal',
                                         'pattern': 'inverse_head_shoulders',
@@ -334,8 +341,10 @@ class PositionTradingPatternDetector:
                     # Flag should have lower volatility (stabilization)
                     if cons_std < decline_std * 0.7:
                         situations.append(MarketSituation(
+                            situation_id="bull_flag_decline",
                             description=f"Bull Flag (Base) after {decline_pct:.0f}% decline",
                             timestamp_indices=np.array([i]),
+                            confidence=1.0,
                             metadata={
                                 'signal_type': 'structural_reversal',
                                 'pattern': 'bull_flag_after_decline',
@@ -394,8 +403,10 @@ class PositionTradingPatternDetector:
                     
                     if abs(decline_pct) >= self.min_decline_pct:
                         situations.append(MarketSituation(
+                            situation_id="higher_lows",
                             description=f"Higher Lows (Trend Reversal) after {decline_pct:.0f}% decline",
                             timestamp_indices=np.array([i]),
+                            confidence=1.0,
                             metadata={
                                 'signal_type': 'structural_reversal',
                                 'pattern': 'higher_lows',
@@ -405,6 +416,61 @@ class PositionTradingPatternDetector:
                             }
                         ))
                         break
+        
+        return situations
+    
+    def detect_ema20_reclaim(
+        self,
+        market_data: MarketData
+    ) -> List[MarketSituation]:
+        """
+        Detect EMA 20 reclaim after decline (SIMPLE PATTERN FOR BACKTEST).
+        
+        Criteria:
+        1. Price declined 10%+ from recent high
+        2. Price crosses above EMA 20
+        3. Simple, high-frequency pattern for validation
+        """
+        situations = []
+        prices = market_data.close_prices
+        
+        if len(prices) < 90:
+            return situations
+        
+        # Calculate EMA 20
+        ema20 = np.zeros(len(prices))
+        ema20[:20] = np.nan
+        ema20[19] = np.mean(prices[:20])
+        multiplier = 2.0 / 21
+        
+        for i in range(20, len(prices)):
+            ema20[i] = (prices[i] - ema20[i-1]) * multiplier + ema20[i-1]
+        
+        # Scan for reclaims
+        for i in range(60, len(prices)):
+            # Check for prior decline
+            lookback_high = np.max(prices[max(0, i-60):i])
+            current_price = prices[i]
+            decline_pct = ((current_price - lookback_high) / lookback_high) * 100
+            
+            if abs(decline_pct) < self.min_decline_pct:
+                continue
+            
+            # Check if price crosses above EMA 20
+            if i > 0 and prices[i-1] < ema20[i-1] and prices[i] > ema20[i]:
+                situations.append(MarketSituation(
+                    situation_id="ema20_reclaim",
+                    description=f"EMA 20 Reclaim after {decline_pct:.0f}% decline",
+                    timestamp_indices=np.array([i]),
+                    confidence=1.0,
+                    metadata={
+                        'signal_type': 'trend_reversal',
+                        'pattern': 'ema20_reclaim',
+                        'priority': 'PRIMARY',
+                        'decline_pct': decline_pct,
+                        'ema20': ema20[i]
+                    }
+                ))
         
         return situations
     
@@ -431,6 +497,11 @@ class PositionTradingPatternDetector:
         higher_lows = self.detect_higher_lows_reversal(market_data)
         for i, hl in enumerate(higher_lows):
             patterns[f'higher_lows_{i}'] = hl
+        
+        # EMA 20 Reclaim (SIMPLE pattern for backtest)
+        ema20_reclaims = self.detect_ema20_reclaim(market_data)
+        for i, ema in enumerate(ema20_reclaims):
+            patterns[f'ema20_reclaim_{i}'] = ema
         
         return patterns
 

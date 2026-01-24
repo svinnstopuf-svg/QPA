@@ -1,0 +1,64 @@
+================================================================================
+SUNDAY DASHBOARD REPORT
+================================================================================
+Generated: 2026-01-23 13:57:10
+Capital: 100,000 SEK
+
+REGIME:
+  EUPHORIA
+  Position Multiplier: 1.0x
+  EUPHORISKT - Hög exponering OK, men var försiktig
+
+TOP 5 SETUPS:
+================================================================================
+
+#1: BSX - Nya lägsta nivåer (252 perioder)
+Score: 80.0/100
+Edge (63d): +20.40%
+Win Rate: 100.0%
+RRR: 1:10.94
+Position: 3,000 SEK (3.00%)
+Expected Profit: +420 SEK
+--------------------------------------------------------------------------------
+
+#2: NMAN.ST - Nya lägsta nivåer (252 perioder)
+Score: 79.2/100
+Edge (63d): +11.11%
+Win Rate: 91.7%
+RRR: 1:12.00
+Position: 3,000 SEK (3.00%)
+Expected Profit: +247 SEK
+--------------------------------------------------------------------------------
+
+#3: NWSA - Extended Rally (7+ up days) - Exhaustion Risk
+Score: 78.1/100
+Edge (63d): +18.02%
+Win Rate: 81.2%
+RRR: 1:7.04
+Position: 3,000 SEK (3.00%)
+Expected Profit: +329 SEK
+--------------------------------------------------------------------------------
+
+#4: CRM - Golden Cross (50MA > 200MA) - Bullish
+Score: 77.3/100
+Edge (63d): +8.83%
+Win Rate: 72.7%
+RRR: 1:6.71
+Position: 2,500 SEK (2.50%)
+Expected Profit: +176 SEK
+--------------------------------------------------------------------------------
+
+#5: LIFCO-B.ST - Nya lägsta nivåer (252 perioder)
+Score: 76.2/100
+Edge (63d): +21.63%
+Win Rate: 73.3%
+RRR: 1:4.62
+Position: 2,500 SEK (2.50%)
+Expected Profit: +216 SEK
+--------------------------------------------------------------------------------
+
+DIAGNOSTICS:
+Total scanned: 664
+POTENTIAL: 9
+No patterns: 595 (89.6%)
+Context invalid: 56 (8.4%)

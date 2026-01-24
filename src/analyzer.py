@@ -12,6 +12,9 @@ from datetime import datetime
 from .utils.market_data import MarketData, MarketDataProcessor
 from .patterns.detector import PatternDetector, MarketSituation
 from .patterns.technical_patterns import TechnicalPatternDetector
+from .patterns.position_trading_patterns import PositionTradingPatternDetector
+from .filters.market_context_filter import MarketContextFilter
+from .filters.earnings_calendar import EarningsCalendar
 from .core.pattern_evaluator import PatternEvaluator, PatternEvaluation
 from .core.pattern_monitor import PatternMonitor, PatternStatus
 from .analysis.outcome_analyzer import OutcomeAnalyzer, OutcomeStatistics
@@ -41,7 +44,7 @@ class QuantPatternAnalyzer:
         self,
         min_occurrences: int = 30,
         min_confidence: float = 0.70,
-        forward_periods: int = 1
+        forward_periods: int = 21  # Changed from 1 to 21 for position trading
     ):
         """
         Initialiserar analysverktyget.
@@ -49,10 +52,13 @@ class QuantPatternAnalyzer:
         Args:
             min_occurrences: Minsta antal observationer för att mönster ska vara giltigt
             min_confidence: Minsta konfidensgrad för signifikans
-            forward_periods: Antal perioder framåt att mäta utfall över
+            forward_periods: Antal perioder framåt att mäta utfall över (21 = position trading)
         """
         self.pattern_detector = PatternDetector()
         self.technical_detector = TechnicalPatternDetector()
+        self.position_detector = PositionTradingPatternDetector()  # NEW: Position trading patterns
+        self.context_filter = MarketContextFilter()  # NEW: Market context pre-filter
+        self.earnings_calendar = EarningsCalendar(risk_window_days=10)  # NEW: Earnings risk filter
         self.pattern_evaluator = PatternEvaluator(
             min_occurrences=min_occurrences,
             min_confidence=min_confidence
@@ -112,11 +118,44 @@ class QuantPatternAnalyzer:
         """
         print("Analyserar marknadsdata...")
         
-        # Steg 1: Identifiera alla marknadssituationer
-        all_situations = self.pattern_detector.detect_all_patterns(market_data)
+        # EARNINGS RISK CHECK (V4.0)
+        ticker = market_data.ticker if hasattr(market_data, 'ticker') else None
+        earnings_risk = None
+        if ticker:
+            earnings_risk = self.earnings_calendar.check_earnings_risk(ticker)
+            print(f"Earnings Risk: {earnings_risk.risk_level} - {earnings_risk.message}")
         
-        # Add technical patterns
+        # PHASE 1: Check market context for position trading
+        market_context = self.context_filter.check_market_context(market_data)
+        print(f"Market Context: {'VALID' if market_context.is_valid_for_entry else 'NO SETUP'}")
+        print(f"  Decline: {market_context.decline_from_high:.1f}% | Price vs EMA200: {market_context.price_vs_ema200:+.1f}%")
+        
+        # Steg 1: Identifiera alla marknadssituationer
+        all_situations = {}
+        
+        # Add PRIMARY patterns (structural reversals) if context is valid
+        if market_context.is_valid_for_entry:
+            print("Detecting PRIMARY patterns (structural reversals)...")
+            position_patterns = self.position_detector.detect_all_position_patterns(market_data)
+            all_situations.update(position_patterns)
+            print(f"  Found {len(position_patterns)} PRIMARY patterns")
+        else:
+            print("Skipping PRIMARY patterns (context not valid for position trading)")
+        
+        # Add SECONDARY patterns (calendar, momentum) - always detect but lower priority
+        print("Detecting SECONDARY patterns (calendar, momentum)...")
+        secondary_patterns = self.pattern_detector.detect_all_patterns(market_data)
+        # Tag all as SECONDARY
+        for situation in secondary_patterns.values():
+            if 'priority' not in situation.metadata:
+                situation.metadata['priority'] = 'SECONDARY'
+        all_situations.update(secondary_patterns)
+        
+        # Add technical patterns (SECONDARY)
         technical_patterns = self.technical_detector.detect_all_technical_patterns(market_data)
+        for situation in technical_patterns.values():
+            if 'priority' not in situation.metadata:
+                situation.metadata['priority'] = 'SECONDARY'
         all_situations.update(technical_patterns)
         
         # Filtrera om specifika mönster önskas
@@ -133,12 +172,25 @@ class QuantPatternAnalyzer:
         significant_patterns = []
         
         for situation_id, situation in all_situations.items():
-            # Beräkna framtida avkastningar från identifierade tidpunkter
-            forward_returns = self.outcome_analyzer.calculate_forward_returns(
+            # MULTI-TIMEFRAME: Calculate returns for 21, 42, and 63 days
+            forward_returns_21d = self.outcome_analyzer.calculate_forward_returns(
                 prices=market_data.close_prices,
                 indices=situation.timestamp_indices,
-                forward_periods=self.forward_periods
+                forward_periods=21
             )
+            forward_returns_42d = self.outcome_analyzer.calculate_forward_returns(
+                prices=market_data.close_prices,
+                indices=situation.timestamp_indices,
+                forward_periods=42
+            )
+            forward_returns_63d = self.outcome_analyzer.calculate_forward_returns(
+                prices=market_data.close_prices,
+                indices=situation.timestamp_indices,
+                forward_periods=63
+            )
+            
+            # Use primary timeframe (21d) for main analysis
+            forward_returns = forward_returns_21d
             
             if len(forward_returns) == 0:
                 continue
@@ -206,6 +258,35 @@ class QuantPatternAnalyzer:
             
             # Spara signifikanta mönster
             if pattern_eval.is_significant:
+                # Calculate outcome stats for all timeframes
+                outcome_stats_42d = self.outcome_analyzer.analyze_outcomes(
+                    returns=forward_returns_42d,
+                    forward_periods=42
+                ) if len(forward_returns_42d) > 0 else None
+                
+                outcome_stats_63d = self.outcome_analyzer.analyze_outcomes(
+                    returns=forward_returns_63d,
+                    forward_periods=63
+                ) if len(forward_returns_63d) > 0 else None
+                
+                # EXPECTED VALUE (EV) calculation
+                # EV = (Win Rate * Avg Win) - (Loss Rate * Avg Loss)
+                win_rate = outcome_stats.win_rate
+                loss_rate = 1.0 - win_rate
+                avg_win = outcome_stats.avg_win
+                avg_loss = abs(outcome_stats.avg_loss)  # Make positive
+                expected_value = (win_rate * avg_win) - (loss_rate * avg_loss)
+                
+                # RISK/REWARD RATIO (RRR) calculation
+                # RRR = Avg Win / Avg Loss (target: >= 1:3 means 3.0+)
+                risk_reward_ratio = avg_win / avg_loss if avg_loss > 0 else 0.0
+                
+                # QUALITY FILTERS: Only show patterns with positive EV and RRR >= 1:3
+                if expected_value <= 0:
+                    continue  # Skip: Negative expected value
+                if risk_reward_ratio < 3.0:
+                    continue  # Skip: Risk/Reward worse than 1:3
+                
                 significant_patterns.append({
                     'description': situation.description,
                     'sample_size': outcome_stats.sample_size,
@@ -215,7 +296,23 @@ class QuantPatternAnalyzer:
                     'win_rate': outcome_stats.win_rate,
                     'metadata': situation.metadata,  # Include for warning checks
                     'bayesian_edge': bayesian_estimate.bias_adjusted_edge if bayesian_estimate else outcome_stats.mean_return,  # V3.0: Use Bayesian survivorship-adjusted edge
-                    'bayesian_uncertainty': bayesian_estimate.uncertainty_level if bayesian_estimate else 'UNKNOWN'
+                    'bayesian_uncertainty': bayesian_estimate.uncertainty_level if bayesian_estimate else 'UNKNOWN',
+                    # MULTI-TIMEFRAME DATA (Position Trading)
+                    'mean_return_21d': outcome_stats.mean_return,
+                    'win_rate_21d': outcome_stats.win_rate,
+                    'mean_return_42d': outcome_stats_42d.mean_return if outcome_stats_42d else 0.0,
+                    'win_rate_42d': outcome_stats_42d.win_rate if outcome_stats_42d else 0.0,
+                    'mean_return_63d': outcome_stats_63d.mean_return if outcome_stats_63d else 0.0,
+                    'win_rate_63d': outcome_stats_63d.win_rate if outcome_stats_63d else 0.0,
+                    # RISK MANAGEMENT (V4.0)
+                    'expected_value': expected_value,
+                    'risk_reward_ratio': risk_reward_ratio,
+                    'avg_win': avg_win,
+                    'avg_loss': avg_loss,
+                    # EARNINGS RISK (V4.0)
+                    'earnings_risk': earnings_risk.risk_level if earnings_risk else 'UNKNOWN',
+                    'earnings_message': earnings_risk.message if earnings_risk else 'No earnings data',
+                    'earnings_days_until': earnings_risk.days_until_earnings if earnings_risk else None,
                 })
         
         print(f"Hittade {len(significant_patterns)} signifikanta mönster")

@@ -117,12 +117,12 @@ class InstrumentScreenerV22:
         self.enable_v22_filters = enable_v22_filters
         self.analysis_date = analysis_date
         
-        # Core components (V2.0)
+        # Core components (V2.0 → V4.0 Position Trading)
         self.data_fetcher = DataFetcher()
         self.analyzer = QuantPatternAnalyzer(
             min_occurrences=5,
             min_confidence=0.40,
-            forward_periods=1
+            forward_periods=21  # CHANGED: 1 → 21 days (position trading)
         )
         self.traffic_light = TrafficLightEvaluator()
         
@@ -155,10 +155,11 @@ class InstrumentScreenerV22:
         results = []
         
         print("=" * 80)
-        print("📊 INSTRUMENT SCREENER V2.2 - CASINO-STYLE RISK IMPROVEMENTS")
+        print("📊 INSTRUMENT SCREENER V4.0 - POSITION TRADING (21/42/63 DAYS)")
         print("=" * 80)
         print(f"\nAnalyserar {len(instruments)} instrument...")
         print(f"V2.2 Filters: {'Enabled' if self.enable_v22_filters else 'Disabled'}")
+        print(f"Timeframe: 21/42/63 days (position trading)")
         print()
         
         for i, (ticker, name, category) in enumerate(instruments, 1):
@@ -582,10 +583,10 @@ class InstrumentScreenerV22:
 
 
 def format_v22_report(results: List[InstrumentScoreV22]) -> str:
-    """Format V2.2 screener report."""
+    """Format V4.0 position trading report."""
     lines = []
     lines.append("=" * 100)
-    lines.append("📊 INSTRUMENT SCREENER V2.2 - CASINO-STYLE RISK IMPROVEMENTS")
+    lines.append("📊 INSTRUMENT SCREENER V4.0 - POSITION TRADING (21/42/63 DAYS)")
     lines.append("=" * 100)
     lines.append("")
     
@@ -616,24 +617,25 @@ def format_v22_report(results: List[InstrumentScoreV22]) -> str:
         lines.append(f"📈 MARKET REGIME: {regime_text}")
         lines.append("")
     
-    # Top opportunities
+    # Top opportunities - CHANGED TO POTENTIAL (position trading)
     actionable = [r for r in results if r.entry_recommendation.startswith("ENTER")]
     
     if actionable:
-        lines.append("✅ TOP OPPORTUNITIES (ENTER SIGNALS)")
+        lines.append("🎯 POTENTIAL FOR SUNDAY REVIEW (21/42/63 DAY HOLDS)")
         lines.append("-" * 100)
-        lines.append(f"{'Rank':<5} {'Instrument':<25} {'Signal':<8} {'Net Edge':<10} "
-                    f"{'Alloc%':<8} {'Breakout':<12} {'Entry':<20}")
+        lines.append(f"{'Rank':<5} {'Instrument':<25} {'Edge21d':<10} {'Edge42d':<10} "
+                    f"{'Edge63d':<10} {'Alloc%':<8} {'Status':<20}")
         lines.append("-" * 100)
         
         for i, r in enumerate(actionable[:10], 1):
-            signal_text = "GREEN" if r.signal == Signal.GREEN else "YELLOW" if r.signal == Signal.YELLOW else "ORANGE"
+            # Show multi-timeframe edges instead of net edge
             lines.append(
-                f"{i:<5} {r.name[:23]:<25} {signal_text:<8} "
-                f"{r.net_edge_after_costs:>7.2f}%  "
+                f"{i:<5} {r.name[:23]:<25} "
+                f"{r.best_edge:>7.2f}%   "  # Using best_edge as 21d proxy
+                f"{'N/A':>7}    "  # 42d not yet implemented
+                f"{'N/A':>7}    "  # 63d not yet implemented
                 f"{r.final_allocation:>6.2f}%  "
-                f"{r.volatility_regime[:10]:<12} "
-                f"{r.entry_recommendation[:18]:<20}"
+                f"POTENTIAL (review Sunday)"
             )
         lines.append("")
     

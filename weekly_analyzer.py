@@ -1,8 +1,11 @@
 """
-WEEKLY ANALYZER - Strategic Decision Module
+WEEKLY ANALYZER - Strategic Decision Module (Position Trading Edition)
 
 Aggregerar dagliga dashboard-körningar för att identifiera bästa köpmöjligheter.
 Transformerar Dashboard-nivå data till Beslutsfattar-nivå insights.
+
+V4.0 POSITION TRADING: Displays 21/42/63-day edges when fed with position trading data.
+Edge values are derived from forward_periods=21 in instrument_screener_v22.py.
 """
 import json
 import glob
