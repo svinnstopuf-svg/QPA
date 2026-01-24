@@ -195,19 +195,71 @@ class SundayDashboard:
         # Systemic Risk Score
         print("\n🚨 Systemic Risk Score...")
         systemic_risk = 0
-        if macro_results.get('yield_curve') and macro_results.get('credit_spreads'):
-            # Simple aggregation
-            if hasattr(macro_results['yield_curve'], 'is_inverted') and macro_results['yield_curve'].is_inverted:
+        risk_components = []
+        
+        # Component 1: Yield Curve (0-40 points)
+        if macro_results.get('yield_curve'):
+            yc = macro_results['yield_curve']
+            if yc.risk_level == "EXTREME":
+                systemic_risk += 40
+                risk_components.append("Yield Curve: EXTREME (40pts)")
+            elif yc.risk_level == "HIGH":
                 systemic_risk += 30
-            if hasattr(macro_results['credit_spreads'], 'spread') and macro_results['credit_spreads'].spread > 0.5:
+                risk_components.append("Yield Curve: HIGH (30pts)")
+            elif yc.risk_level == "MEDIUM":
+                systemic_risk += 15
+                risk_components.append("Yield Curve: MEDIUM (15pts)")
+            else:
+                risk_components.append("Yield Curve: LOW (0pts)")
+        
+        # Component 2: Credit Spreads (0-30 points)
+        if macro_results.get('credit_spreads'):
+            cs = macro_results['credit_spreads']
+            if cs.stress_level == "EXTREME":
+                systemic_risk += 30
+                risk_components.append("Credit Spreads: EXTREME (30pts)")
+            elif cs.stress_level == "HIGH":
                 systemic_risk += 20
-            
-            results['systemic_risk'] = systemic_risk
+                risk_components.append("Credit Spreads: HIGH (20pts)")
+            elif cs.stress_level == "MEDIUM":
+                systemic_risk += 10
+                risk_components.append("Credit Spreads: MEDIUM (10pts)")
+            else:
+                risk_components.append("Credit Spreads: LOW (0pts)")
+        
+        # Component 3: Safe Haven Activity (0-30 points)
+        # Will be calculated after screener results are available
+        # For now, use market breadth as proxy
+        if results.get('market_breadth'):
+            breadth = results['market_breadth']
+            if breadth.breadth_pct < 20:  # <20% = extreme weakness
+                systemic_risk += 30
+                risk_components.append("Market Breadth: EXTREME weakness (30pts)")
+            elif breadth.breadth_pct < 40:
+                systemic_risk += 20
+                risk_components.append("Market Breadth: HIGH weakness (20pts)")
+            elif breadth.breadth_pct < 60:
+                systemic_risk += 10
+                risk_components.append("Market Breadth: MEDIUM weakness (10pts)")
+            else:
+                risk_components.append("Market Breadth: Healthy (0pts)")
+        
+        results['systemic_risk'] = systemic_risk
+        
+        # Display
+        if systemic_risk > 0 or len(risk_components) > 0:
             print(f"   Risk Score: {systemic_risk}/100")
+            for component in risk_components:
+                print(f"      • {component}")
             
-            if systemic_risk > 70:
-                print(f"   🚨 EXTREME RISK - Recommend blocking new positions")
-                print(f"   (Continuing analysis for informational purposes)")
+            if systemic_risk >= 80:
+                print(f"   🚨 EXTREME RISK - Recommend blocking all new positions")
+            elif systemic_risk >= 60:
+                print(f"   ⚠️ HIGH RISK - Reduce position sizes by 50%")
+            elif systemic_risk >= 40:
+                print(f"   ⚠️ ELEVATED RISK - Extra caution recommended")
+            else:
+                print(f"   ✅ ACCEPTABLE RISK - Proceed with normal trading")
         else:
             print(f"   Risk Score: N/A (insufficient macro data)")
             results['systemic_risk'] = None
@@ -538,7 +590,35 @@ class SundayDashboard:
                     # Optimal stop = avg_loss * 1.5 (more negative = wider stop)
                     setup.optimal_stop_pct = abs(setup.avg_loss) * 1.5
                 else:
-                    setup.optimal_stop_pct = 0.015  # Default 1.5%
+                    # No losses: estimate from volatility
+                    # Use combination of avg_win range and sample size
+                    # Wider stops for patterns with:
+                    # - Higher volatility (larger avg_win implies larger swings)
+                    # - Smaller sample size (less confidence)
+                    
+                    # Base stop: 2% for conservative estimate
+                    base_stop = 0.02
+                    
+                    # Adjust for pattern volatility
+                    if setup.avg_win > 0.10:  # >10% avg win = high volatility
+                        volatility_factor = 1.5
+                    elif setup.avg_win > 0.05:  # 5-10% avg win = medium volatility
+                        volatility_factor = 1.2
+                    else:  # <5% avg win = low volatility
+                        volatility_factor = 1.0
+                    
+                    # Adjust for sample size confidence
+                    if setup.sample_size < 5:
+                        confidence_factor = 1.5  # Low confidence = wider stop
+                    elif setup.sample_size < 10:
+                        confidence_factor = 1.2
+                    else:
+                        confidence_factor = 1.0
+                    
+                    setup.optimal_stop_pct = base_stop * volatility_factor * confidence_factor
+                    
+                    # Cap between 1.5% and 6%
+                    setup.optimal_stop_pct = max(0.015, min(0.06, setup.optimal_stop_pct))
                 
                 # MAE-based RRR: avg_win / optimal_stop
                 if setup.optimal_stop_pct > 0 and setup.avg_win > 0:
@@ -547,7 +627,7 @@ class SundayDashboard:
                     setup.mae_based_rrr = setup.risk_reward_ratio
                 
             except Exception as e:
-                setup.optimal_stop_pct = 0.01  # Default 1% stop
+                setup.optimal_stop_pct = 0.02  # Default 2% stop (more conservative)
                 setup.mae_based_rrr = setup.risk_reward_ratio
         
         # Correlation Clustering
