@@ -12,6 +12,16 @@ Output: Top 3-5 setups + Portfolio health + PDF report
 
 import sys
 import os
+
+# Fix Unicode encoding for Windows console
+if sys.platform == 'win32':
+    import codecs
+    # Only wrap if not already wrapped
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    if hasattr(sys.stderr, 'buffer'):
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import json
@@ -21,10 +31,15 @@ from pathlib import Path
 
 # Core
 from instrument_screener_v23_position import PositionTradingScreener
-from instruments_universe_800 import (
-    SWEDISH_INSTRUMENTS,
-    US_LARGE_CAP,
-    ALL_WEATHER_HEDGE
+from instruments_universe_1200 import (
+    get_all_tickers,
+    get_sector_for_ticker,
+    get_geography_for_ticker,
+    get_mifid_ii_proxy,
+    get_sector_volatility_factor,
+    calculate_usd_sek_zscore,
+    get_fx_adjustment_factor,
+    MIFID_II_PROXY_MAP
 )
 
 # Phase 1: Risk Management
@@ -192,6 +207,50 @@ class SundayDashboard:
         
         results['macro'] = macro_results
         
+        # FX Guard: USD/SEK Check
+        print("\n💱 FX Guard (USD/SEK)...")
+        usd_sek_zscore = 0.0
+        try:
+            import yfinance as yf
+            import numpy as np
+            
+            # Fetch USD/SEK data
+            usdsek = yf.Ticker("USDSEK=X")
+            hist = usdsek.history(period="1y")  # 1 year for 200-day calculation
+            
+            if not hist.empty and len(hist) >= 200:
+                current_rate = hist['Close'].iloc[-1]
+                mean_200d = hist['Close'].rolling(200).mean().iloc[-1]
+                std_200d = hist['Close'].rolling(200).std().iloc[-1]
+                
+                usd_sek_zscore = calculate_usd_sek_zscore(current_rate, mean_200d, std_200d)
+                fx_adjustment = get_fx_adjustment_factor(usd_sek_zscore)
+                
+                print(f"   Current: {current_rate:.4f} SEK/USD")
+                print(f"   200-day mean: {mean_200d:.4f}")
+                print(f"   Z-score: {usd_sek_zscore:+.2f}")
+                print(f"   FX adjustment: {fx_adjustment:.1%}")
+                
+                if usd_sek_zscore > 2.0:
+                    print(f"   ⚠️ WARNING: USD extremely expensive - avoiding US positions")
+                elif usd_sek_zscore > 1.5:
+                    print(f"   ⚡ CAUTION: USD expensive - reducing US exposure")
+                elif usd_sek_zscore < -1.5:
+                    print(f"   🎯 OPPORTUNITY: USD cheap - favoring US positions")
+                else:
+                    print(f"   ✅ USD/SEK at fair value")
+                
+                results['usd_sek_zscore'] = usd_sek_zscore
+                results['fx_adjustment'] = fx_adjustment
+            else:
+                print(f"   ⚠️ Insufficient USD/SEK data - no FX adjustment")
+                results['usd_sek_zscore'] = 0.0
+                results['fx_adjustment'] = 1.0
+        except Exception as e:
+            print(f"   ⚠️ FX Guard failed: {e} - no FX adjustment")
+            results['usd_sek_zscore'] = 0.0
+            results['fx_adjustment'] = 1.0
+        
         # Systemic Risk Score
         print("\n🚨 Systemic Risk Score...")
         systemic_risk = 0
@@ -271,23 +330,18 @@ class SundayDashboard:
         print("STEP 2: SCANNING UNIVERSE")
         print("="*80)
         
-        # Load instruments
-        all_tickers = []
-        all_tickers.extend(SWEDISH_INSTRUMENTS)
-        all_tickers.extend(US_LARGE_CAP)
-        all_tickers.extend(ALL_WEATHER_HEDGE)
+        # Load instruments from new 1200-ticker universe
+        all_tickers = get_all_tickers()
         
-        # Try additional categories
-        try:
-            import instruments_universe_800 as universe
-            if hasattr(universe, 'SECTOR_ETFS'):
-                all_tickers.extend(universe.SECTOR_ETFS)
-            if hasattr(universe, 'GLOBAL_EMERGING'):
-                all_tickers.extend(universe.GLOBAL_EMERGING)
-        except:
-            pass
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_tickers = []
+        for ticker in all_tickers:
+            if ticker not in seen:
+                seen.add(ticker)
+                unique_tickers.append(ticker)
         
-        instruments = [(ticker, ticker) for ticker in all_tickers]
+        instruments = [(ticker, ticker) for ticker in unique_tickers]
         
         print(f"\nScanning {len(instruments)} instruments...")
         print(f"Expected runtime: {len(instruments) * 20 / 3600:.1f} hours\n")
@@ -438,7 +492,14 @@ class SundayDashboard:
                     f.write(f"\n#{i}: {setup.ticker} - {setup.best_pattern_name}\n")
                     f.write(f"Score: {setup.score:.1f}/100\n")
                     f.write(f"Edge (63d): {setup.edge_63d*100:+.2f}%\n")
-                    f.write(f"Win Rate: {setup.win_rate_63d*100:.1f}%\n")
+                    f.write(f"Win Rate (Raw): {setup.win_rate_63d*100:.1f}% (n={setup.sample_size})\n")
+                    if hasattr(setup, 'adjusted_win_rate') and setup.adjusted_win_rate > 0:
+                        f.write(f"Win Rate (Bayesian): {setup.adjusted_win_rate*100:.1f}%\n")
+                    if hasattr(setup, 'p_value') and setup.p_value < 1.0:
+                        sig = "YES" if setup.p_value < 0.05 else "NO"
+                        f.write(f"Statistically Significant: {sig} (p={setup.p_value:.4f})\n")
+                    if hasattr(setup, 'robust_score') and setup.robust_score > 0:
+                        f.write(f"Robust Score: {setup.robust_score:.1f}/100\n")
                     f.write(f"RRR: 1:{setup.risk_reward_ratio:.2f}\n")
                     f.write(f"Position: {setup.position_size_sek:,.0f} SEK ({setup.position_size_pct:.2f}%)\n")
                     f.write(f"Expected Profit: {setup.ev_sek:+,.0f} SEK\n")
@@ -483,8 +544,25 @@ class SundayDashboard:
         
         results['regime'] = regime_result
         
+        # Get FX adjustment from results
+        usd_sek_zscore = results.get('usd_sek_zscore', 0.0)
+        fx_adjustment = results.get('fx_adjustment', 1.0)
+        
         # Process each setup
         for setup in setups:
+            # Strategic Features: Sector & Geography
+            setup.sector = get_sector_for_ticker(setup.ticker)
+            setup.geography = get_geography_for_ticker(setup.ticker)
+            setup.sector_volatility = get_sector_volatility_factor(setup.sector)
+            
+            # Check if MiFID II proxy needed
+            if setup.ticker in MIFID_II_PROXY_MAP:
+                setup.mifid_proxy = get_mifid_ii_proxy(setup.ticker)
+                setup.mifid_warning = f"Cannot trade {setup.ticker} on Avanza ISK. Use {setup.mifid_proxy} instead."
+            else:
+                setup.mifid_proxy = None
+                setup.mifid_warning = None
+            
             # V-Kelly Position Sizing
             try:
                 # Calculate actual volatility from pattern metrics
@@ -655,10 +733,80 @@ class SundayDashboard:
         except Exception as e:
             print(f"   ⚠️ Clustering failed: {e}")
         
-        # Sort by score
-        processed.sort(key=lambda x: x.score, reverse=True)
+        # Apply Strategic Adjustments
+        print("\n🎯 Strategic Score Adjustments...")
+        for setup in processed:
+            # Store original score
+            setup.raw_score = setup.score
+            
+            # 1. Sector Volatility Adjustment
+            # Normalize EV by sector volatility (Sharpe-like adjustment)
+            # Lower volatility sectors get bonus, higher volatility get penalty
+            vol_adjusted_ev = setup.expected_value / setup.sector_volatility
+            vol_adjustment_factor = vol_adjusted_ev / setup.expected_value if setup.expected_value != 0 else 1.0
+            
+            # Cap sector adjustment to ±20% to prevent extreme scores
+            vol_adjustment_factor = max(0.80, min(1.20, vol_adjustment_factor))
+            setup.score *= vol_adjustment_factor
+            setup.sector_adjustment = vol_adjustment_factor
+            
+            # 2. FX Guard Adjustment (US tickers only)
+            if setup.geography == "USA":
+                setup.score *= fx_adjustment
+                setup.fx_adjusted = True
+                setup.fx_factor = fx_adjustment
+            else:
+                setup.fx_adjusted = False
+                setup.fx_factor = 1.0
+            
+            # 3. Final cap: Never exceed 100 points
+            # Strategic adjustments are for relative ranking, not absolute quality
+            if setup.score > 100:
+                setup.score = 100.0
+                setup.capped_at_100 = True
+            else:
+                setup.capped_at_100 = False
+            
+            # Store final adjusted score
+            setup.adjusted_score = setup.score
         
-        return processed
+        print(f"   Applied sector volatility normalization (0.70x-1.35x)")
+        if fx_adjustment != 1.0:
+            print(f"   Applied FX adjustment to US tickers ({fx_adjustment:.1%})")
+        
+        # Sort by adjusted score
+        processed.sort(key=lambda x: x.adjusted_score, reverse=True)
+        
+        # FILTER: Top 5 should ONLY include PRIMARY patterns (structural reversals)
+        # SECONDARY patterns (calendar, technical indicators) are supporting evidence only
+        primary_only = []
+        secondary_only = []
+        
+        for setup in processed:
+            # Check if pattern is PRIMARY (structural reversal)
+            # PRIMARY patterns have 'priority': 'PRIMARY' in metadata
+            # or are from position_trading_patterns (which are all PRIMARY)
+            is_primary = False
+            
+            # Patterns marked PRIMARY in metadata
+            if hasattr(setup, 'pattern_metadata') and setup.pattern_metadata.get('priority') == 'PRIMARY':
+                is_primary = True
+            # Structural reversal patterns (always PRIMARY)
+            elif any(keyword in setup.best_pattern_name.lower() for keyword in [
+                'lägsta nivåer', 'double bottom', 'inverse', 'bull flag', 'higher lows',
+                'ema20 reclaim', 'volatilitetökning'
+            ]):
+                is_primary = True
+            
+            if is_primary:
+                primary_only.append(setup)
+            else:
+                secondary_only.append(setup)
+        
+        print(f"   Filtered: {len(primary_only)} PRIMARY, {len(secondary_only)} SECONDARY patterns")
+        
+        # Return PRIMARY patterns first, then SECONDARY (for Top 5 ranking)
+        return primary_only + secondary_only
     
     def _check_portfolio_health(self, screener_results: List) -> Dict:
         """Check health of existing positions."""
@@ -723,18 +871,66 @@ class SundayDashboard:
         print("="*80)
         
         for i, setup in enumerate(processed[:max_setups], 1):
+            # Determine pattern priority
+            is_primary = any(keyword in setup.best_pattern_name.lower() for keyword in [
+                'lägsta nivåer', 'double bottom', 'inverse', 'bull flag', 'higher lows',
+                'ema20 reclaim', 'volatilitetökning'
+            ])
+            priority_tag = "PRIMARY" if is_primary else "SECONDARY"
+            
             print(f"\n{'#'*80}")
             print(f"RANK {i}: {setup.ticker} - {setup.best_pattern_name}")
-            print(f"Score: {setup.score:.1f}/100 | Priority: PRIMARY")
+            print(f"Score: {setup.score:.1f}/100 | Priority: {priority_tag}")
             print('#'*80)
+            
+            # Strategic Context
+            print(f"\nSTRATEGIC CONTEXT:")
+            print(f"  Sector: {setup.sector} (Vol: {setup.sector_volatility:.2f}x)")
+            print(f"  Geography: {setup.geography}")
+            
+            # Score breakdown
+            if hasattr(setup, 'raw_score'):
+                print(f"  Raw Score: {setup.raw_score:.1f} → Adjusted: {setup.adjusted_score:.1f}")
+                if hasattr(setup, 'sector_adjustment'):
+                    print(f"  Sector Adjustment: {setup.sector_adjustment:.1%} (Vol: {setup.sector_volatility:.2f}x)")
+                if setup.fx_adjusted:
+                    print(f"  FX Adjustment: {setup.fx_factor:.1%} (USD/SEK Z={results.get('usd_sek_zscore', 0):.2f})")
+                if hasattr(setup, 'capped_at_100') and setup.capped_at_100:
+                    print(f"  ⚠️ Score capped at 100 (strategic adjustments for ranking only)")
+            
+            # MiFID II warning
+            if setup.mifid_warning:
+                print(f"\n⚠️ MiFID II: {setup.mifid_warning}")
             
             print(f"\nEDGE & PERFORMANCE:")
             print(f"  21-day: {setup.edge_21d*100:+.2f}%")
             print(f"  42-day: {setup.edge_42d*100:+.2f}%")
             print(f"  63-day: {setup.edge_63d*100:+.2f}%")
-            print(f"  Win Rate: {setup.win_rate_63d*100:.1f}%")
+            
+            # Win Rate with Confidence Interval & Robust Statistics
+            if hasattr(setup, 'win_rate_ci_margin') and setup.win_rate_ci_margin > 0:
+                print(f"  Win Rate (Raw): {setup.win_rate_63d*100:.1f}% ± {setup.win_rate_ci_margin*100:.1f}% (n={setup.sample_size})")
+                print(f"  95% CI: [{setup.win_rate_ci_lower*100:.1f}%, {setup.win_rate_ci_upper*100:.1f}%]")
+            else:
+                print(f"  Win Rate (Raw): {setup.win_rate_63d*100:.1f}% (n={setup.sample_size})")
+            
+            # Display robust statistics if available
+            if hasattr(setup, 'adjusted_win_rate') and setup.adjusted_win_rate > 0:
+                print(f"  Win Rate (Bayesian): {setup.adjusted_win_rate*100:.1f}%")
+            if hasattr(setup, 'p_value') and setup.p_value < 1.0:
+                sig_marker = "✓" if setup.p_value < 0.05 else "✗"
+                print(f"  Statistical Significance: {sig_marker} (p={setup.p_value:.4f})")
+            if hasattr(setup, 'return_consistency') and setup.return_consistency != 0:
+                print(f"  Return Consistency (Sharpe-like): {setup.return_consistency:.2f}")
+            if hasattr(setup, 'sample_size_factor'):
+                print(f"  Sample Size Confidence: {setup.sample_size_factor*100:.0f}%")
+            if hasattr(setup, 'robust_score') and setup.robust_score > 0:
+                print(f"  Robust Score: {setup.robust_score:.1f}/100")
+            
             print(f"  Risk/Reward: 1:{setup.risk_reward_ratio:.2f}")
-            print(f"  Expected Value: {setup.expected_value*100:+.2f}%")
+            print(f"  Expected Value (Raw): {setup.expected_value*100:+.2f}%")
+            if hasattr(setup, 'pessimistic_ev') and setup.pessimistic_ev != 0:
+                print(f"  Expected Value (Pessimistic): {setup.pessimistic_ev*100:+.2f}%")
             
             print(f"\nPOSITION SIZING:")
             print(f"  Position: {setup.position_size_sek:,.0f} SEK ({setup.position_size_pct:.2f}%)")

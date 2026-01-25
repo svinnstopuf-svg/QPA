@@ -5,6 +5,15 @@
 This app finds profitable stock trades by **thinking like a casino**. Casinos don't guess—they calculate odds, manage risk, minimize costs, and only play when they have an edge. This system does the same for stock trading.
 
 **Latest additions:**
+- 🔬 **V4.0 ROBUST STATISTICS** - Bayesian inference & statistical significance testing (2026-01-25)
+  - 📊 **Bayesian Win Rate Adjustments** - Small samples pulled towards 50% prior (eliminates overfitting)
+  - 🎯 **Sample Size Penalties** - Logarithmic confidence factors (n<5: 20%, n≥30: 100%)
+  - ✅ **Statistical Significance Testing** - P-values with t-tests (only trade p<0.05 patterns)
+  - 📉 **Return Consistency Metrics** - Sharpe-like scoring penalizes volatile patterns
+  - 🛡️ **Pessimistic EV** - Conservative expected value with worst-case components
+  - 🎲 **Confidence Intervals** - Wilson score intervals show win rate uncertainty (95% CI)
+  - 🏆 **Robust Score** - 0-100 composite score drives 50% of final setup ranking
+  - 📈 **Philosophy Shift** - From "what happened" to "probability of future success"
 - 🚀 **V3.0 MASTER SYSTEM UPGRADE** - 16 institutional-grade features (~3,700 LOC, 13 modules)
   - 🌡️ **Market Breadth** - OMXS30 health check (<40% = warning)
   - 🚫 **Event Guard** - Blocks trades 48h before earnings

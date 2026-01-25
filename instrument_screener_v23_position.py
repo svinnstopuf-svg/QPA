@@ -33,6 +33,7 @@ from src import QuantPatternAnalyzer
 from src.utils.data_fetcher import DataFetcher
 from src.filters.market_context_filter import MarketContextFilter
 from src.filters.earnings_calendar import EarningsCalendar
+from src.analysis.confidence_interval import calculate_win_rate_ci
 
 
 @dataclass
@@ -49,7 +50,7 @@ class PositionTradingScore:
     # Pattern Analysis (PRIMARY only)
     primary_patterns: int
     best_pattern_name: str
-    pattern_priority: str  # PRIMARY or SECONDARY
+    pattern_priority: str  # CORE, PRIMARY, SECONDARY, or INSUFFICIENT
     
     # Multi-Timeframe Edges
     edge_21d: float  # 1 month
@@ -81,6 +82,20 @@ class PositionTradingScore:
     status: str  # POTENTIAL, WAIT, NO SETUP
     score: float  # 0-100 ranking score
     recommendation: str
+    
+    # Optional fields with defaults (must come last in dataclass)
+    # Robust Statistics (Statistical Significance)
+    adjusted_win_rate: float = 0.0  # Bayesian smoothed WR
+    return_consistency: float = 0.0  # Mean/Std (Sharpe-like)
+    p_value: float = 1.0  # Statistical significance
+    sample_size_factor: float = 0.0  # Penalty factor (0-1)
+    pessimistic_ev: float = 0.0  # Worst-case EV
+    robust_score: float = 0.0  # 0-100 robust confidence score
+    
+    # Confidence Intervals
+    win_rate_ci_lower: float = 0.0  # 95% CI lower bound
+    win_rate_ci_upper: float = 0.0  # 95% CI upper bound
+    win_rate_ci_margin: float = 0.0  # ± margin
 
 
 class PositionTradingScreener:
@@ -221,17 +236,30 @@ class PositionTradingScreener:
                 recommendation="Pass - No valid patterns"
             )
         
-        # Filter PRIMARY patterns only
-        primary_patterns = [p for p in patterns if p['metadata'].get('priority') == 'PRIMARY']
+        # Filter patterns by sample size tiers:
+        # CORE: ≥150 occurrences (highest confidence)
+        # PRIMARY: ≥75 occurrences (good confidence)
+        # SECONDARY: ≥30 occurrences (minimum acceptable)
+        core_patterns = [p for p in patterns if p['sample_size'] >= 150 and p['metadata'].get('priority') == 'PRIMARY']
+        primary_patterns = [p for p in patterns if p['sample_size'] >= 75 and p['metadata'].get('priority') == 'PRIMARY']
+        secondary_patterns = [p for p in patterns if p['sample_size'] >= 30]
         
-        if len(primary_patterns) > 0:
-            # Use best PRIMARY pattern
+        if len(core_patterns) > 0:
+            # Use best CORE pattern (structural + high sample size)
+            best_pattern = max(core_patterns, key=lambda x: x['expected_value'])
+            pattern_priority = "CORE"
+        elif len(primary_patterns) > 0:
+            # Use best PRIMARY pattern (structural + medium sample size)
             best_pattern = max(primary_patterns, key=lambda x: x['expected_value'])
             pattern_priority = "PRIMARY"
-        else:
-            # Fall back to best SECONDARY (but flag it)
-            best_pattern = max(patterns, key=lambda x: x['expected_value'])
+        elif len(secondary_patterns) > 0:
+            # Fall back to SECONDARY (minimum sample size)
+            best_pattern = max(secondary_patterns, key=lambda x: x['expected_value'])
             pattern_priority = "SECONDARY"
+        else:
+            # Insufficient sample size (<30)
+            best_pattern = max(patterns, key=lambda x: x['expected_value'])
+            pattern_priority = "INSUFFICIENT"
         
         # Extract metrics
         edge_21d = best_pattern['mean_return_21d']
@@ -248,6 +276,27 @@ class PositionTradingScreener:
         uncertainty = best_pattern['bayesian_uncertainty']
         sample_size = best_pattern['sample_size']
         
+        # Extract robust statistics (if available)
+        robust_stats = best_pattern.get('robust_stats')
+        if robust_stats:
+            adjusted_wr = robust_stats.adjusted_win_rate
+            return_consistency = robust_stats.return_consistency
+            p_value = robust_stats.p_value
+            sample_size_factor = robust_stats.sample_size_factor
+            pessimistic_ev = robust_stats.pessimistic_ev
+            robust_score_val = best_pattern.get('robust_score', 0.0)
+        else:
+            # Fallback if robust stats not available
+            adjusted_wr = win_rate_63d
+            return_consistency = 0.0
+            p_value = 1.0
+            sample_size_factor = 0.0
+            pessimistic_ev = ev
+            robust_score_val = 0.0
+        
+        # Calculate confidence interval for win rate
+        win_rate_ci = calculate_win_rate_ci(win_rate_63d, sample_size)
+        
         # Volume confirmation
         metadata = best_pattern['metadata']
         volume_confirmed = metadata.get('volume_declining', False) and metadata.get('high_volume_breakout', False)
@@ -256,9 +305,11 @@ class PositionTradingScreener:
         score = self._calculate_score(
             context_valid=context.is_valid_for_entry,
             pattern_priority=pattern_priority,
+            sample_size=sample_size,
             ev=ev,
             rrr=rrr,
             win_rate=win_rate_63d,
+            robust_score=robust_score_val,
             volume=volume_confirmed,
             earnings=earnings_risk.risk_level
         )
@@ -270,6 +321,9 @@ class PositionTradingScreener:
         elif earnings_risk.risk_level == 'HIGH':
             status = "WAIT"
             recommendation = f"Earnings in {earnings_risk.days_until_earnings} days - DO NOT TRADE"
+        elif pattern_priority == "INSUFFICIENT":
+            status = "WAIT"
+            recommendation = f"Insufficient sample size ({sample_size} < 30)"
         elif win_rate_63d < self.min_win_rate:
             status = "WAIT"
             recommendation = f"Win rate too low ({win_rate_63d*100:.0f}% < {self.min_win_rate*100:.0f}%)"
@@ -281,10 +335,13 @@ class PositionTradingScreener:
             recommendation = f"Negative EV ({ev*100:.2f}%)"
         elif pattern_priority == "SECONDARY":
             status = "POTENTIAL*"
-            recommendation = "⚠️ SECONDARY pattern (not structural) - Review carefully"
-        else:
+            recommendation = f"⚠️ SECONDARY tier (30-74 samples) - Review carefully"
+        elif pattern_priority == "PRIMARY":
             status = "POTENTIAL"
-            recommendation = "✅ Valid setup for Sunday review"
+            recommendation = f"✅ PRIMARY tier (75-149 samples) - Valid setup"
+        else:  # CORE
+            status = "POTENTIAL"
+            recommendation = f"✅✅ CORE tier (150+ samples) - High confidence setup"
         
         # Position sizing (1% risk)
         position_size_pct = 1.0  # Always 1% risk
@@ -302,6 +359,9 @@ class PositionTradingScreener:
             edge_42d=edge_42d,
             edge_63d=edge_63d,
             win_rate_63d=win_rate_63d,
+            win_rate_ci_lower=win_rate_ci.lower_bound,
+            win_rate_ci_upper=win_rate_ci.upper_bound,
+            win_rate_ci_margin=win_rate_ci.margin_of_error,
             expected_value=ev,
             risk_reward_ratio=rrr,
             avg_win=avg_win,
@@ -309,6 +369,12 @@ class PositionTradingScreener:
             bayesian_edge=bayesian_edge,
             uncertainty=uncertainty,
             sample_size=sample_size,
+            adjusted_win_rate=adjusted_wr,
+            return_consistency=return_consistency,
+            p_value=p_value,
+            sample_size_factor=sample_size_factor,
+            pessimistic_ev=pessimistic_ev,
+            robust_score=robust_score_val,
             earnings_risk=earnings_risk.risk_level,
             earnings_days=earnings_risk.days_until_earnings or 999,
             volume_confirmed=volume_confirmed,
@@ -323,48 +389,45 @@ class PositionTradingScreener:
         self,
         context_valid: bool,
         pattern_priority: str,
+        sample_size: int,
         ev: float,
         rrr: float,
         win_rate: float,
+        robust_score: float,
         volume: bool,
         earnings: str
     ) -> float:
-        """Calculate 0-100 score for ranking."""
-        score = 0.0
+        """Calculate 0-100 score for ranking using robust statistics."""
         
-        # Context (30 points)
+        # NEW APPROACH: Use robust_score as foundation (50% weight)
+        # Combines: Bayesian WR, sample size penalty, consistency, pessimistic EV, significance
+        base_score = robust_score * 0.50  # 50 points max from robust statistics
+        
+        # Context requirement (30 points) - NON-NEGOTIABLE
         if context_valid:
-            score += 30
+            base_score += 30
         
-        # Pattern priority (20 points)
-        if pattern_priority == "PRIMARY":
-            score += 20
+        # Pattern priority tier bonus (10 points)
+        # Robust score already penalizes small samples, but we add tier bonus
+        if pattern_priority == "CORE":
+            base_score += 10
+        elif pattern_priority == "PRIMARY":
+            base_score += 7
         elif pattern_priority == "SECONDARY":
-            score += 5
+            base_score += 3
+        # INSUFFICIENT gets 0 bonus
         
-        # Expected Value (20 points)
-        ev_score = min(20, ev * 100 * 5)  # Cap at 4% EV
-        score += max(0, ev_score)
-        
-        # Risk/Reward (15 points)
-        rrr_score = min(15, (rrr / 5.0) * 15)  # Cap at 5:1
-        score += rrr_score
-        
-        # Win Rate (10 points)
-        wr_score = (win_rate * 100) / 10  # 100% WR = 10 points
-        score += min(10, wr_score)
-        
-        # Volume (3 points)
+        # Volume confirmation (3 points)
         if volume:
-            score += 3
+            base_score += 3
         
-        # Earnings penalty
+        # Earnings penalty (multiplicative)
         if earnings == 'HIGH':
-            score *= 0.5  # 50% penalty
+            base_score *= 0.5  # 50% penalty
         elif earnings == 'WARNING':
-            score *= 0.8  # 20% penalty
+            base_score *= 0.8  # 20% penalty
         
-        return min(100, score)
+        return min(100, base_score)
     
     def analyze_rejection_reasons(
         self,
@@ -471,22 +534,34 @@ class PositionTradingScreener:
             return
         
         print(f"\n🎯 TOP {min(top_n, len(potential))} POTENTIAL SETUPS:\n")
-        print(f"{'Rank':<5} {'Ticker':<12} {'Pattern':<35} {'Score':<7} {'21d':<8} {'42d':<8} {'63d':<8} {'WR':<8} {'RRR':<8}")
-        print("-"*80)
+        print(f"{'Rank':<5} {'Ticker':<12} {'Pattern':<35} {'Score':<7} {'21d':<8} {'42d':<8} {'63d':<8} {'WR (±CI)':<15} {'RRR':<8}")
+        print("-"*90)
         
         for i, result in enumerate(potential[:top_n], 1):
             pattern_short = result.best_pattern_name[:33] + ".." if len(result.best_pattern_name) > 35 else result.best_pattern_name
-            priority_flag = "*" if result.pattern_priority == "SECONDARY" else ""
+            
+            # Priority flag
+            if result.pattern_priority == "CORE":
+                priority_flag = "⭐"
+            elif result.pattern_priority == "PRIMARY":
+                priority_flag = ""
+            elif result.pattern_priority == "SECONDARY":
+                priority_flag = "*"
+            else:
+                priority_flag = "?"
+            
+            # Format win rate with CI
+            wr_with_ci = f"{result.win_rate_63d*100:.0f}% (±{result.win_rate_ci_margin*100:.0f}%)"
             
             print(f"{i:<5} {result.ticker:<12} {pattern_short:<35}{priority_flag} "
                   f"{result.score:<7.0f} "
                   f"{result.edge_21d*100:>6.1f}% "
                   f"{result.edge_42d*100:>6.1f}% "
                   f"{result.edge_63d*100:>6.1f}% "
-                  f"{result.win_rate_63d*100:>6.0f}% "
+                  f"{wr_with_ci:<15} "
                   f"{result.risk_reward_ratio:>6.1f}")
         
-        print("\n* = SECONDARY pattern (calendar/momentum, not structural)")
+        print("\n⭐ = CORE (150+ samples) | * = SECONDARY (30-74 samples)")
         print("\n" + "="*80)
 
 

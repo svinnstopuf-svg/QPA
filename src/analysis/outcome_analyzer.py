@@ -10,10 +10,18 @@ import numpy as np
 from dataclasses import dataclass
 from scipy import stats
 
+# Import robust statistics
+from .robust_statistics import (
+    calculate_robust_stats,
+    calculate_robust_score,
+    RobustStatistics
+)
+
 
 @dataclass
 class OutcomeStatistics:
-    """Statistik över historiska utfall."""
+    """Statistik över historiska utfall med robust corrections."""
+    # Raw metrics (legacy)
     mean_return: float
     median_return: float
     std_return: float
@@ -31,6 +39,10 @@ class OutcomeStatistics:
     profit_factor: float
     max_drawdown: float
     sample_size: int
+    
+    # Robust statistics (new)
+    robust_stats: Optional[RobustStatistics] = None
+    robust_score: float = 0.0
     
     
 class OutcomeAnalyzer:
@@ -107,6 +119,11 @@ class OutcomeAnalyzer:
         # Maximal drawdown
         max_drawdown = self._calculate_max_drawdown(returns)
         
+        # Calculate robust statistics
+        returns_list = returns.tolist() if isinstance(returns, np.ndarray) else list(returns)
+        robust_stats = calculate_robust_stats(returns_list)
+        robust_score = calculate_robust_score(robust_stats)
+        
         return OutcomeStatistics(
             mean_return=mean_return,
             median_return=median_return,
@@ -124,7 +141,9 @@ class OutcomeAnalyzer:
             avg_loss=avg_loss,
             profit_factor=profit_factor,
             max_drawdown=max_drawdown,
-            sample_size=len(returns)
+            sample_size=len(returns),
+            robust_stats=robust_stats,
+            robust_score=robust_score
         )
     
     def compare_to_baseline(

@@ -9,10 +9,23 @@ from typing import Dict, List, Tuple, Optional
 import numpy as np
 from dataclasses import dataclass
 
+# Import robust statistics
+try:
+    from src.analysis.robust_statistics import (
+        calculate_robust_stats,
+        calculate_robust_score,
+        RobustStatistics
+    )
+    ROBUST_STATS_AVAILABLE = True
+except ImportError:
+    # Fallback if module not found
+    ROBUST_STATS_AVAILABLE = False
+    RobustStatistics = None
+
 
 @dataclass
 class PatternEvaluation:
-    """Resultat av en mönsterutvärdering."""
+    """Resultat av en mönsterutvärdering med robust corrections."""
     pattern_id: str
     occurrence_count: int
     mean_return: float
@@ -23,6 +36,14 @@ class PatternEvaluation:
     stability_score: float  # Hur stabilt mönstret är över tid (0-1)
     statistical_strength: float  # Statistisk styrka baserat på sample size och konsistens (0-1)
     # OBS: Dessa är HISTORISKA mått, inte framtidsprediktioner!
+    
+    # Robust statistics (new - with defaults for backward compatibility)
+    robust_stats: Optional[object] = None  # RobustStatistics
+    robust_score: float = 0.0
+    adjusted_win_rate: float = 0.0
+    pessimistic_ev: float = 0.0
+    return_consistency: float = 0.0
+    sample_size_factor: float = 0.0
     
     
 class PatternEvaluator:
@@ -78,12 +99,28 @@ class PatternEvaluator:
         # Beräkna statistisk styrka
         statistical_strength = self._calculate_statistical_strength(historical_returns)
         
-        # Avgör om mönstret är signifikant
-        is_significant = (
-            len(historical_returns) >= self.min_occurrences and
-            stability_score >= self.min_confidence and
-            statistical_strength >= self.min_confidence
-        )
+        # Calculate robust statistics if available
+        if ROBUST_STATS_AVAILABLE:
+            returns_list = historical_returns.tolist()
+            robust_stats = calculate_robust_stats(returns_list)
+            robust_score = calculate_robust_score(robust_stats)
+            
+            # Use robust metrics for significance determination
+            is_significant = (
+                len(historical_returns) >= self.min_occurrences and
+                robust_stats.is_significant and  # T-test p < 0.05
+                robust_stats.sample_size_factor >= 0.6 and  # At least 60% confidence
+                stability_score >= self.min_confidence
+            )
+        else:
+            # Fallback to legacy scoring
+            robust_stats = None
+            robust_score = 0.0
+            is_significant = (
+                len(historical_returns) >= self.min_occurrences and
+                stability_score >= self.min_confidence and
+                statistical_strength >= self.min_confidence
+            )
         
         return PatternEvaluation(
             pattern_id=pattern_id,
@@ -94,7 +131,13 @@ class PatternEvaluator:
             max_drawdown=max_drawdown,
             is_significant=is_significant,
             stability_score=stability_score,
-            statistical_strength=statistical_strength
+            statistical_strength=statistical_strength,
+            robust_stats=robust_stats if ROBUST_STATS_AVAILABLE else None,
+            robust_score=robust_score if ROBUST_STATS_AVAILABLE else 0.0,
+            adjusted_win_rate=robust_stats.adjusted_win_rate if ROBUST_STATS_AVAILABLE else win_rate,
+            pessimistic_ev=robust_stats.pessimistic_ev if ROBUST_STATS_AVAILABLE else mean_return,
+            return_consistency=robust_stats.return_consistency if ROBUST_STATS_AVAILABLE else 0.0,
+            sample_size_factor=robust_stats.sample_size_factor if ROBUST_STATS_AVAILABLE else 1.0
         )
     
     def _calculate_max_drawdown(self, returns: np.ndarray) -> float:

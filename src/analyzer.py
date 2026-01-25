@@ -309,6 +309,9 @@ class QuantPatternAnalyzer:
                     'risk_reward_ratio': risk_reward_ratio,
                     'avg_win': avg_win,
                     'avg_loss': avg_loss,
+                    # ROBUST STATISTICS (Statistical Significance)
+                    'robust_stats': outcome_stats_63d.robust_stats if outcome_stats_63d and hasattr(outcome_stats_63d, 'robust_stats') else None,
+                    'robust_score': outcome_stats_63d.robust_score if outcome_stats_63d and hasattr(outcome_stats_63d, 'robust_score') else 0.0,
                     # EARNINGS RISK (V4.0)
                     'earnings_risk': earnings_risk.risk_level if earnings_risk else 'UNKNOWN',
                     'earnings_message': earnings_risk.message if earnings_risk else 'No earnings data',

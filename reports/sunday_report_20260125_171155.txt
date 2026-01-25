@@ -1,0 +1,64 @@
+================================================================================
+SUNDAY DASHBOARD REPORT
+================================================================================
+Generated: 2026-01-25 17:11:55
+Capital: 100,000 SEK
+
+REGIME:
+  EUPHORIA
+  Position Multiplier: 1.0x
+  EUPHORISKT - Hög exponering OK, men var försiktig
+
+TOP 5 SETUPS:
+================================================================================
+
+#1: CALM - Nya lägsta nivåer (252 perioder)
+Score: 98.4/100
+Edge (63d): +11.53%
+Win Rate: 93.9%
+RRR: 1:4.58
+Position: 3,000 SEK (3.00%)
+Expected Profit: +181 SEK
+--------------------------------------------------------------------------------
+
+#2: AWK - Nya lägsta nivåer (252 perioder)
+Score: 94.2/100
+Edge (63d): +16.82%
+Win Rate: 100.0%
+RRR: 1:3.25
+Position: 3,000 SEK (3.00%)
+Expected Profit: +304 SEK
+--------------------------------------------------------------------------------
+
+#3: CEG - Volatilitetökning (låg->hög regime)
+Score: 90.8/100
+Edge (63d): +15.22%
+Win Rate: 73.3%
+RRR: 1:3.24
+Position: 2,500 SEK (2.50%)
+Expected Profit: +353 SEK
+--------------------------------------------------------------------------------
+
+#4: KBH - Nya lägsta nivåer (252 perioder)
+Score: 79.0/100
+Edge (63d): +15.07%
+Win Rate: 61.8%
+RRR: 1:4.69
+Position: 2,000 SEK (2.00%)
+Expected Profit: +185 SEK
+--------------------------------------------------------------------------------
+
+#5: ZTS - Death Cross (50MA < 200MA) - Bearish
+Score: 78.0/100
+Edge (63d): +10.66%
+Win Rate: 80.0%
+RRR: 1:3.76
+Position: 3,000 SEK (3.00%)
+Expected Profit: +229 SEK
+--------------------------------------------------------------------------------
+
+DIAGNOSTICS:
+Total scanned: 980
+POTENTIAL: 15
+No patterns: 903 (92.1%)
+Context invalid: 60 (6.1%)

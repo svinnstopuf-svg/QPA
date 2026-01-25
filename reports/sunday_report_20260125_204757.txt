@@ -1,0 +1,79 @@
+================================================================================
+SUNDAY DASHBOARD REPORT
+================================================================================
+Generated: 2026-01-25 20:47:57
+Capital: 100,000 SEK
+
+REGIME:
+  EUPHORIA
+  Position Multiplier: 1.0x
+  EUPHORISKT - Hög exponering OK, men var försiktig
+
+TOP 5 SETUPS:
+================================================================================
+
+#1: CALM - Nya lägsta nivåer (252 perioder)
+Score: 96.7/100
+Edge (63d): +11.53%
+Win Rate (Raw): 93.9% (n=49)
+Win Rate (Bayesian): 92.2%
+Statistically Significant: YES (p=0.0000)
+Robust Score: 87.5/100
+RRR: 1:4.58
+Position: 3,000 SEK (3.00%)
+Expected Profit: +181 SEK
+--------------------------------------------------------------------------------
+
+#2: KBH - Nya lägsta nivåer (252 perioder)
+Score: 73.6/100
+Edge (63d): +15.07%
+Win Rate (Raw): 61.8% (n=55)
+Win Rate (Bayesian): 61.4%
+Statistically Significant: YES (p=0.0030)
+Robust Score: 74.2/100
+RRR: 1:4.69
+Position: 2,000 SEK (2.00%)
+Expected Profit: +185 SEK
+--------------------------------------------------------------------------------
+
+#3: NEU - Nya lägsta nivåer (252 perioder)
+Score: 70.8/100
+Edge (63d): +11.81%
+Win Rate (Raw): 96.8% (n=31)
+Win Rate (Bayesian): 93.9%
+Statistically Significant: YES (p=0.0000)
+Robust Score: 95.8/100
+RRR: 1:4.68
+Position: 3,000 SEK (3.00%)
+Expected Profit: +215 SEK
+--------------------------------------------------------------------------------
+
+#4: NMAN.ST - Nya lägsta nivåer (252 perioder)
+Score: 62.1/100
+Edge (63d): +11.11%
+Win Rate (Raw): 91.7% (n=39)
+Win Rate (Bayesian): 89.5%
+Statistically Significant: YES (p=0.0000)
+Robust Score: 89.3/100
+RRR: 1:12.00
+Position: 3,000 SEK (3.00%)
+Expected Profit: +247 SEK
+--------------------------------------------------------------------------------
+
+#5: PI - Nya lägsta nivåer (252 perioder)
+Score: 50.1/100
+Edge (63d): +36.45%
+Win Rate (Raw): 87.1% (n=31)
+Win Rate (Bayesian): 84.8%
+Statistically Significant: YES (p=0.0000)
+Robust Score: 83.2/100
+RRR: 1:4.31
+Position: 3,000 SEK (3.00%)
+Expected Profit: +416 SEK
+--------------------------------------------------------------------------------
+
+DIAGNOSTICS:
+Total scanned: 980
+POTENTIAL: 8
+No patterns: 939 (95.8%)
+Context invalid: 28 (2.9%)

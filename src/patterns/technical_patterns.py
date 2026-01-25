@@ -59,15 +59,17 @@ class TechnicalPatternDetector:
     
     def detect_rsi_extremes(self, market_data: MarketData) -> Dict[str, MarketSituation]:
         """
-        Detect RSI oversold (<30) and overbought (>70) conditions.
+        Detect RSI oversold (<30) conditions - Mean Reversion Setup.
         
-        Oversold → potential bounce
-        Overbought → potential pullback
+        Oversold → potential bounce (BUY signal)
+        
+        NOTE: RSI Overbought (>70) REMOVED - contradicts bottom-fishing strategy.
+        We buy at BOTTOMS, not tops. Overbought is a SELL signal, not a BUY signal.
         """
         rsi = self.calculate_rsi(market_data.close_prices)
         
         oversold_indices = np.where(rsi < 30)[0]
-        overbought_indices = np.where(rsi > 70)[0]
+        # overbought_indices = np.where(rsi > 70)[0]  # REMOVED
         
         patterns = {}
         
@@ -77,17 +79,15 @@ class TechnicalPatternDetector:
                 description="RSI Oversold (<30) - Potential Bounce",
                 timestamp_indices=oversold_indices,
                 confidence=0.60,
-                metadata={'signal_type': 'technical', 'indicator': 'RSI', 'threshold': 30}
+                metadata={
+                    'signal_type': 'technical', 
+                    'indicator': 'RSI', 
+                    'threshold': 30,
+                    'priority': 'SECONDARY'  # Supporting evidence for reversal, not PRIMARY entry.
+                }
             )
         
-        if len(overbought_indices) > 0:
-            patterns['rsi_overbought'] = MarketSituation(
-                situation_id='rsi_overbought',
-                description="RSI Overbought (>70) - Potential Pullback",
-                timestamp_indices=overbought_indices,
-                confidence=0.60,
-                metadata={'signal_type': 'technical', 'indicator': 'RSI', 'threshold': 70}
-            )
+        # RSI Overbought REMOVED - use for sell signals, not buy signals
         
         return patterns
     
@@ -132,7 +132,11 @@ class TechnicalPatternDetector:
                 description="Golden Cross (50MA > 200MA) - Bullish",
                 timestamp_indices=np.array(golden_crosses),
                 confidence=0.60,
-                metadata={'signal_type': 'technical', 'indicator': 'MA_Cross'}
+                metadata={
+                    'signal_type': 'technical', 
+                    'indicator': 'MA_Cross',
+                    'priority': 'SECONDARY'  # Trend-following, not reversal. Use as supporting evidence only.
+                }
             )
         
         if len(death_crosses) > 0:
@@ -141,7 +145,11 @@ class TechnicalPatternDetector:
                 description="Death Cross (50MA < 200MA) - Bearish",
                 timestamp_indices=np.array(death_crosses),
                 confidence=0.60,
-                metadata={'signal_type': 'technical', 'indicator': 'MA_Cross'}
+                metadata={
+                    'signal_type': 'technical', 
+                    'indicator': 'MA_Cross',
+                    'priority': 'SECONDARY'  # Bearish signal. Context only, NOT reversal entry.
+                }
             )
         
         return patterns
@@ -224,7 +232,11 @@ class TechnicalPatternDetector:
                 description="Gap Up (>2%) - Strong Buying",
                 timestamp_indices=gap_up_indices,
                 confidence=0.60,
-                metadata={'signal_type': 'technical', 'pattern': 'gap'}
+                metadata={
+                    'signal_type': 'technical', 
+                    'pattern': 'gap',
+                    'priority': 'SECONDARY'  # 39.5% occur after declines. Supporting evidence, not PRIMARY.
+                }
             )
         
         if len(gap_down_indices) > 0:
@@ -233,7 +245,11 @@ class TechnicalPatternDetector:
                 description="Gap Down (>2%) - Strong Selling",
                 timestamp_indices=gap_down_indices,
                 confidence=0.60,
-                metadata={'signal_type': 'technical', 'pattern': 'gap'}
+                metadata={
+                    'signal_type': 'technical', 
+                    'pattern': 'gap',
+                    'priority': 'SECONDARY'  # Panic selling. Good for reversal setup context.
+                }
             )
         
         return patterns
@@ -258,9 +274,11 @@ class TechnicalPatternDetector:
         ma_patterns = self.detect_ma_crosses(market_data)
         all_patterns.update(ma_patterns)
         
-        # Trend exhaustion
-        exhaustion_patterns = self.detect_trend_exhaustion(market_data)
-        all_patterns.update(exhaustion_patterns)
+        # Trend exhaustion - REMOVED: Extended Rally contradicts mean reversion strategy
+        # We buy at BOTTOMS after declines, not after 7+ day rallies (momentum/breakout)
+        # Extended Selloff (7+ down days) could be kept, but removing entire function for clarity
+        # exhaustion_patterns = self.detect_trend_exhaustion(market_data)
+        # all_patterns.update(exhaustion_patterns)
         
         # Gaps
         gap_patterns = self.detect_gaps(market_data)
