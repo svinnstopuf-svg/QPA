@@ -76,6 +76,13 @@ from src.analysis.timing_score import TimingScoreCalculator, format_timing_summa
 from src.analysis.macro_regime import MacroRegimeAnalyzer, format_regime_summary
 from src.analysis.quality_score import QualityScoreAnalyzer, format_quality_summary
 
+# Phase 7: Hybrid Engine & Statistical Iron Curtain (V7.0)
+from src.patterns.momentum_engine import MomentumEngine, calculate_universe_returns
+from src.analysis.alpha_switch import AlphaSwitchDetector, apply_convergence_boost
+from src.analysis.statistical_iron_curtain import StatisticalIronCurtain, eliminate_correlated_by_er
+from src.analysis.hard_limits import HardLimits
+from src.communication.elite_formatter import EliteReportFormatter
+
 # TIMING THRESHOLD FOR ACTIVE BUY SIGNALS
 TIMING_THRESHOLD = 50.0  # Minimum timing confidence required for buy signal
 
@@ -104,8 +111,10 @@ class SundayDashboard:
         self.min_position_pct = min_position_sek / capital
         
         print("="*80)
-        print("SUNDAY DASHBOARD - V4.0 POSITION TRADING")
+        print("SUNDAY DASHBOARD - MEAN REVERSION STRATEGY V6.1")
         print("="*80)
+        print("Philosophy: Buy weakness at structural support (Bottom Fishing)")
+        print("Patterns: Double Bottom, IH&S, New Lows, Extended Selloff")
         print(f"\nCapital: {self.capital:,.0f} SEK")
         print(f"Risk per trade: {self.max_risk_per_trade*100:.1f}%")
         print(f"Minimum position: {self.min_position_sek:,.0f} SEK ({self.min_position_pct*100:.1f}%)")
@@ -156,6 +165,21 @@ class SundayDashboard:
         # Phase 6: Macro Regime & Quality Filters (V6.0)
         self.macro_analyzer = MacroRegimeAnalyzer()
         self.quality_analyzer = QualityScoreAnalyzer()
+        
+        # Phase 7: Hybrid Engine & Statistical Iron Curtain (V7.0)
+        self.momentum_engine = MomentumEngine(
+            min_rs_rating=95.0,
+            min_52w_proximity=0.95,
+            max_atr_ratio=0.85
+        )
+        self.alpha_switch = AlphaSwitchDetector(lookback_days=15)
+        self.iron_curtain = StatisticalIronCurtain(
+            n_bootstrap=1000,
+            min_pass_rate=0.95,
+            min_efficiency_ratio=0.30
+        )
+        self.hard_limits = HardLimits()
+        self.elite_formatter = EliteReportFormatter()
         
         # Screener
         self.screener = PositionTradingScreener(
@@ -823,6 +847,80 @@ class SundayDashboard:
                 setup.quality_score = 0.0
                 setup.quality_analysis = None
         
+        # V7.0: Motor B (Momentum/Launchpad Detection)
+        # NOTE: Motor B requires OPPOSITE conditions from Motor A (price > EMA50 > EMA200, near 52w high)
+        # Running Motor B on Motor A candidates (price < EMA200, -15% decline) will ALWAYS reject
+        # TODO: Implement separate Motor B pipeline that scans full universe independently
+        print("\n🚀 Motor B - Momentum/Launchpad Detection...")
+        print("   ⚠️  SKIPPED: Motor B requires separate pipeline (incompatible with Motor A candidates)")
+        print("   Motor A: Price < EMA200, -15% decline (bottom fishing)")
+        print("   Motor B: Price > EMA50 > EMA200, near 52w high (momentum leaders)")
+        print("   → These conditions are mutually exclusive")
+        
+        # Mark all setups as Motor A only
+        for setup in processed:
+            setup.motor_b_signal = None
+            setup.rs_rating = None
+        
+        # V7.0: Alpha-Switch (Convergence Detection)
+        # SKIPPED: No Motor B signals to converge with
+        print("\n🎯 Alpha-Switch - Convergence Detection...")
+        print("   ⚠️  SKIPPED: No Motor B pipeline active")
+        for setup in processed:
+            setup.convergence_detected = False
+            setup.convergence = None
+        
+        # V7.0: Statistical Iron Curtain (Bootstrap + Kaufman ER)
+        # CRITICAL BUG FIX: Iron Curtain was using MOCK/GENERATED data instead of HISTORICAL returns
+        # This defeats the entire purpose of statistical validation
+        # Solution: DISABLE until we have access to actual historical forward returns from screener
+        print("\n🛡️ Statistical Iron Curtain (Bootstrap + Kaufman ER)...")
+        print("   ⚠️  DISABLED: Requires historical forward returns (not available from screener)")
+        print("   Previous implementation used GENERATED data which invalidates statistical tests")
+        print("   → All setups pass Iron Curtain by default")
+        
+        for setup in processed:
+            setup.iron_curtain_passed = True  # Disabled - pass all by default
+            setup.kaufman_er = None
+        
+        # V7.0: Hard Limits (MAE 6% Cap + Sector Diversification)
+        print("\n⚠️ Hard Limits Enforcement...")
+        sector_map = {s.ticker: s.sector for s in processed if hasattr(s, 'sector')}
+        validated_setups = []
+        
+        for i, setup in enumerate(processed):
+            try:
+                # Check both hard limits
+                passed, mae_check, sector_check = self.hard_limits.validate_setup(
+                    ticker=setup.ticker,
+                    sector=getattr(setup, 'sector', 'Unknown'),
+                    robust_score=getattr(setup, 'robust_score', 0),
+                    avg_loss=setup.avg_loss,
+                    existing_setups=validated_setups,  # Already validated (higher ranked)
+                    sector_map=sector_map
+                )
+                
+                setup.mae_check = mae_check
+                setup.sector_check = sector_check
+                setup.hard_limits_passed = passed
+                
+                if not passed:
+                    if not mae_check.passed:
+                        print(f"   ❌ {setup.ticker}: {mae_check.reason}")
+                    if not sector_check.passed:
+                        print(f"   ❌ {setup.ticker}: {sector_check.reason}")
+                else:
+                    validated_setups.append(setup)
+            except Exception as e:
+                print(f"   ⚠️ Hard limits check failed for {setup.ticker}: {e}")
+                setup.hard_limits_passed = True  # Don't reject on error
+                validated_setups.append(setup)
+        
+        print(f"   Hard Limits: {len(validated_setups)}/{len(processed)} setups passed")
+        
+        # Replace processed with validated only
+        processed = validated_setups
+        
         # Calculate Timing Scores (for New Lows only)
         print("\n⏱️ Timing Score Analysis (Immediate Reversal Detection)...")
         for setup in processed:
@@ -1254,8 +1352,65 @@ class SundayDashboard:
                     print(f"\n✅ Recommended from correlation cluster")
                 else:
                     print(f"\n⚠️ {setup.cluster_warning}")
+            
+            # V7.0: Show Motor B & Convergence status if applicable
+            if hasattr(setup, 'motor_b_signal') and setup.motor_b_signal and setup.motor_b_signal.is_valid:
+                mb = setup.motor_b_signal
+                print(f"\n🚀 MOTOR B (Momentum/Launchpad):")
+                print(f"   RS-Rating: {mb.rs_rating:.0f}/100 (top {100-mb.rs_rating:.0f}% of universe)")
+                print(f"   VCP: ATR ratio {mb.atr_ratio:.3f} (compressed: {mb.volatility_contracted})")
+                print(f"   Distance from 52w high: {mb.distance_from_52w:+.1f}%")
+            
+            if hasattr(setup, 'convergence_detected') and setup.convergence_detected:
+                conv = setup.convergence
+                print(f"\n🎯 ALPHA-SWITCH (Convergence Detected!):")
+                print(f"   Motor A triggered: {conv.days_since_motor_a} days ago @ {conv.motor_a_entry_price:.2f}")
+                print(f"   Price move since: {conv.price_move_since_motor_a:+.1f}%")
+                print(f"   Robust Score boosted: 1.2x multiplier applied")
+            
+            # V7.0: Show Iron Curtain results if available
+            if hasattr(setup, 'iron_curtain_bootstrap'):
+                boot = setup.iron_curtain_bootstrap
+                print(f"\n🛡️ IRON CURTAIN (Statistical Validation):")
+                print(f"   Bootstrap: {boot.n_positive_ev}/{boot.n_simulations} simulations EV>0 ({boot.pass_rate*100:.0f}%)")
+                if hasattr(setup, 'kaufman_er'):
+                    print(f"   Kaufman ER: {setup.kaufman_er:.3f} (signal/noise ratio)")
+            
+            # V7.0: Show Hard Limits checks
+            if hasattr(setup, 'mae_check'):
+                print(f"\n⚠️ HARD LIMITS:")
+                print(f"   MAE Stop: {setup.mae_check.optimal_stop_pct*100:.1f}% (cap: 6%)")
+                if hasattr(setup, 'sector_check'):
+                    print(f"   Sector: {setup.sector_check.sector_count}/3 in {setup.sector_check.sector}")
         
         print("\n" + "="*80)
+        
+        # V7.0: Generate Elite Report (Top 5 ONLY)
+        print("\n" + "="*80)
+        print("📄 GENERATING ELITE SUNDAY REPORT (TOP 5 ONLY)")
+        print("="*80)
+        
+        # Filter to top 5 ACTIVE BUY SIGNALS only
+        top_5 = [s for s in processed if getattr(s, 'signal_status', '') == 'ACTIVE BUY SIGNAL'][:5]
+        
+        if len(top_5) == 0:
+            # If no ACTIVE signals, use top 5 from all processed
+            top_5 = processed[:5]
+        
+        macro_regime = results.get('macro_regime')
+        if macro_regime:
+            elite_report = self.elite_formatter.generate_sunday_report(
+                top_5_setups=top_5,
+                macro_regime=macro_regime
+            )
+            
+            # Save Elite Report
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            elite_path = f"reports/ELITE_SUNDAY_{timestamp}.txt"
+            self.elite_formatter.save_report(elite_report, elite_path)
+            
+            # Also print to console
+            print("\n" + elite_report)
     
     def _export_json(self, results: Dict):
         """Export results to JSON for backfill."""
