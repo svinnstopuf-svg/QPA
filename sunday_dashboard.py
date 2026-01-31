@@ -69,6 +69,16 @@ from src.validation.data_sanity_checker import DataSanityChecker
 from src.reporting.weekly_report import WeeklyReportGenerator
 from src.utils.data_fetcher import DataFetcher
 
+# Phase 5: Timing Score (Immediate Reversal Detection)
+from src.analysis.timing_score import TimingScoreCalculator, format_timing_summary
+
+# Phase 6: Macro Regime & Quality Filters (V6.0)
+from src.analysis.macro_regime import MacroRegimeAnalyzer, format_regime_summary
+from src.analysis.quality_score import QualityScoreAnalyzer, format_quality_summary
+
+# TIMING THRESHOLD FOR ACTIVE BUY SIGNALS
+TIMING_THRESHOLD = 50.0  # Minimum timing confidence required for buy signal
+
 
 class SundayDashboard:
     """
@@ -139,6 +149,13 @@ class SundayDashboard:
         self.data_sanity = DataSanityChecker()
         self.report_generator = WeeklyReportGenerator()
         self.data_fetcher = DataFetcher()
+        
+        # Phase 5: Timing Score (Immediate Reversal Detection)
+        self.timing_calculator = TimingScoreCalculator()
+        
+        # Phase 6: Macro Regime & Quality Filters (V6.0)
+        self.macro_analyzer = MacroRegimeAnalyzer()
+        self.quality_analyzer = QualityScoreAnalyzer()
         
         # Screener
         self.screener = PositionTradingScreener(
@@ -304,6 +321,51 @@ class SundayDashboard:
                 risk_components.append("Market Breadth: Healthy (0pts)")
         
         results['systemic_risk'] = systemic_risk
+        
+        # Macro Regime Analysis (V6.0)
+        print("\n🌐 Macro Regime Analysis (The 'Wind' Filter)...")
+        try:
+            macro_regime = self.macro_analyzer.analyze_regime()
+            results['macro_regime'] = macro_regime
+            
+            print(f"   Regime: {macro_regime.regime.value}")
+            print(f"   Position Size Multiplier: {macro_regime.position_size_multiplier:.0%}")
+            
+            # S&P 500
+            print(f"\n   S&P 500:")
+            print(f"      Current: {macro_regime.sp500_price:.2f}")
+            print(f"      200-day EMA: {macro_regime.sp500_ema200:.2f}")
+            status_emoji = "✅" if macro_regime.sp500_above_ema else "⚠️"
+            print(f"      {status_emoji} {macro_regime.sp500_distance_pct:+.2f}% vs EMA")
+            
+            # US 10Y Yield
+            print(f"\n   US 10Y Yield:")
+            print(f"      Current: {macro_regime.us10y_current:.2f}%")
+            print(f"      3-week change: {macro_regime.us10y_change_bps:+.0f} bps")
+            print(f"      Trend: {macro_regime.us10y_trend}")
+            
+            # Defensive signals
+            if len(macro_regime.defensive_signals) > 0:
+                print(f"\n   ⚠️ DEFENSIVE MODE ACTIVATED:")
+                for signal in macro_regime.defensive_signals:
+                    print(f"      • {signal}")
+                print(f"   → All position sizes will be HALVED (50%)")
+            else:
+                print(f"\n   ✅ AGGRESSIVE MODE - Full position sizing")
+        
+        except Exception as e:
+            print(f"   ⚠️ Macro regime analysis failed: {e}")
+            # Default to neutral/aggressive regime
+            from src.analysis.macro_regime import MacroRegimeAnalysis, MarketRegime
+            macro_regime = MacroRegimeAnalysis(
+                regime=MarketRegime.AGGRESSIVE,
+                position_size_multiplier=1.0,
+                sp500_price=0.0, sp500_ema200=0.0, sp500_above_ema=True, sp500_distance_pct=0.0,
+                us10y_current=0.0, us10y_3w_ago=0.0, us10y_trend="Flat", us10y_change_bps=0.0,
+                usdsek_current=0.0, usdsek_zscore=0.0,
+                defensive_signals=[]
+            )
+            results['macro_regime'] = macro_regime
         
         # Display
         if systemic_risk > 0 or len(risk_components) > 0:
@@ -544,9 +606,13 @@ class SundayDashboard:
         
         results['regime'] = regime_result
         
-        # Get FX adjustment from results
+        # Get FX adjustment and Macro Regime multiplier from results
         usd_sek_zscore = results.get('usd_sek_zscore', 0.0)
         fx_adjustment = results.get('fx_adjustment', 1.0)
+        
+        # Get Macro Regime multiplier (V6.0)
+        macro_regime = results.get('macro_regime')
+        macro_multiplier = macro_regime.position_size_multiplier if macro_regime else 1.0
         
         # Process each setup
         for setup in setups:
@@ -599,6 +665,11 @@ class SundayDashboard:
                 
                 # Apply regime multiplier
                 position_pct = base_allocation * regime_multiplier
+                
+                # Apply Macro Regime multiplier (V6.0 - The 'Wind' Filter)
+                # This halves position sizing in DEFENSIVE markets
+                position_pct *= macro_multiplier
+                setup.macro_adjusted = (macro_multiplier < 1.0)
                 
                 # Apply 1500 SEK floor (min_position_pct is already % as decimal: 1.5% = 0.015)
                 if 0 < position_pct < self.min_position_pct:
@@ -733,6 +804,82 @@ class SundayDashboard:
         except Exception as e:
             print(f"   ⚠️ Clustering failed: {e}")
         
+        # Calculate Quality Scores (V6.0 - The 'Company' Filter)
+        print("\n🏭 Quality Score Analysis (The 'Company' Filter)...")
+        for setup in processed:
+            try:
+                quality_analysis = self.quality_analyzer.analyze_quality(setup.ticker)
+                setup.quality_score = quality_analysis.quality_score
+                setup.quality_analysis = quality_analysis
+                
+                # Log quality warnings
+                if quality_analysis.quality_score < 40:
+                    warning = " - VALUE TRAP!" if quality_analysis.value_trap_warning else ""
+                    print(f"   🚨 {setup.ticker}: HIGH RISK/TRASH (Q:{quality_analysis.quality_score:.0f}){warning}")
+                elif quality_analysis.quality_score >= 80:
+                    print(f"   ✅ {setup.ticker}: HIGH QUALITY (Q:{quality_analysis.quality_score:.0f})")
+            except Exception as e:
+                print(f"   ⚠️ Quality analysis failed for {setup.ticker}: {e}")
+                setup.quality_score = 0.0
+                setup.quality_analysis = None
+        
+        # Calculate Timing Scores (for New Lows only)
+        print("\n⏱️ Timing Score Analysis (Immediate Reversal Detection)...")
+        for setup in processed:
+            try:
+                # Fetch fresh price data for timing analysis
+                import yfinance as yf
+                ticker_obj = yf.Ticker(setup.ticker)
+                hist = ticker_obj.history(period="1mo")  # Last month for RSI(2) and EMA(5)
+                
+                if not hist.empty and len(hist) >= 20:
+                    timing_signals = self.timing_calculator.calculate_timing_score(
+                        setup.ticker,
+                        hist
+                    )
+                    
+                    if timing_signals:
+                        setup.timing_confidence = timing_signals.total_score
+                        setup.timing_signals = timing_signals
+                        
+                        # Classify as ACTIVE BUY SIGNAL or WATCHLIST
+                        has_robust_score = hasattr(setup, 'robust_score') and setup.robust_score > 70
+                        has_timing = timing_signals.total_score >= TIMING_THRESHOLD
+                        
+                        if has_robust_score and has_timing:
+                            setup.signal_status = "ACTIVE BUY SIGNAL"
+                            setup.waiting_reason = None
+                            print(f"   🚀 {setup.ticker}: ACTIVE BUY SIGNAL (Timing: {timing_signals.total_score:.0f}%)")
+                        elif has_robust_score:
+                            setup.signal_status = "WATCHLIST (Wait for Trigger)"
+                            # Determine why we're waiting
+                            reasons = []
+                            if not timing_signals.volume_confirmed:
+                                reasons.append("Waiting for Volume")
+                            if timing_signals.rsi_2_current > 30:
+                                reasons.append("RSI not oversold")
+                            elif timing_signals.rsi_2_current < 15 and timing_signals.rsi_hook_boost == 0:
+                                reasons.append("RSI too low (no hook yet)")
+                            if timing_signals.candle_pattern in ["Bearish/Neutral", "Bearish"]:
+                                reasons.append("Price Action missing")
+                            setup.waiting_reason = ", ".join(reasons) if reasons else "Timing < 50%"
+                            print(f"   ⏸️ {setup.ticker}: WATCHLIST - {setup.waiting_reason}")
+                        else:
+                            setup.signal_status = "NO SIGNAL"
+                            setup.waiting_reason = "Robust Score < 70"
+                    else:
+                        setup.timing_confidence = 0.0
+                        setup.timing_signals = None
+                        setup.signal_status = "NO SIGNAL"
+                        setup.waiting_reason = "Timing data unavailable"
+                else:
+                    setup.timing_confidence = 0.0
+                    setup.timing_signals = None
+            except Exception as e:
+                print(f"   ⚠️ Timing analysis failed for {setup.ticker}: {e}")
+                setup.timing_confidence = 0.0
+                setup.timing_signals = None
+        
         # Apply Strategic Adjustments
         print("\n🎯 Strategic Score Adjustments...")
         for setup in processed:
@@ -774,8 +921,29 @@ class SundayDashboard:
         if fx_adjustment != 1.0:
             print(f"   Applied FX adjustment to US tickers ({fx_adjustment:.1%})")
         
-        # Sort by adjusted score
-        processed.sort(key=lambda x: x.adjusted_score, reverse=True)
+        # Sort by Multi-Factor Rank: Signal Status, Quality, Timing, Robust Score
+        def sort_key(setup):
+            # Priority 1: ACTIVE BUY SIGNALS (status = ACTIVE BUY SIGNAL)
+            is_active = 1 if getattr(setup, 'signal_status', '') == 'ACTIVE BUY SIGNAL' else 0
+            # Priority 2: Quality Score (companies that make money)
+            quality = getattr(setup, 'quality_score', 0)
+            # Priority 3: Timing confidence
+            timing = getattr(setup, 'timing_confidence', 0)
+            # Priority 4: Robust Score (statistical edge)
+            robust = getattr(setup, 'robust_score', 0)
+            # Priority 5: Adjusted score (fallback)
+            score = setup.adjusted_score
+            return (is_active, quality, timing, robust, score)
+        
+        processed.sort(key=sort_key, reverse=True)
+        
+        # Calculate Multi-Factor Rank for each setup
+        for setup in processed:
+            # Combine Robust Score (statistical) + Quality Score (fundamental)
+            robust_score = getattr(setup, 'robust_score', 0)
+            quality_score = getattr(setup, 'quality_score', 0)
+            # Weight: 60% Robust (pattern strength), 40% Quality (company health)
+            setup.multi_factor_rank = (robust_score * 0.6) + (quality_score * 0.4)
         
         # FILTER: Top 5 should ONLY include PRIMARY patterns (structural reversals)
         # SECONDARY patterns (calendar, technical indicators) are supporting evidence only
@@ -825,15 +993,27 @@ class SundayDashboard:
         current_edges = {}
         exit_signals = {}
         
+        # Fetch real market prices
+        import yfinance as yf
+        
         for pos in positions:
-            # Find in screener results
+            # Get current market price
+            try:
+                ticker_obj = yf.Ticker(pos.ticker)
+                hist = ticker_obj.history(period="1d")
+                if not hist.empty:
+                    current_prices[pos.ticker] = hist['Close'].iloc[-1]
+                else:
+                    current_prices[pos.ticker] = pos.entry_price
+            except:
+                current_prices[pos.ticker] = pos.entry_price
+            
+            # Find in screener results for edge
             match = next((r for r in screener_results if r.ticker == pos.ticker), None)
             
             if match:
-                current_prices[pos.ticker] = match.edge_21d  # Approximate
-                current_edges[pos.ticker] = match.edge_21d
+                current_edges[pos.ticker] = match.edge_63d  # Use 63-day edge
             else:
-                current_prices[pos.ticker] = pos.entry_price
                 current_edges[pos.ticker] = 0.0
             
             # Check exit signals (would need market data)
@@ -859,18 +1039,50 @@ class SundayDashboard:
         }
     
     def _display_results(self, results: Dict, max_setups: int):
-        """Display final results."""
+        """Display final results in two groups: ACTIVE BUY SIGNALS and WATCHLIST."""
         
         processed = results.get('processed_setups', [])
         
         if len(processed) == 0:
             return
         
-        print("\n" + "="*80)
-        print(f"🎯 TOP {min(max_setups, len(processed))} SETUPS FOR THIS SUNDAY")
-        print("="*80)
+        # Separate into groups
+        active_signals = [s for s in processed if getattr(s, 'signal_status', '') == 'ACTIVE BUY SIGNAL']
+        watchlist = [s for s in processed if getattr(s, 'signal_status', '') == 'WATCHLIST (Wait for Trigger)']
         
-        for i, setup in enumerate(processed[:max_setups], 1):
+        print("\n" + "="*80)
+        print(f"🎯 SUNDAY ANALYSIS - BUY SIGNAL CLASSIFICATION")
+        print("="*80)
+        print(f"\n✅ ACTIVE BUY SIGNALS: {len(active_signals)}")
+        print(f"⏸️  WATCHLIST (Waiting for Trigger): {len(watchlist)}")
+        print(f"📊 Total Analyzed: {len(processed)}")
+        print("\n" + "="*80)
+        
+        # Display ACTIVE BUY SIGNALS first
+        if len(active_signals) > 0:
+            print("\n" + "#"*80)
+            print("GROUP 1: ACTIVE BUY SIGNALS (Robust Score > 70 AND Timing > 50%)")
+            print("#"*80)
+            self._display_setup_group(active_signals, results, max_count=max_setups)
+        
+        # Display WATCHLIST second (SHOW ALL)
+        if len(watchlist) > 0:
+            print("\n" + "#"*80)
+            print("GROUP 2: CANDIDATES ON WATCHLIST (High Robust Score, Waiting for Timing)")
+            print("#"*80)
+            # Show ALL watchlist candidates, not just top 3
+            self._display_setup_group(watchlist, results, max_count=len(watchlist))
+        
+        print("\n" + "="*80)
+    
+    def _display_setup_group(self, setups: List, results: Dict, max_count: int = 5):
+        """Display a group of setups with full details."""
+        
+        if len(setups) == 0:
+            print("\n   (No setups in this category)")
+            return
+        
+        for i, setup in enumerate(setups[:max_count], 1):
             # Determine pattern priority
             is_primary = any(keyword in setup.best_pattern_name.lower() for keyword in [
                 'lägsta nivåer', 'double bottom', 'inverse', 'bull flag', 'higher lows',
@@ -879,11 +1091,55 @@ class SundayDashboard:
             priority_tag = "PRIMARY" if is_primary else "SECONDARY"
             
             print(f"\n{'#'*80}")
-            print(f"RANK {i}: {setup.ticker} - {setup.best_pattern_name}")
-            print(f"Score: {setup.score:.1f}/100 | Priority: {priority_tag}")
+            # Show signal status in rank header
+            signal_status = getattr(setup, 'signal_status', 'UNKNOWN')
+            status_emoji = "🚀" if signal_status == "ACTIVE BUY SIGNAL" else "⏸️"
+            print(f"{status_emoji} RANK {i}: {setup.ticker} - {setup.best_pattern_name}")
+            
+            # Multi-line header with all key metrics
+            timing_conf = setup.timing_confidence if hasattr(setup, 'timing_confidence') else 0
+            quality_score = setup.quality_score if hasattr(setup, 'quality_score') else 0
+            multi_factor = setup.multi_factor_rank if hasattr(setup, 'multi_factor_rank') else 0
+            
+            # Get macro regime info
+            macro_regime_info = results.get('macro_regime')
+            macro_status = macro_regime_info.regime.value if macro_regime_info else "UNKNOWN"
+            macro_emoji = "🟢" if macro_status == "AGGRESSIVE" else "🟡"
+            
+            print(f"Score: {setup.score:.1f}/100 | Priority: {priority_tag} | Timing: {timing_conf:.0f}% | Status: {signal_status}")
+            print(f"Quality: {quality_score:.0f}/100 | Multi-Factor Rank: {multi_factor:.1f}/100 | Macro: {macro_emoji} {macro_status}")
+            
+            # Show waiting reason if on watchlist
+            if hasattr(setup, 'waiting_reason') and setup.waiting_reason:
+                print(f"⚠️ Reason for Waiting: {setup.waiting_reason}")
+            
             print('#'*80)
             
             # Strategic Context
+            print(f"\nCOMPANY QUALITY (V6.0 - The 'Company' Filter):")
+            if hasattr(setup, 'quality_analysis') and setup.quality_analysis:
+                qa = setup.quality_analysis
+                print(f"  Quality Score: {qa.summary}")
+                print(f"  Company: {qa.company_name}")
+                
+                # Profitability
+                if qa.roe is not None:
+                    print(f"  ROE: {qa.roe*100:.1f}% (Score: {qa.roe_score:.0f}/40)")
+                
+                # Solvency
+                if qa.debt_to_equity is not None:
+                    de_ratio = qa.debt_to_equity / 100 if qa.debt_to_equity > 10 else qa.debt_to_equity
+                    print(f"  Debt/Equity: {de_ratio:.2f} (Score: {qa.debt_score:.0f}/40)")
+                
+                # Value
+                if qa.trailing_pe is not None:
+                    discount = ((qa.sector_avg_pe - qa.trailing_pe) / qa.sector_avg_pe) * 100
+                    print(f"  P/E: {qa.trailing_pe:.1f} vs Sector {qa.sector_avg_pe:.1f} ({discount:+.0f}%, Score: {qa.value_score:.0f}/20)")
+                
+                # Value trap warning
+                if qa.value_trap_warning:
+                    print(f"  🚨 VALUE TRAP WARNING - Low quality despite cheap valuation!")
+            
             print(f"\nSTRATEGIC CONTEXT:")
             print(f"  Sector: {setup.sector} (Vol: {setup.sector_volatility:.2f}x)")
             print(f"  Geography: {setup.geography}")
@@ -936,6 +1192,8 @@ class SundayDashboard:
             print(f"  Position: {setup.position_size_sek:,.0f} SEK ({setup.position_size_pct:.2f}%)")
             if setup.floor_applied:
                 print(f"  ⚠️ Raised to 1,500 SEK floor (courtage efficiency)")
+            if hasattr(setup, 'macro_adjusted') and setup.macro_adjusted:
+                print(f"  🌐 Macro Adjustment: Position HALVED due to DEFENSIVE regime (50%)")
             print(f"  Expected Profit: {setup.ev_sek:+,.0f} SEK")
             
             print(f"\nRISK ANALYSIS:")
@@ -954,6 +1212,39 @@ class SundayDashboard:
             print(f"  Decline from high: {setup.decline_from_high:.1f}%")
             print(f"  Below EMA200: {setup.price_vs_ema200:.1f}%")
             print(f"  Volume Confirmed: {'YES' if setup.volume_confirmed else 'NO'}")
+            
+            # Timing Score Breakdown
+            if hasattr(setup, 'timing_signals') and setup.timing_signals:
+                ts = setup.timing_signals
+                print(f"\nTIMING SCORE (Immediate Reversal):")
+                print(f"  Overall Confidence: {ts.total_score:.0f}% (0-100)")
+                if ts.rsi_hook_boost > 0:
+                    print(f"  🎯 RSI HOOK DETECTED: +{ts.rsi_hook_boost*100:.0f}% boost applied!")
+                print(f"  └─ RSI Momentum Flip: {ts.rsi_momentum_flip:.0f}/25")
+                print(f"     RSI(2): {ts.rsi_2_current:.1f} (prev: {ts.rsi_2_previous:.1f}, 2d ago: {ts.rsi_2_two_days_ago:.1f})")
+                print(f"  └─ Mean Reversion: {ts.mean_reversion_distance:.0f}/25")
+                print(f"     Distance: {ts.distance_from_ema5_std:.2f} std from EMA(5)")
+                print(f"  └─ Volume Exhaustion: {ts.volume_exhaustion:.0f}/25")
+                print(f"     Trend: {ts.volume_trend_last_3d}")
+                vol_status = "✅ CONFIRMED" if ts.volume_confirmed else "❌ NOT CONFIRMED"
+                print(f"     Enhanced Volume Check: {vol_status}")
+                
+                # Explain why volume not confirmed if applicable
+                if not ts.volume_confirmed:
+                    print(f"     ⚠️ Volume Issue: Need either:")
+                    print(f"        - Declining price + volume -15% below avg (seller exhaustion), OR")
+                    print(f"        - Green day + volume +10% above avg (buyer entry)")
+                print(f"  └─ Price Action: {ts.price_action_signal:.0f}/25")
+                print(f"     Pattern: {ts.candle_pattern}")
+                
+                # Interpretation with threshold check
+                if ts.total_score >= TIMING_THRESHOLD:
+                    if ts.total_score >= 75:
+                        print(f"  🚀 ACTIVE BUY SIGNAL - Excellent timing for entry")
+                    else:
+                        print(f"  🚀 ACTIVE BUY SIGNAL - Good timing for entry")
+                else:
+                    print(f"  ⏸️ WATCHLIST - Timing below {TIMING_THRESHOLD:.0f}% threshold")
             
             if setup.earnings_risk == 'HIGH':
                 print(f"\n🚨 EARNINGS RISK: {setup.earnings_days} days - DO NOT TRADE")
